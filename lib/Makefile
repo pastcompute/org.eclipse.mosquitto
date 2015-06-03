@@ -32,6 +32,7 @@ install : all
 	$(MAKE) -C cpp install
 
 uninstall :
+	$(MAKE) -C cpp uninstall
 	-rm -f ${DESTDIR}${prefix}/lib${LIB_SUFFIX}/libmosquitto.so.${SOVERSION}
 	-rm -f ${DESTDIR}${prefix}/lib${LIB_SUFFIX}/libmosquitto.so
 	-rm -f ${DESTDIR}${prefix}/include/mosquitto.h
