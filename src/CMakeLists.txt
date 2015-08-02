@@ -101,9 +101,10 @@ endif (${WITH_WEBSOCKETS} STREQUAL ON)
 # Simple detect libuuid
 if(NOT APPLE)
 	FIND_PATH(UUID_HEADER uuid/uuid.h)
+	find_library(UUID_LIBRARY NAMES uuid)
 	if (UUID_HEADER)
 		add_definitions(-DWITH_UUID)
-		set (MOSQ_LIBS ${MOSQ_LIBS} uuid)
+		set (MOSQ_LIBS ${MOSQ_LIBS} ${UUID_LIBRARY})
 	endif (UUID_HEADER)
 endif(NOT APPLE)
 
@@ -126,7 +127,7 @@ if (${WITH_TLS} STREQUAL ON)
 	install(TARGETS mosquitto_passwd RUNTIME DESTINATION ${BINDIR} LIBRARY DESTINATION ${LIBDIR})
 endif (${WITH_TLS} STREQUAL ON)
 
-if (UNIX)
+if (UNIX AND NOT ("${OPENWRT}" STREQUAL "yes"))
 	install(CODE "EXEC_PROGRAM(/sbin/ldconfig)")
-endif (UNIX)
+endif (UNIX AND NOT ("${OPENWRT}" STREQUAL "yes"))
 

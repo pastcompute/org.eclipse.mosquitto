@@ -54,9 +54,10 @@ endif (WIN32)
 if (${WITH_SRV} STREQUAL ON)
 	# Simple detect c-ares
 	find_path(ARES_HEADER ares.h)
+	find_library(ARES_LIBRARY NAMES cares)
 	if (ARES_HEADER)
 		add_definitions("-DWITH_SRV")
-		set (LIBRARIES ${LIBRARIES} cares)
+		set (LIBRARIES ${LIBRARIES} ${ARES_LIBRARY})
 	else (ARES_HEADER)
 		message(WARNING "c-ares library not found.")
 	endif (ARES_HEADER)
@@ -73,6 +74,7 @@ set_target_properties(libmosquitto PROPERTIES
 install(TARGETS libmosquitto RUNTIME DESTINATION ${BINDIR} LIBRARY DESTINATION ${LIBDIR})
 install(FILES mosquitto.h DESTINATION ${INCLUDEDIR})
 
-if (UNIX)
+if (UNIX AND NOT ("${OPENWRT}" STREQUAL "yes"))
 	install(CODE "EXEC_PROGRAM(/sbin/ldconfig)")
-endif (UNIX)
+endif (UNIX AND NOT ("${OPENWRT}" STREQUAL "yes"))
+
