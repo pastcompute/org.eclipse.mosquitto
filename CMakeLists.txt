@@ -86,7 +86,7 @@ option(WITH_SRV "Include SRV lookup support?" ON)
 add_subdirectory(lib)
 add_subdirectory(client)
 add_subdirectory(src)
-add_subdirectory(man)
+# add_subdirectory(man)    # <-- not built by cmake, and running make builds in the source tree ...
 
 # ========================================
 # Install config file
