@@ -21,12 +21,12 @@
 # Disabling this will also mean that passwords must be stored in plain text. It
 # is strongly recommended that you only disable WITH_TLS if you are not using
 # password authentication at all.
-WITH_TLS:=yes
+#WITH_TLS:=yes
 
 # Comment out to disable TLS/PSK support in the broker and client. Requires
 # WITH_TLS=yes.
 # This must be disabled if using openssl < 1.0.
-WITH_TLS_PSK:=yes
+#WITH_TLS_PSK:=yes
 
 # Comment out to disable client client threading support.
 WITH_THREADING:=yes
@@ -58,14 +58,14 @@ WITH_MEMORY_TRACKING:=yes
 WITH_SYS_TREE:=yes
 
 # Build with SRV lookup support.
-WITH_SRV:=yes
+#WITH_SRV:=yes
 
 # Build using libuuid for clientid generation (Linux only - please report if
 # supported on your platform).
-WITH_UUID:=yes
+#WITH_UUID:=yes
 
 # Build with websockets support on the broker.
-WITH_WEBSOCKETS:=no
+WITH_WEBSOCKETS:=yes
 
 # Use elliptic keys in broker
 WITH_EC:=yes
@@ -115,7 +115,7 @@ LIB_LDFLAGS:=${LDFLAGS}
 BROKER_CFLAGS:=${LIB_CFLAGS} ${CPPFLAGS} -DVERSION="\"${VERSION}\"" -DTIMESTAMP="\"${TIMESTAMP}\"" -DWITH_BROKER
 CLIENT_CFLAGS:=${CFLAGS} ${CPPFLAGS} -I../lib -DVERSION="\"${VERSION}\""
 
-ifneq ($(or $(find $(UNAME),FreeBSD), $(find $(UNAME),OpenBSD)),)
+ifeq ($(UNAME),FreeBSD)
 	BROKER_LIBS:=-lm
 else
 	BROKER_LIBS:=-ldl -lm
