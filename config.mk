@@ -21,7 +21,7 @@
 # Disabling this will also mean that passwords must be stored in plain text. It
 # is strongly recommended that you only disable WITH_TLS if you are not using
 # password authentication at all.
-#WITH_TLS:=yes
+WITH_TLS:=no
 
 # Comment out to disable TLS/PSK support in the broker and client. Requires
 # WITH_TLS=yes.
@@ -65,7 +65,7 @@ WITH_SYS_TREE:=yes
 #WITH_UUID:=yes
 
 # Build with websockets support on the broker.
-WITH_WEBSOCKETS:=yes
+WITH_WEBSOCKETS:=no
 
 # Use elliptic keys in broker
 WITH_EC:=yes
