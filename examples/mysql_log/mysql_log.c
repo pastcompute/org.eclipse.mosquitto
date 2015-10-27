@@ -9,7 +9,7 @@
 #  define snprintf sprintf_s
 #endif
 
-#include <mosquitto.h>
+#include <eecloud.h>
 #include <mysql/mysql.h>
 
 #define db_host "localhost"
@@ -31,11 +31,11 @@ void handle_signal(int s)
 	run = 0;
 }
 
-void connect_callback(struct mosquitto *mosq, void *obj, int result)
+void connect_callback(struct eecloud *ecld, void *obj, int result)
 {
 }
 
-void message_callback(struct mosquitto *mosq, void *obj, const struct mosquitto_message *message)
+void message_callback(struct eecloud *ecld, void *obj, const struct eecloud_message *message)
 {
 	MYSQL_BIND bind[2];
 
@@ -55,14 +55,14 @@ int main(int argc, char *argv[])
 	MYSQL *connection;
 	my_bool reconnect = true;
 	char clientid[24];
-	struct mosquitto *mosq;
+	struct eecloud *ecld;
 	int rc = 0;
 
 	signal(SIGINT, handle_signal);
 	signal(SIGTERM, handle_signal);
 
 	mysql_library_init(0, NULL, NULL);
-	mosquitto_lib_init();
+	eecloud_lib_init();
 
 	connection = mysql_init(NULL);
 
@@ -78,24 +78,24 @@ int main(int argc, char *argv[])
 
 			memset(clientid, 0, 24);
 			snprintf(clientid, 23, "mysql_log_%d", getpid());
-			mosq = mosquitto_new(clientid, true, connection);
-			if(mosq){
-				mosquitto_connect_callback_set(mosq, connect_callback);
-				mosquitto_message_callback_set(mosq, message_callback);
+			ecld = eecloud_new(clientid, true, connection);
+			if(ecld){
+				eecloud_connect_callback_set(ecld, connect_callback);
+				eecloud_message_callback_set(ecld, message_callback);
 
 
-			    rc = mosquitto_connect(mosq, mqtt_host, mqtt_port, 60);
+			    rc = eecloud_connect(ecld, mqtt_host, mqtt_port, 60);
 
-				mosquitto_subscribe(mosq, NULL, "#", 0);
+				eecloud_subscribe(ecld, NULL, "#", 0);
 
 				while(run){
-					rc = mosquitto_loop(mosq, -1, 1);
+					rc = eecloud_loop(ecld, -1, 1);
 					if(run && rc){
 						sleep(20);
-						mosquitto_reconnect(mosq);
+						eecloud_reconnect(ecld);
 					}
 				}
-				mosquitto_destroy(mosq);
+				eecloud_destroy(ecld);
 			}
 			mysql_stmt_close(stmt);
 
@@ -111,7 +111,7 @@ int main(int argc, char *argv[])
 	}
 
 	mysql_library_end();
-	mosquitto_lib_cleanup();
+	eecloud_lib_cleanup();
 
 	return rc;
 }

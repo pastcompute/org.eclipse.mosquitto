@@ -1,6 +1,6 @@
 #include <cstdio>
 #include <cstring>
-#include <mosquittopp.h>
+#include <eecloudpp.h>
 
 void print_error(const char *topic, char **topics, int topic_count)
 {
@@ -21,7 +21,7 @@ int main(int argc, char *argv[])
 	char **topics;
 	int topic_count;
 
-	if(mosqpp::sub_topic_tokenise("topic", &topics, &topic_count)){
+	if(ecldpp::sub_topic_tokenise("topic", &topics, &topic_count)){
 		printf("Out of memory.\n");
 		return 1;
 	}
@@ -30,7 +30,7 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	if(mosqpp::sub_topic_tokenise("a/deep/topic/hierarchy", &topics, &topic_count)){
+	if(ecldpp::sub_topic_tokenise("a/deep/topic/hierarchy", &topics, &topic_count)){
 		printf("Out of memory.\n");
 		return 1;
 	}
@@ -43,7 +43,7 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	if(mosqpp::sub_topic_tokenise("/a/deep/topic/hierarchy", &topics, &topic_count)){
+	if(ecldpp::sub_topic_tokenise("/a/deep/topic/hierarchy", &topics, &topic_count)){
 		printf("Out of memory.\n");
 		return 1;
 	}
@@ -57,7 +57,7 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	if(mosqpp::sub_topic_tokenise("a/b/c", &topics, &topic_count)){
+	if(ecldpp::sub_topic_tokenise("a/b/c", &topics, &topic_count)){
 		printf("Out of memory.\n");
 		return 1;
 	}
@@ -69,7 +69,7 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	if(mosqpp::sub_topic_tokenise("/a/b/c", &topics, &topic_count)){
+	if(ecldpp::sub_topic_tokenise("/a/b/c", &topics, &topic_count)){
 		printf("Out of memory.\n");
 		return 1;
 	}
@@ -82,7 +82,7 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	if(mosqpp::sub_topic_tokenise("a///hierarchy", &topics, &topic_count)){
+	if(ecldpp::sub_topic_tokenise("a///hierarchy", &topics, &topic_count)){
 		printf("Out of memory.\n");
 		return 1;
 	}
@@ -95,7 +95,7 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	if(mosqpp::sub_topic_tokenise("/a///hierarchy", &topics, &topic_count)){
+	if(ecldpp::sub_topic_tokenise("/a///hierarchy", &topics, &topic_count)){
 		printf("Out of memory.\n");
 		return 1;
 	}
@@ -109,7 +109,7 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	if(mosqpp::sub_topic_tokenise("/a///hierarchy/", &topics, &topic_count)){
+	if(ecldpp::sub_topic_tokenise("/a///hierarchy/", &topics, &topic_count)){
 		printf("Out of memory.\n");
 		return 1;
 	}

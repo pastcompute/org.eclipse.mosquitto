@@ -14,33 +14,33 @@ cmd_subfolder = os.path.realpath(os.path.abspath(os.path.join(os.path.split(insp
 if cmd_subfolder not in sys.path:
     sys.path.insert(0, cmd_subfolder)
 
-import mosq_test
+import ecld_test
 
 rc = 1
 keepalive = 60
-connect_packet = mosq_test.gen_connect("retain-qos1-test", keepalive=keepalive)
-connack_packet = mosq_test.gen_connack(rc=0)
+connect_packet = ecld_test.gen_connect("retain-qos1-test", keepalive=keepalive)
+connack_packet = ecld_test.gen_connack(rc=0)
 
 mid = 6
-publish_packet = mosq_test.gen_publish("retain/qos1/test", qos=1, mid=mid, payload="retained message", retain=True)
-puback_packet = mosq_test.gen_puback(mid)
+publish_packet = ecld_test.gen_publish("retain/qos1/test", qos=1, mid=mid, payload="retained message", retain=True)
+puback_packet = ecld_test.gen_puback(mid)
 mid = 18
-subscribe_packet = mosq_test.gen_subscribe(mid, "retain/qos1/test", 0)
-suback_packet = mosq_test.gen_suback(mid, 0)
-publish0_packet = mosq_test.gen_publish("retain/qos1/test", qos=0, payload="retained message", retain=True)
+subscribe_packet = ecld_test.gen_subscribe(mid, "retain/qos1/test", 0)
+suback_packet = ecld_test.gen_suback(mid, 0)
+publish0_packet = ecld_test.gen_publish("retain/qos1/test", qos=0, payload="retained message", retain=True)
 
-cmd = ['../../src/mosquitto', '-p', '1888']
-broker = mosq_test.start_broker(filename=os.path.basename(__file__), cmd=cmd)
+cmd = ['../../src/eecloud', '-p', '1888']
+broker = ecld_test.start_broker(filename=os.path.basename(__file__), cmd=cmd)
 
 try:
-    sock = mosq_test.do_client_connect(connect_packet, connack_packet)
+    sock = ecld_test.do_client_connect(connect_packet, connack_packet)
     sock.send(publish_packet)
 
-    if mosq_test.expect_packet(sock, "puback", puback_packet):
+    if ecld_test.expect_packet(sock, "puback", puback_packet):
         sock.send(subscribe_packet)
 
-        if mosq_test.expect_packet(sock, "suback", suback_packet):
-            if mosq_test.expect_packet(sock, "publish0", publish0_packet):
+        if ecld_test.expect_packet(sock, "suback", suback_packet):
+            if ecld_test.expect_packet(sock, "publish0", publish0_packet):
                 rc = 0
     sock.close()
 finally:

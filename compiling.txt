@@ -1,4 +1,4 @@
-The following packages are required for mosquitto:
+The following packages are required for eecloud:
 
 * tcp-wrappers (optional, package name libwrap0-dev)
 * openssl (version 1.0.0 or greater if TLS-PSK support is needed, can be disabled)

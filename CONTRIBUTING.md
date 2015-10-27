@@ -1,4 +1,4 @@
-Contributing to Mosquitto
+Contributing to Eecloud
 =========================
 
 Thank you for your interest in this project.
@@ -6,33 +6,33 @@ Thank you for your interest in this project.
 Project description:
 --------------------
 
-The Mosquitto project has been created to provide a light weight, open-source
+The Eecloud project has been created to provide a light weight, open-source
 implementation, of an MQTT broker to allow new, existing, and emerging
 applications for Machine-to-Machine (M2M) and Internet of Things (IoT).
 
-- <https://projects.eclipse.org/projects/technology.mosquitto>
+- <https://projects.eclipse.org/projects/technology.eecloud>
 
 
 Source
 ------
 
-The Mosquitto code is stored in a git repository. The URL for anonymous access is:
+The Eecloud code is stored in a git repository. The URL for anonymous access is:
 
-- http://git.eclipse.org/gitroot/mosquitto/org.eclipse.mosquitto.git
+- http://git.eclipse.org/gitroot/eecloud/org.eclipse.eecloud.git
 
 Access via Gerrit (for code review) is through the following URLs:
 
-- ssh://username@git.eclipse.org:29418/mosquitto/org.eclipse.mosquitto
-- https://username@git.eclipse.org/r/mosquitto/org.eclipse.mosquitto
+- ssh://username@git.eclipse.org:29418/eecloud/org.eclipse.eecloud
+- https://username@git.eclipse.org/r/eecloud/org.eclipse.eecloud
 
 A web browsable repository is available at
 
-- <http://git.eclipse.org/c/mosquitto/org.eclipse.mosquitto.git>
+- <http://git.eclipse.org/c/eecloud/org.eclipse.eecloud.git>
 
 Contributing a patch
 --------------------
 
-The Mosquitto repositories are accessed through Gerrit, the code review
+The Eecloud repositories are accessed through Gerrit, the code review
 project, which makes it possible for anybody to clone the repository, make
 changes and push them back for review and eventual acceptance into the project.
 
@@ -69,7 +69,7 @@ Developer resources:
 More information regarding source code management, builds, coding standards,
 and other topics can be found at.
 
-- <https://projects.eclipse.org/projects/technology.mosquitto/developer>
+- <https://projects.eclipse.org/projects/technology.eecloud/developer>
 
 
 Contributor License Agreement:
@@ -86,7 +86,7 @@ Contact:
 
 Contact the project developers via the project's "dev" list.
 
-- <https://dev.eclipse.org/mailman/listinfo/mosquitto-dev>
+- <https://dev.eclipse.org/mailman/listinfo/eecloud-dev>
 
 
 Search for bugs:
@@ -94,11 +94,11 @@ Search for bugs:
 
 This project uses Bugzilla to track ongoing development and issues.
 
-- <https://bugs.eclipse.org/bugs/buglist.cgi?product=Mosquitto>
+- <https://bugs.eclipse.org/bugs/buglist.cgi?product=Eecloud>
 
 Create a new bug:
 -----------------
 
 Be sure to search for existing bugs before you create another one. Remember that contributions are always welcome!
 
-- <https://bugs.eclipse.org/bugs/enter_bug.cgi?product=Mosquitto>
+- <https://bugs.eclipse.org/bugs/enter_bug.cgi?product=Eecloud>

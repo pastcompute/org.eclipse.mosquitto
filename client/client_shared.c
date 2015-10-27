@@ -28,13 +28,13 @@ Contributors:
 #define snprintf sprintf_s
 #endif
 
-#include <mosquitto.h>
+#include <eecloud.h>
 #include "client_shared.h"
 
-static int mosquitto__parse_socks_url(struct mosq_config *cfg, char *url);
-static int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, char *argv[]);
+static int eecloud__parse_socks_url(struct ecld_config *cfg, char *url);
+static int client_config_line_proc(struct ecld_config *cfg, int pub_or_sub, int argc, char *argv[]);
 
-void init_config(struct mosq_config *cfg)
+void init_config(struct ecld_config *cfg)
 {
 	memset(cfg, 0, sizeof(*cfg));
 	cfg->port = 1883;
@@ -45,7 +45,7 @@ void init_config(struct mosq_config *cfg)
 	cfg->protocol_version = MQTT_PROTOCOL_V31;
 }
 
-void client_config_cleanup(struct mosq_config *cfg)
+void client_config_cleanup(struct ecld_config *cfg)
 {
 	int i;
 	if(cfg->id) free(cfg->id);
@@ -90,7 +90,7 @@ void client_config_cleanup(struct mosq_config *cfg)
 #endif
 }
 
-int client_config_load(struct mosq_config *cfg, int pub_or_sub, int argc, char *argv[])
+int client_config_load(struct ecld_config *cfg, int pub_or_sub, int argc, char *argv[])
 {
 	int rc;
 	FILE *fptr;
@@ -113,23 +113,23 @@ int client_config_load(struct mosq_config *cfg, int pub_or_sub, int argc, char *
 #ifndef WIN32
 	env = getenv("XDG_CONFIG_HOME");
 	if(env){
-		len = strlen(env) + strlen("/mosquitto_pub") + 1;
+		len = strlen(env) + strlen("/eecloud_pub") + 1;
 		loc = malloc(len);
 		if(pub_or_sub == CLIENT_PUB){
-			snprintf(loc, len, "%s/mosquitto_pub", env);
+			snprintf(loc, len, "%s/eecloud_pub", env);
 		}else{
-			snprintf(loc, len, "%s/mosquitto_sub", env);
+			snprintf(loc, len, "%s/eecloud_sub", env);
 		}
 		loc[len-1] = '\0';
 	}else{
 		env = getenv("HOME");
 		if(env){
-			len = strlen(env) + strlen("/.config/mosquitto_pub") + 1;
+			len = strlen(env) + strlen("/.config/eecloud_pub") + 1;
 			loc = malloc(len);
 			if(pub_or_sub == CLIENT_PUB){
-				snprintf(loc, len, "%s/.config/mosquitto_pub", env);
+				snprintf(loc, len, "%s/.config/eecloud_pub", env);
 			}else{
-				snprintf(loc, len, "%s/.config/mosquitto_sub", env);
+				snprintf(loc, len, "%s/.config/eecloud_sub", env);
 			}
 			loc[len-1] = '\0';
 		}else{
@@ -140,12 +140,12 @@ int client_config_load(struct mosq_config *cfg, int pub_or_sub, int argc, char *
 #else
 	rc = GetEnvironmentVariable("USERPROFILE", env, 1024);
 	if(rc > 0 && rc < 1024){
-		len = strlen(env) + strlen("\\mosquitto_pub.conf") + 1;
+		len = strlen(env) + strlen("\\eecloud_pub.conf") + 1;
 		loc = malloc(len);
 		if(pub_or_sub == CLIENT_PUB){
-			snprintf(loc, len, "%s\\mosquitto_pub.conf", env);
+			snprintf(loc, len, "%s\\eecloud_pub.conf", env);
 		}else{
-			snprintf(loc, len, "%s\\mosquitto_sub.conf", env);
+			snprintf(loc, len, "%s\\eecloud_sub.conf", env);
 		}
 		loc[len-1] = '\0';
 	}else{
@@ -235,7 +235,7 @@ int client_config_load(struct mosq_config *cfg, int pub_or_sub, int argc, char *
 }
 
 /* Process a tokenised single line from a file or set of real argc/argv */
-int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, char *argv[])
+int client_config_line_proc(struct ecld_config *cfg, int pub_or_sub, int argc, char *argv[])
 {
 	int i;
 
@@ -452,7 +452,7 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 				fprintf(stderr, "Error: --proxy argument given but no proxy url specified.\n\n");
 				return 1;
 			}else{
-				if(mosquitto__parse_socks_url(cfg, argv[i+1])){
+				if(eecloud__parse_socks_url(cfg, argv[i+1])){
 					return 1;
 				}
 				i++;
@@ -515,13 +515,13 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 				return 1;
 			}else{
 				if(pub_or_sub == CLIENT_PUB){
-					if(mosquitto_pub_topic_check(argv[i+1]) == MOSQ_ERR_INVAL){
+					if(eecloud_pub_topic_check(argv[i+1]) == MOSQ_ERR_INVAL){
 						fprintf(stderr, "Error: Invalid publish topic '%s', does it contain '+' or '#'?\n", argv[i+1]);
 						return 1;
 					}
 					cfg->topic = strdup(argv[i+1]);
 				}else{
-					if(mosquitto_sub_topic_check(argv[i+1]) == MOSQ_ERR_INVAL){
+					if(eecloud_sub_topic_check(argv[i+1]) == MOSQ_ERR_INVAL){
 						fprintf(stderr, "Error: Invalid subscription topic '%s', are all '+' and '#' wildcards correct?\n", argv[i+1]);
 						return 1;
 					}
@@ -539,7 +539,7 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 				fprintf(stderr, "Error: -T argument given but no topic filter specified.\n\n");
 				return 1;
 			}else{
-				if(mosquitto_sub_topic_check(argv[i+1]) == MOSQ_ERR_INVAL){
+				if(eecloud_sub_topic_check(argv[i+1]) == MOSQ_ERR_INVAL){
 					fprintf(stderr, "Error: Invalid filter topic '%s', are all '+' and '#' wildcards correct?\n", argv[i+1]);
 					return 1;
 				}
@@ -602,7 +602,7 @@ int client_config_line_proc(struct mosq_config *cfg, int pub_or_sub, int argc, c
 				fprintf(stderr, "Error: --will-topic argument given but no will topic specified.\n\n");
 				return 1;
 			}else{
-				if(mosquitto_pub_topic_check(argv[i+1]) == MOSQ_ERR_INVAL){
+				if(eecloud_pub_topic_check(argv[i+1]) == MOSQ_ERR_INVAL){
 					fprintf(stderr, "Error: Invalid will topic '%s', does it contain '+' or '#'?\n", argv[i+1]);
 					return 1;
 				}
@@ -641,64 +641,64 @@ unknown_option:
 	return 1;
 }
 
-int client_opts_set(struct mosquitto *mosq, struct mosq_config *cfg)
+int client_opts_set(struct eecloud *ecld, struct ecld_config *cfg)
 {
 	int rc;
 
-	if(cfg->will_topic && mosquitto_will_set(mosq, cfg->will_topic,
+	if(cfg->will_topic && eecloud_will_set(ecld, cfg->will_topic,
 				cfg->will_payloadlen, cfg->will_payload, cfg->will_qos,
 				cfg->will_retain)){
 
 		if(!cfg->quiet) fprintf(stderr, "Error: Problem setting will.\n");
-		mosquitto_lib_cleanup();
+		eecloud_lib_cleanup();
 		return 1;
 	}
-	if(cfg->username && mosquitto_username_pw_set(mosq, cfg->username, cfg->password)){
+	if(cfg->username && eecloud_username_pw_set(ecld, cfg->username, cfg->password)){
 		if(!cfg->quiet) fprintf(stderr, "Error: Problem setting username and password.\n");
-		mosquitto_lib_cleanup();
+		eecloud_lib_cleanup();
 		return 1;
 	}
 #ifdef WITH_TLS
 	if((cfg->cafile || cfg->capath)
-			&& mosquitto_tls_set(mosq, cfg->cafile, cfg->capath, cfg->certfile, cfg->keyfile, NULL)){
+			&& eecloud_tls_set(ecld, cfg->cafile, cfg->capath, cfg->certfile, cfg->keyfile, NULL)){
 
 		if(!cfg->quiet) fprintf(stderr, "Error: Problem setting TLS options.\n");
-		mosquitto_lib_cleanup();
+		eecloud_lib_cleanup();
 		return 1;
 	}
-	if(cfg->insecure && mosquitto_tls_insecure_set(mosq, true)){
+	if(cfg->insecure && eecloud_tls_insecure_set(ecld, true)){
 		if(!cfg->quiet) fprintf(stderr, "Error: Problem setting TLS insecure option.\n");
-		mosquitto_lib_cleanup();
+		eecloud_lib_cleanup();
 		return 1;
 	}
 #  ifdef WITH_TLS_PSK
-	if(cfg->psk && mosquitto_tls_psk_set(mosq, cfg->psk, cfg->psk_identity, NULL)){
+	if(cfg->psk && eecloud_tls_psk_set(ecld, cfg->psk, cfg->psk_identity, NULL)){
 		if(!cfg->quiet) fprintf(stderr, "Error: Problem setting TLS-PSK options.\n");
-		mosquitto_lib_cleanup();
+		eecloud_lib_cleanup();
 		return 1;
 	}
 #  endif
-	if(cfg->tls_version && mosquitto_tls_opts_set(mosq, 1, cfg->tls_version, cfg->ciphers)){
+	if(cfg->tls_version && eecloud_tls_opts_set(ecld, 1, cfg->tls_version, cfg->ciphers)){
 		if(!cfg->quiet) fprintf(stderr, "Error: Problem setting TLS options.\n");
-		mosquitto_lib_cleanup();
+		eecloud_lib_cleanup();
 		return 1;
 	}
 #endif
-	mosquitto_max_inflight_messages_set(mosq, cfg->max_inflight);
+	eecloud_max_inflight_messages_set(ecld, cfg->max_inflight);
 #ifdef WITH_SOCKS
 	if(cfg->socks5_host){
-		rc = mosquitto_socks5_set(mosq, cfg->socks5_host, cfg->socks5_port, cfg->socks5_username, cfg->socks5_password);
+		rc = eecloud_socks5_set(ecld, cfg->socks5_host, cfg->socks5_port, cfg->socks5_username, cfg->socks5_password);
 		if(rc){
-			mosquitto_lib_cleanup();
+			eecloud_lib_cleanup();
 			return rc;
 		}
 	}
 #endif
-	mosquitto_opts_set(mosq, MOSQ_OPT_PROTOCOL_VERSION, &(cfg->protocol_version));
+	eecloud_opts_set(ecld, MOSQ_OPT_PROTOCOL_VERSION, &(cfg->protocol_version));
 	return MOSQ_ERR_SUCCESS;
 }
 
-int client_id_generate(struct mosq_config *cfg, const char *id_base)
+int client_id_generate(struct ecld_config *cfg, const char *id_base)
 {
 	int len;
 	char hostname[256];
@@ -707,7 +707,7 @@ int client_id_generate(struct mosq_config *cfg, const char *id_base)
 		cfg->id = malloc(strlen(cfg->id_prefix)+10);
 		if(!cfg->id){
 			if(!cfg->quiet) fprintf(stderr, "Error: Out of memory.\n");
-			mosquitto_lib_cleanup();
+			eecloud_lib_cleanup();
 			return 1;
 		}
 		snprintf(cfg->id, strlen(cfg->id_prefix)+10, "%s%d", cfg->id_prefix, getpid());
@@ -719,7 +719,7 @@ int client_id_generate(struct mosq_config *cfg, const char *id_base)
 		cfg->id = malloc(len);
 		if(!cfg->id){
 			if(!cfg->quiet) fprintf(stderr, "Error: Out of memory.\n");
-			mosquitto_lib_cleanup();
+			eecloud_lib_cleanup();
 			return 1;
 		}
 		snprintf(cfg->id, len, "%s/%d-%s", id_base, getpid(), hostname);
@@ -731,19 +731,19 @@ int client_id_generate(struct mosq_config *cfg, const char *id_base)
 	return MOSQ_ERR_SUCCESS;
 }
 
-int client_connect(struct mosquitto *mosq, struct mosq_config *cfg)
+int client_connect(struct eecloud *ecld, struct ecld_config *cfg)
 {
 	char err[1024];
 	int rc;
 
 #ifdef WITH_SRV
 	if(cfg->use_srv){
-		rc = mosquitto_connect_srv(mosq, cfg->host, cfg->keepalive, cfg->bind_address);
+		rc = eecloud_connect_srv(ecld, cfg->host, cfg->keepalive, cfg->bind_address);
 	}else{
-		rc = mosquitto_connect_bind(mosq, cfg->host, cfg->port, cfg->keepalive, cfg->bind_address);
+		rc = eecloud_connect_bind(ecld, cfg->host, cfg->port, cfg->keepalive, cfg->bind_address);
 	}
 #else
-	rc = mosquitto_connect_bind(mosq, cfg->host, cfg->port, cfg->keepalive, cfg->bind_address);
+	rc = eecloud_connect_bind(ecld, cfg->host, cfg->port, cfg->keepalive, cfg->bind_address);
 #endif
 	if(rc>0){
 		if(!cfg->quiet){
@@ -758,7 +758,7 @@ int client_connect(struct mosquitto *mosq, struct mosq_config *cfg)
 				fprintf(stderr, "Unable to connect (%d).\n", rc);
 			}
 		}
-		mosquitto_lib_cleanup();
+		eecloud_lib_cleanup();
 		return rc;
 	}
 	return MOSQ_ERR_SUCCESS;
@@ -766,7 +766,7 @@ int client_connect(struct mosquitto *mosq, struct mosq_config *cfg)
 
 #ifdef WITH_SOCKS
 /* Convert %25 -> %, %3a, %3A -> :, %40 -> @ */
-static int mosquitto__urldecode(char *str)
+static int eecloud__urldecode(char *str)
 {
 	int i, j;
 	int len;
@@ -809,7 +809,7 @@ static int mosquitto__urldecode(char *str)
 	return 0;
 }
 
-static int mosquitto__parse_socks_url(struct mosq_config *cfg, char *url)
+static int eecloud__parse_socks_url(struct ecld_config *cfg, char *url)
 {
 	char *str;
 	int i;
@@ -922,10 +922,10 @@ static int mosquitto__parse_socks_url(struct mosq_config *cfg, char *url)
 		goto cleanup;
 	}
 
-	if(mosquitto__urldecode(username)){
+	if(eecloud__urldecode(username)){
 		goto cleanup;
 	}
-	if(mosquitto__urldecode(password)){
+	if(eecloud__urldecode(password)){
 		goto cleanup;
 	}
 	if(port){

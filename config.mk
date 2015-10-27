@@ -4,7 +4,7 @@
 # These options control compilation on all systems apart from Windows and Mac
 # OS X. Use CMake to compile on Windows and Mac.
 #
-# Largely, these are options that are designed to make mosquitto run more
+# Largely, these are options that are designed to make eecloud run more
 # easily in restrictive environments by removing features.
 #
 # Modify the variable below to enable/disable features.
@@ -44,11 +44,11 @@ WITH_BRIDGE:=yes
 WITH_PERSISTENCE:=yes
 
 # Comment out to remove memory tracking support from the broker. If disabled,
-# mosquitto won't track heap memory usage nor export '$SYS/broker/heap/current
+# eecloud won't track heap memory usage nor export '$SYS/broker/heap/current
 # size', but will use slightly less memory and CPU time.
 WITH_MEMORY_TRACKING:=yes
 
-# Compile with database upgrading support? If disabled, mosquitto won't
+# Compile with database upgrading support? If disabled, eecloud won't
 # automatically upgrade old database versions.
 # Not currently supported.
 #WITH_DB_UPGRADE:=yes
@@ -81,8 +81,8 @@ WITH_SOCKS:=yes
 # =============================================================================
 
 
-# Also bump lib/mosquitto.h, CMakeLists.txt,
-# installer/mosquitto.nsi, installer/mosquitto-cygwin.nsi
+# Also bump lib/eecloud.h, CMakeLists.txt,
+# installer/eecloud.nsi, installer/eecloud-cygwin.nsi
 VERSION=1.4.2
 TIMESTAMP:=$(shell date "+%F %T%z")
 
@@ -128,7 +128,7 @@ ifeq ($(UNAME),Linux)
 	LIB_LIBS:=$(LIB_LIBS) -lrt
 endif
 
-CLIENT_LDFLAGS:=$(LDFLAGS) -L../lib ../lib/libmosquitto.so.${SOVERSION}
+CLIENT_LDFLAGS:=$(LDFLAGS) -L../lib ../lib/libeecloud.so.${SOVERSION}
 
 ifeq ($(UNAME),SunOS)
 	ifeq ($(CC),cc)
@@ -148,7 +148,7 @@ else
 endif
 
 ifneq ($(UNAME),SunOS)
-	LIB_LDFLAGS:=$(LIB_LDFLAGS) -Wl,--version-script=linker.version -Wl,-soname,libmosquitto.so.$(SOVERSION)
+	LIB_LDFLAGS:=$(LIB_LDFLAGS) -Wl,--version-script=linker.version -Wl,-soname,libeecloud.so.$(SOVERSION)
 endif
 
 ifeq ($(UNAME),QNX)
@@ -235,7 +235,7 @@ ifeq ($(WITH_EC),yes)
 	BROKER_CFLAGS:=$(BROKER_CFLAGS) -DWITH_EC
 endif
 
-MAKE_ALL:=mosquitto
+MAKE_ALL:=eecloud
 ifeq ($(WITH_DOCS),yes)
 	MAKE_ALL:=$(MAKE_ALL) docs
 endif

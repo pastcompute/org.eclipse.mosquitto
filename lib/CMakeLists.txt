@@ -15,31 +15,31 @@ else (${WITH_THREADING} STREQUAL ON)
 	set (PTHREAD_INCLUDE_DIR "")
 endif (${WITH_THREADING} STREQUAL ON)
 
-include_directories(${mosquitto_SOURCE_DIR} ${mosquitto_SOURCE_DIR}/lib
+include_directories(${eecloud_SOURCE_DIR} ${eecloud_SOURCE_DIR}/lib
 			${STDBOOL_H_PATH} ${STDINT_H_PATH}
 			${OPENSSL_INCLUDE_DIR} ${PTHREAD_INCLUDE_DIR})
-link_directories(${mosquitto_SOURCE_DIR}/lib)
+link_directories(${eecloud_SOURCE_DIR}/lib)
 
-add_library(libmosquitto SHARED
-	logging_mosq.c logging_mosq.h
-	memory_mosq.c memory_mosq.h
-	messages_mosq.c messages_mosq.h
-	mosquitto.c mosquitto.h
-	mosquitto_internal.h
+add_library(libeecloud SHARED
+	logging_ecld.c logging_ecld.h
+	memory_ecld.c memory_ecld.h
+	messages_ecld.c messages_ecld.h
+	eecloud.c eecloud.h
+	eecloud_internal.h
 	mqtt3_protocol.h
-	net_mosq.c net_mosq.h
+	net_ecld.c net_ecld.h
 	read_handle.c read_handle.h
 	read_handle_client.c
 	read_handle_shared.c
-	send_client_mosq.c
-	send_mosq.c send_mosq.h
-	socks_mosq.c
-	srv_mosq.c
-	thread_mosq.c
-	time_mosq.c
-	tls_mosq.c
-	util_mosq.c util_mosq.h
-	will_mosq.c will_mosq.h)
+	send_client_ecld.c
+	send_ecld.c send_ecld.h
+	socks_ecld.c
+	srv_ecld.c
+	thread_ecld.c
+	time_ecld.c
+	tls_ecld.c
+	util_ecld.c util_ecld.h
+	will_ecld.c will_ecld.h)
 
 set (LIBRARIES ${OPENSSL_LIBRARIES} ${PTHREAD_LIBRARIES})
 
@@ -62,16 +62,16 @@ if (${WITH_SRV} STREQUAL ON)
 	endif (ARES_HEADER)
 endif (${WITH_SRV} STREQUAL ON)
 
-target_link_libraries(libmosquitto ${LIBRARIES})
+target_link_libraries(libeecloud ${LIBRARIES})
 
-set_target_properties(libmosquitto PROPERTIES
-	OUTPUT_NAME mosquitto
+set_target_properties(libeecloud PROPERTIES
+	OUTPUT_NAME eecloud
 	VERSION ${VERSION}
 	SOVERSION 1
 )
 
-install(TARGETS libmosquitto RUNTIME DESTINATION ${BINDIR} LIBRARY DESTINATION ${LIBDIR})
-install(FILES mosquitto.h DESTINATION ${INCLUDEDIR})
+install(TARGETS libeecloud RUNTIME DESTINATION ${BINDIR} LIBRARY DESTINATION ${LIBDIR})
+install(FILES eecloud.h DESTINATION ${INCLUDEDIR})
 
 if (UNIX)
 	install(CODE "EXEC_PROGRAM(/sbin/ldconfig)")

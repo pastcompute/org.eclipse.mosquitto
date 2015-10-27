@@ -19,10 +19,10 @@ Contributors:
 
 #include <config.h>
 
-#include <mosquitto_broker.h>
-#include <memory_mosq.h>
-#include <send_mosq.h>
-#include <time_mosq.h>
+#include <eecloud_broker.h>
+#include <memory_ecld.h>
+#include <send_ecld.h>
+#include <time_ecld.h>
 
 static int max_inflight = 20;
 static int max_queued = 100;
@@ -30,10 +30,10 @@ static int max_queued = 100;
 extern unsigned long g_msgs_dropped;
 #endif
 
-int mqtt3_db_open(struct mqtt3_config *config, struct mosquitto_db *db)
+int mqtt3_db_open(struct mqtt3_config *config, struct eecloud_db *db)
 {
 	int rc = 0;
-	struct _mosquitto_subhier *child;
+	struct _eecloud_subhier *child;
 
 	if(!config || !db) return MOSQ_ERR_INVAL;
 
@@ -54,15 +54,15 @@ int mqtt3_db_open(struct mqtt3_config *config, struct mosquitto_db *db)
 	db->subs.subs = NULL;
 	db->subs.topic = "";
 
-	child = _mosquitto_malloc(sizeof(struct _mosquitto_subhier));
+	child = _eecloud_malloc(sizeof(struct _eecloud_subhier));
 	if(!child){
-		_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
+		_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 		return MOSQ_ERR_NOMEM;
 	}
 	child->next = NULL;
-	child->topic = _mosquitto_strdup("");
+	child->topic = _eecloud_strdup("");
 	if(!child->topic){
-		_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
+		_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 		return MOSQ_ERR_NOMEM;
 	}
 	child->subs = NULL;
@@ -70,15 +70,15 @@ int mqtt3_db_open(struct mqtt3_config *config, struct mosquitto_db *db)
 	child->retained = NULL;
 	db->subs.children = child;
 
-	child = _mosquitto_malloc(sizeof(struct _mosquitto_subhier));
+	child = _eecloud_malloc(sizeof(struct _eecloud_subhier));
 	if(!child){
-		_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
+		_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 		return MOSQ_ERR_NOMEM;
 	}
 	child->next = NULL;
-	child->topic = _mosquitto_strdup("$SYS");
+	child->topic = _eecloud_strdup("$SYS");
 	if(!child->topic){
-		_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
+		_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 		return MOSQ_ERR_NOMEM;
 	}
 	child->subs = NULL;
@@ -97,40 +97,40 @@ int mqtt3_db_open(struct mqtt3_config *config, struct mosquitto_db *db)
 	return rc;
 }
 
-static void subhier_clean(struct mosquitto_db *db, struct _mosquitto_subhier *subhier)
+static void subhier_clean(struct eecloud_db *db, struct _eecloud_subhier *subhier)
 {
-	struct _mosquitto_subhier *next;
-	struct _mosquitto_subleaf *leaf, *nextleaf;
+	struct _eecloud_subhier *next;
+	struct _eecloud_subleaf *leaf, *nextleaf;
 
 	while(subhier){
 		next = subhier->next;
 		leaf = subhier->subs;
 		while(leaf){
 			nextleaf = leaf->next;
-			_mosquitto_free(leaf);
+			_eecloud_free(leaf);
 			leaf = nextleaf;
 		}
 		if(subhier->retained){
-			mosquitto__db_msg_store_deref(db, &subhier->retained);
+			eecloud__db_msg_store_deref(db, &subhier->retained);
 		}
 		subhier_clean(db, subhier->children);
-		if(subhier->topic) _mosquitto_free(subhier->topic);
+		if(subhier->topic) _eecloud_free(subhier->topic);
 
-		_mosquitto_free(subhier);
+		_eecloud_free(subhier);
 		subhier = next;
 	}
 }
 
-int mqtt3_db_close(struct mosquitto_db *db)
+int mqtt3_db_close(struct eecloud_db *db)
 {
 	subhier_clean(db, db->subs.children);
-	mosquitto__db_msg_store_clean(db);
+	eecloud__db_msg_store_clean(db);
 
 	return MOSQ_ERR_SUCCESS;
 }
 
 
-void mosquitto__db_msg_store_add(struct mosquitto_db *db, struct mosquitto_msg_store *store)
+void eecloud__db_msg_store_add(struct eecloud_db *db, struct eecloud_msg_store *store)
 {
 	store->next = db->msg_store;
 	store->prev = NULL;
@@ -141,7 +141,7 @@ void mosquitto__db_msg_store_add(struct mosquitto_db *db, struct mosquitto_msg_s
 }
 
 
-void mosquitto__db_msg_store_remove(struct mosquitto_db *db, struct mosquitto_msg_store *store)
+void eecloud__db_msg_store_remove(struct eecloud_db *db, struct eecloud_msg_store *store)
 {
 	int i;
 
@@ -158,49 +158,49 @@ void mosquitto__db_msg_store_remove(struct mosquitto_db *db, struct mosquitto_ms
 	}
 	db->msg_store_count--;
 
-	if(store->source_id) _mosquitto_free(store->source_id);
+	if(store->source_id) _eecloud_free(store->source_id);
 	if(store->dest_ids){
 		for(i=0; i<store->dest_id_count; i++){
-			if(store->dest_ids[i]) _mosquitto_free(store->dest_ids[i]);
+			if(store->dest_ids[i]) _eecloud_free(store->dest_ids[i]);
 		}
-		_mosquitto_free(store->dest_ids);
+		_eecloud_free(store->dest_ids);
 	}
-	if(store->topic) _mosquitto_free(store->topic);
-	if(store->payload) _mosquitto_free(store->payload);
-	_mosquitto_free(store);
+	if(store->topic) _eecloud_free(store->topic);
+	if(store->payload) _eecloud_free(store->payload);
+	_eecloud_free(store);
 }
 
 
-void mosquitto__db_msg_store_clean(struct mosquitto_db *db)
+void eecloud__db_msg_store_clean(struct eecloud_db *db)
 {
-	struct mosquitto_msg_store *store, *next;;
+	struct eecloud_msg_store *store, *next;;
 
 	store = db->msg_store;
 	while(store){
 		next = store->next;
-		mosquitto__db_msg_store_remove(db, store);
+		eecloud__db_msg_store_remove(db, store);
 		store = next;
 	}
 }
 
-void mosquitto__db_msg_store_deref(struct mosquitto_db *db, struct mosquitto_msg_store **store)
+void eecloud__db_msg_store_deref(struct eecloud_db *db, struct eecloud_msg_store **store)
 {
 	(*store)->ref_count--;
 	if((*store)->ref_count == 0){
-		mosquitto__db_msg_store_remove(db, *store);
+		eecloud__db_msg_store_remove(db, *store);
 		*store = NULL;
 	}
 }
 
 
-static void _message_remove(struct mosquitto_db *db, struct mosquitto *context, struct mosquitto_client_msg **msg, struct mosquitto_client_msg *last)
+static void _message_remove(struct eecloud_db *db, struct eecloud *context, struct eecloud_client_msg **msg, struct eecloud_client_msg *last)
 {
 	if(!context || !msg || !(*msg)){
 		return;
 	}
 
 	if((*msg)->store){
-		mosquitto__db_msg_store_deref(db, &(*msg)->store);
+		eecloud__db_msg_store_deref(db, &(*msg)->store);
 	}
 	if(last){
 		last->next = (*msg)->next;
@@ -217,7 +217,7 @@ static void _message_remove(struct mosquitto_db *db, struct mosquitto *context, 
 	if((*msg)->qos > 0){
 		context->msg_count12--;
 	}
-	_mosquitto_free(*msg);
+	_eecloud_free(*msg);
 	if(last){
 		*msg = last->next;
 	}else{
@@ -225,9 +225,9 @@ static void _message_remove(struct mosquitto_db *db, struct mosquitto *context, 
 	}
 }
 
-int mqtt3_db_message_delete(struct mosquitto_db *db, struct mosquitto *context, uint16_t mid, enum mosquitto_msg_direction dir)
+int mqtt3_db_message_delete(struct eecloud_db *db, struct eecloud *context, uint16_t mid, enum eecloud_msg_direction dir)
 {
-	struct mosquitto_client_msg *tail, *last = NULL;
+	struct eecloud_client_msg *tail, *last = NULL;
 	int msg_index = 0;
 	bool deleted = false;
 
@@ -236,23 +236,23 @@ int mqtt3_db_message_delete(struct mosquitto_db *db, struct mosquitto *context, 
 	tail = context->msgs;
 	while(tail){
 		msg_index++;
-		if(tail->state == mosq_ms_queued && msg_index <= max_inflight){
-			tail->timestamp = mosquitto_time();
-			if(tail->direction == mosq_md_out){
+		if(tail->state == ecld_ms_queued && msg_index <= max_inflight){
+			tail->timestamp = eecloud_time();
+			if(tail->direction == ecld_md_out){
 				switch(tail->qos){
 					case 0:
-						tail->state = mosq_ms_publish_qos0;
+						tail->state = ecld_ms_publish_qos0;
 						break;
 					case 1:
-						tail->state = mosq_ms_publish_qos1;
+						tail->state = ecld_ms_publish_qos1;
 						break;
 					case 2:
-						tail->state = mosq_ms_publish_qos2;
+						tail->state = ecld_ms_publish_qos2;
 						break;
 				}
 			}else{
 				if(tail->qos == 2){
-					tail->state = mosq_ms_wait_for_pubrel;
+					tail->state = ecld_ms_wait_for_pubrel;
 				}
 			}
 		}
@@ -272,10 +272,10 @@ int mqtt3_db_message_delete(struct mosquitto_db *db, struct mosquitto *context, 
 	return MOSQ_ERR_SUCCESS;
 }
 
-int mqtt3_db_message_insert(struct mosquitto_db *db, struct mosquitto *context, uint16_t mid, enum mosquitto_msg_direction dir, int qos, bool retain, struct mosquitto_msg_store *stored)
+int mqtt3_db_message_insert(struct eecloud_db *db, struct eecloud *context, uint16_t mid, enum eecloud_msg_direction dir, int qos, bool retain, struct eecloud_msg_store *stored)
 {
-	struct mosquitto_client_msg *msg;
-	enum mosquitto_msg_state state = mosq_ms_invalid;
+	struct eecloud_client_msg *msg;
+	enum eecloud_msg_state state = ecld_ms_invalid;
 	int rc = 0;
 	int i;
 	char **dest_ids;
@@ -292,7 +292,7 @@ int mqtt3_db_message_insert(struct mosquitto_db *db, struct mosquitto *context, 
 	 * case for SUBSCRIPTION with multiple subs in so is a minor concern.
 	 */
 	if(db->config->allow_duplicate_messages == false
-			&& dir == mosq_md_out && retain == false && stored->dest_ids){
+			&& dir == ecld_md_out && retain == false && stored->dest_ids){
 
 		for(i=0; i<stored->dest_id_count; i++){
 			if(!strcmp(stored->dest_ids[i], context->id)){
@@ -316,33 +316,33 @@ int mqtt3_db_message_insert(struct mosquitto_db *db, struct mosquitto *context, 
 
 	if(context->sock != INVALID_SOCKET){
 		if(qos == 0 || max_inflight == 0 || context->msg_count12 < max_inflight){
-			if(dir == mosq_md_out){
+			if(dir == ecld_md_out){
 				switch(qos){
 					case 0:
-						state = mosq_ms_publish_qos0;
+						state = ecld_ms_publish_qos0;
 						break;
 					case 1:
-						state = mosq_ms_publish_qos1;
+						state = ecld_ms_publish_qos1;
 						break;
 					case 2:
-						state = mosq_ms_publish_qos2;
+						state = ecld_ms_publish_qos2;
 						break;
 				}
 			}else{
 				if(qos == 2){
-					state = mosq_ms_wait_for_pubrel;
+					state = ecld_ms_wait_for_pubrel;
 				}else{
 					return 1;
 				}
 			}
 		}else if(max_queued == 0 || context->msg_count12-max_inflight < max_queued){
-			state = mosq_ms_queued;
+			state = ecld_ms_queued;
 			rc = 2;
 		}else{
 			/* Dropping message due to full queue. */
 			if(context->is_dropping == false){
 				context->is_dropping = true;
-				_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE,
+				_eecloud_log_printf(NULL, MOSQ_LOG_NOTICE,
 						"Outgoing messages are being dropped for client %s.",
 						context->id);
 			}
@@ -358,30 +358,30 @@ int mqtt3_db_message_insert(struct mosquitto_db *db, struct mosquitto *context, 
 #endif
 			if(context->is_dropping == false){
 				context->is_dropping = true;
-				_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE,
+				_eecloud_log_printf(NULL, MOSQ_LOG_NOTICE,
 						"Outgoing messages are being dropped for client %s.",
 						context->id);
 			}
 			return 2;
 		}else{
-			state = mosq_ms_queued;
+			state = ecld_ms_queued;
 		}
 	}
-	assert(state != mosq_ms_invalid);
+	assert(state != ecld_ms_invalid);
 
 #ifdef WITH_PERSISTENCE
-	if(state == mosq_ms_queued){
+	if(state == ecld_ms_queued){
 		db->persistence_changes++;
 	}
 #endif
 
-	msg = _mosquitto_malloc(sizeof(struct mosquitto_client_msg));
+	msg = _eecloud_malloc(sizeof(struct eecloud_client_msg));
 	if(!msg) return MOSQ_ERR_NOMEM;
 	msg->next = NULL;
 	msg->store = stored;
 	msg->store->ref_count++;
 	msg->mid = mid;
-	msg->timestamp = mosquitto_time();
+	msg->timestamp = eecloud_time();
 	msg->direction = dir;
 	msg->state = state;
 	msg->dup = false;
@@ -399,7 +399,7 @@ int mqtt3_db_message_insert(struct mosquitto_db *db, struct mosquitto *context, 
 		context->msg_count12++;
 	}
 
-	if(db->config->allow_duplicate_messages == false && dir == mosq_md_out && retain == false){
+	if(db->config->allow_duplicate_messages == false && dir == ecld_md_out && retain == false){
 		/* Record which client ids this message has been sent to so we can avoid duplicates.
 		 * Outgoing messages only.
 		 * If retain==true then this is a stale retained message and so should be
@@ -407,11 +407,11 @@ int mqtt3_db_message_insert(struct mosquitto_db *db, struct mosquitto *context, 
 		 * multiple times for overlapping subscriptions, although this is only the
 		 * case for SUBSCRIPTION with multiple subs in so is a minor concern.
 		 */
-		dest_ids = _mosquitto_realloc(stored->dest_ids, sizeof(char *)*(stored->dest_id_count+1));
+		dest_ids = _eecloud_realloc(stored->dest_ids, sizeof(char *)*(stored->dest_id_count+1));
 		if(dest_ids){
 			stored->dest_ids = dest_ids;
 			stored->dest_id_count++;
-			stored->dest_ids[stored->dest_id_count-1] = _mosquitto_strdup(context->id);
+			stored->dest_ids[stored->dest_id_count-1] = _eecloud_strdup(context->id);
 			if(!stored->dest_ids[stored->dest_id_count-1]){
 				return MOSQ_ERR_NOMEM;
 			}
@@ -439,15 +439,15 @@ int mqtt3_db_message_insert(struct mosquitto_db *db, struct mosquitto *context, 
 #endif
 }
 
-int mqtt3_db_message_update(struct mosquitto *context, uint16_t mid, enum mosquitto_msg_direction dir, enum mosquitto_msg_state state)
+int mqtt3_db_message_update(struct eecloud *context, uint16_t mid, enum eecloud_msg_direction dir, enum eecloud_msg_state state)
 {
-	struct mosquitto_client_msg *tail;
+	struct eecloud_client_msg *tail;
 
 	tail = context->msgs;
 	while(tail){
 		if(tail->mid == mid && tail->direction == dir){
 			tail->state = state;
-			tail->timestamp = mosquitto_time();
+			tail->timestamp = eecloud_time();
 			return MOSQ_ERR_SUCCESS;
 		}
 		tail = tail->next;
@@ -455,17 +455,17 @@ int mqtt3_db_message_update(struct mosquitto *context, uint16_t mid, enum mosqui
 	return 1;
 }
 
-int mqtt3_db_messages_delete(struct mosquitto_db *db, struct mosquitto *context)
+int mqtt3_db_messages_delete(struct eecloud_db *db, struct eecloud *context)
 {
-	struct mosquitto_client_msg *tail, *next;
+	struct eecloud_client_msg *tail, *next;
 
 	if(!context) return MOSQ_ERR_INVAL;
 
 	tail = context->msgs;
 	while(tail){
-		mosquitto__db_msg_store_deref(db, &tail->store);
+		eecloud__db_msg_store_deref(db, &tail->store);
 		next = tail->next;
-		_mosquitto_free(tail);
+		_eecloud_free(tail);
 		tail = next;
 	}
 	context->msgs = NULL;
@@ -476,9 +476,9 @@ int mqtt3_db_messages_delete(struct mosquitto_db *db, struct mosquitto *context)
 	return MOSQ_ERR_SUCCESS;
 }
 
-int mqtt3_db_messages_easy_queue(struct mosquitto_db *db, struct mosquitto *context, const char *topic, int qos, uint32_t payloadlen, const void *payload, int retain)
+int mqtt3_db_messages_easy_queue(struct eecloud_db *db, struct eecloud *context, const char *topic, int qos, uint32_t payloadlen, const void *payload, int retain)
 {
-	struct mosquitto_msg_store *stored;
+	struct eecloud_msg_store *stored;
 	char *source_id;
 
 	assert(db);
@@ -495,25 +495,25 @@ int mqtt3_db_messages_easy_queue(struct mosquitto_db *db, struct mosquitto *cont
 	return mqtt3_db_messages_queue(db, source_id, topic, qos, retain, &stored);
 }
 
-int mqtt3_db_message_store(struct mosquitto_db *db, const char *source, uint16_t source_mid, const char *topic, int qos, uint32_t payloadlen, const void *payload, int retain, struct mosquitto_msg_store **stored, dbid_t store_id)
+int mqtt3_db_message_store(struct eecloud_db *db, const char *source, uint16_t source_mid, const char *topic, int qos, uint32_t payloadlen, const void *payload, int retain, struct eecloud_msg_store **stored, dbid_t store_id)
 {
-	struct mosquitto_msg_store *temp;
+	struct eecloud_msg_store *temp;
 
 	assert(db);
 	assert(stored);
 
-	temp = _mosquitto_malloc(sizeof(struct mosquitto_msg_store));
+	temp = _eecloud_malloc(sizeof(struct eecloud_msg_store));
 	if(!temp) return MOSQ_ERR_NOMEM;
 
 	temp->ref_count = 0;
 	if(source){
-		temp->source_id = _mosquitto_strdup(source);
+		temp->source_id = _eecloud_strdup(source);
 	}else{
-		temp->source_id = _mosquitto_strdup("");
+		temp->source_id = _eecloud_strdup("");
 	}
 	if(!temp->source_id){
-		_mosquitto_free(temp);
-		_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
+		_eecloud_free(temp);
+		_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 		return MOSQ_ERR_NOMEM;
 	}
 	temp->source_mid = source_mid;
@@ -521,11 +521,11 @@ int mqtt3_db_message_store(struct mosquitto_db *db, const char *source, uint16_t
 	temp->qos = qos;
 	temp->retain = retain;
 	if(topic){
-		temp->topic = _mosquitto_strdup(topic);
+		temp->topic = _eecloud_strdup(topic);
 		if(!temp->topic){
-			_mosquitto_free(temp->source_id);
-			_mosquitto_free(temp);
-			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
+			_eecloud_free(temp->source_id);
+			_eecloud_free(temp);
+			_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 			return MOSQ_ERR_NOMEM;
 		}
 	}else{
@@ -533,12 +533,12 @@ int mqtt3_db_message_store(struct mosquitto_db *db, const char *source, uint16_t
 	}
 	temp->payloadlen = payloadlen;
 	if(payloadlen){
-		temp->payload = _mosquitto_malloc(sizeof(char)*payloadlen);
+		temp->payload = _eecloud_malloc(sizeof(char)*payloadlen);
 		if(!temp->payload){
-			if(temp->source_id) _mosquitto_free(temp->source_id);
-			if(temp->topic) _mosquitto_free(temp->topic);
-			if(temp->payload) _mosquitto_free(temp->payload);
-			_mosquitto_free(temp);
+			if(temp->source_id) _eecloud_free(temp->source_id);
+			if(temp->topic) _eecloud_free(temp->topic);
+			if(temp->payload) _eecloud_free(temp->payload);
+			_eecloud_free(temp);
 			return MOSQ_ERR_NOMEM;
 		}
 		memcpy(temp->payload, payload, sizeof(char)*payloadlen);
@@ -547,10 +547,10 @@ int mqtt3_db_message_store(struct mosquitto_db *db, const char *source, uint16_t
 	}
 
 	if(!temp->source_id || (payloadlen && !temp->payload)){
-		if(temp->source_id) _mosquitto_free(temp->source_id);
-		if(temp->topic) _mosquitto_free(temp->topic);
-		if(temp->payload) _mosquitto_free(temp->payload);
-		_mosquitto_free(temp);
+		if(temp->source_id) _eecloud_free(temp->source_id);
+		if(temp->topic) _eecloud_free(temp->topic);
+		if(temp->payload) _eecloud_free(temp->payload);
+		_eecloud_free(temp);
 		return 1;
 	}
 	temp->dest_ids = NULL;
@@ -564,21 +564,21 @@ int mqtt3_db_message_store(struct mosquitto_db *db, const char *source, uint16_t
 		temp->db_id = store_id;
 	}
 
-	mosquitto__db_msg_store_add(db, temp);
+	eecloud__db_msg_store_add(db, temp);
 
 	return MOSQ_ERR_SUCCESS;
 }
 
-int mqtt3_db_message_store_find(struct mosquitto *context, uint16_t mid, struct mosquitto_msg_store **stored)
+int mqtt3_db_message_store_find(struct eecloud *context, uint16_t mid, struct eecloud_msg_store **stored)
 {
-	struct mosquitto_client_msg *tail;
+	struct eecloud_client_msg *tail;
 
 	if(!context) return MOSQ_ERR_INVAL;
 
 	*stored = NULL;
 	tail = context->msgs;
 	while(tail){
-		if(tail->store->source_mid == mid && tail->direction == mosq_md_in){
+		if(tail->store->source_mid == mid && tail->direction == ecld_md_in){
 			*stored = tail->store;
 			return MOSQ_ERR_SUCCESS;
 		}
@@ -590,10 +590,10 @@ int mqtt3_db_message_store_find(struct mosquitto *context, uint16_t mid, struct 
 
 /* Called on reconnect to set outgoing messages to a sensible state and force a
  * retry, and to set incoming messages to expect an appropriate retry. */
-int mqtt3_db_message_reconnect_reset(struct mosquitto_db *db, struct mosquitto *context)
+int mqtt3_db_message_reconnect_reset(struct eecloud_db *db, struct eecloud *context)
 {
-	struct mosquitto_client_msg *msg;
-	struct mosquitto_client_msg *prev = NULL;
+	struct eecloud_client_msg *msg;
+	struct eecloud_client_msg *prev = NULL;
 	int count;
 
 	msg = context->msgs;
@@ -607,20 +607,20 @@ int mqtt3_db_message_reconnect_reset(struct mosquitto_db *db, struct mosquitto *
 			context->msg_count12++;
 		}
 
-		if(msg->direction == mosq_md_out){
-			if(msg->state != mosq_ms_queued){
+		if(msg->direction == ecld_md_out){
+			if(msg->state != ecld_ms_queued){
 				switch(msg->qos){
 					case 0:
-						msg->state = mosq_ms_publish_qos0;
+						msg->state = ecld_ms_publish_qos0;
 						break;
 					case 1:
-						msg->state = mosq_ms_publish_qos1;
+						msg->state = ecld_ms_publish_qos1;
 						break;
 					case 2:
-						if(msg->state == mosq_ms_wait_for_pubcomp){
-							msg->state = mosq_ms_resend_pubrel;
+						if(msg->state == ecld_ms_wait_for_pubcomp){
+							msg->state = ecld_ms_resend_pubrel;
 						}else{
-							msg->state = mosq_ms_publish_qos2;
+							msg->state = ecld_ms_publish_qos2;
 						}
 						break;
 				}
@@ -639,7 +639,7 @@ int mqtt3_db_message_reconnect_reset(struct mosquitto_db *db, struct mosquitto *
 		if(msg) msg = msg->next;
 	}
 	/* Messages received when the client was disconnected are put
-	 * in the mosq_ms_queued state. If we don't change them to the
+	 * in the ecld_ms_queued state. If we don't change them to the
 	 * appropriate "publish" state, then the queued messages won't
 	 * get sent until the client next receives a message - and they
 	 * will be sent out of order.
@@ -648,16 +648,16 @@ int mqtt3_db_message_reconnect_reset(struct mosquitto_db *db, struct mosquitto *
 		count = 0;
 		msg = context->msgs;
 		while(msg && (max_inflight == 0 || count < max_inflight)){
-			if(msg->state == mosq_ms_queued){
+			if(msg->state == ecld_ms_queued){
 				switch(msg->qos){
 					case 0:
-						msg->state = mosq_ms_publish_qos0;
+						msg->state = ecld_ms_publish_qos0;
 						break;
 					case 1:
-						msg->state = mosq_ms_publish_qos1;
+						msg->state = ecld_ms_publish_qos1;
 						break;
 					case 2:
-						msg->state = mosq_ms_publish_qos2;
+						msg->state = ecld_ms_publish_qos2;
 						break;
 				}
 			}
@@ -669,38 +669,38 @@ int mqtt3_db_message_reconnect_reset(struct mosquitto_db *db, struct mosquitto *
 	return MOSQ_ERR_SUCCESS;
 }
 
-int mqtt3_db_message_timeout_check(struct mosquitto_db *db, unsigned int timeout)
+int mqtt3_db_message_timeout_check(struct eecloud_db *db, unsigned int timeout)
 {
 	time_t threshold;
-	enum mosquitto_msg_state new_state;
-	struct mosquitto *context, *ctxt_tmp;
-	struct mosquitto_client_msg *msg;
+	enum eecloud_msg_state new_state;
+	struct eecloud *context, *ctxt_tmp;
+	struct eecloud_client_msg *msg;
 
-	threshold = mosquitto_time() - timeout;
+	threshold = eecloud_time() - timeout;
 
 	HASH_ITER(hh_sock, db->contexts_by_sock, context, ctxt_tmp){
 		msg = context->msgs;
 		while(msg){
-			new_state = mosq_ms_invalid;
-			if(msg->timestamp < threshold && msg->state != mosq_ms_queued){
+			new_state = ecld_ms_invalid;
+			if(msg->timestamp < threshold && msg->state != ecld_ms_queued){
 				switch(msg->state){
-					case mosq_ms_wait_for_puback:
-						new_state = mosq_ms_publish_qos1;
+					case ecld_ms_wait_for_puback:
+						new_state = ecld_ms_publish_qos1;
 						break;
-					case mosq_ms_wait_for_pubrec:
-						new_state = mosq_ms_publish_qos2;
+					case ecld_ms_wait_for_pubrec:
+						new_state = ecld_ms_publish_qos2;
 						break;
-					case mosq_ms_wait_for_pubrel:
-						new_state = mosq_ms_send_pubrec;
+					case ecld_ms_wait_for_pubrel:
+						new_state = ecld_ms_send_pubrec;
 						break;
-					case mosq_ms_wait_for_pubcomp:
-						new_state = mosq_ms_resend_pubrel;
+					case ecld_ms_wait_for_pubcomp:
+						new_state = ecld_ms_resend_pubrel;
 						break;
 					default:
 						break;
 				}
-				if(new_state != mosq_ms_invalid){
-					msg->timestamp = mosquitto_time();
+				if(new_state != ecld_ms_invalid){
+					msg->timestamp = eecloud_time();
 					msg->state = new_state;
 					msg->dup = true;
 				}
@@ -712,9 +712,9 @@ int mqtt3_db_message_timeout_check(struct mosquitto_db *db, unsigned int timeout
 	return MOSQ_ERR_SUCCESS;
 }
 
-int mqtt3_db_message_release(struct mosquitto_db *db, struct mosquitto *context, uint16_t mid, enum mosquitto_msg_direction dir)
+int mqtt3_db_message_release(struct eecloud_db *db, struct eecloud *context, uint16_t mid, enum eecloud_msg_direction dir)
 {
-	struct mosquitto_client_msg *tail, *last = NULL;
+	struct eecloud_client_msg *tail, *last = NULL;
 	int qos;
 	int retain;
 	char *topic;
@@ -727,24 +727,24 @@ int mqtt3_db_message_release(struct mosquitto_db *db, struct mosquitto *context,
 	tail = context->msgs;
 	while(tail){
 		msg_index++;
-		if(tail->state == mosq_ms_queued && msg_index <= max_inflight){
-			tail->timestamp = mosquitto_time();
-			if(tail->direction == mosq_md_out){
+		if(tail->state == ecld_ms_queued && msg_index <= max_inflight){
+			tail->timestamp = eecloud_time();
+			if(tail->direction == ecld_md_out){
 				switch(tail->qos){
 					case 0:
-						tail->state = mosq_ms_publish_qos0;
+						tail->state = ecld_ms_publish_qos0;
 						break;
 					case 1:
-						tail->state = mosq_ms_publish_qos1;
+						tail->state = ecld_ms_publish_qos1;
 						break;
 					case 2:
-						tail->state = mosq_ms_publish_qos2;
+						tail->state = ecld_ms_publish_qos2;
 						break;
 				}
 			}else{
 				if(tail->qos == 2){
-					_mosquitto_send_pubrec(context, tail->mid);
-					tail->state = mosq_ms_wait_for_pubrel;
+					_eecloud_send_pubrec(context, tail->mid);
+					tail->state = ecld_ms_wait_for_pubrel;
 				}
 			}
 		}
@@ -779,10 +779,10 @@ int mqtt3_db_message_release(struct mosquitto_db *db, struct mosquitto *context,
 	}
 }
 
-int mqtt3_db_message_write(struct mosquitto_db *db, struct mosquitto *context)
+int mqtt3_db_message_write(struct eecloud_db *db, struct eecloud *context)
 {
 	int rc;
-	struct mosquitto_client_msg *tail, *last = NULL;
+	struct eecloud_client_msg *tail, *last = NULL;
 	uint16_t mid;
 	int retries;
 	int retain;
@@ -793,20 +793,20 @@ int mqtt3_db_message_write(struct mosquitto_db *db, struct mosquitto *context)
 	int msg_count = 0;
 
 	if(!context || context->sock == INVALID_SOCKET
-			|| (context->state == mosq_cs_connected && !context->id)){
+			|| (context->state == ecld_cs_connected && !context->id)){
 		return MOSQ_ERR_INVAL;
 	}
 
-	if(context->state != mosq_cs_connected){
+	if(context->state != ecld_cs_connected){
 		return MOSQ_ERR_SUCCESS;
 	}
 
 	tail = context->msgs;
 	while(tail){
-		if(tail->direction == mosq_md_in){
+		if(tail->direction == ecld_md_in){
 			msg_count++;
 		}
-		if(tail->state != mosq_ms_queued){
+		if(tail->state != ecld_ms_queued){
 			mid = tail->mid;
 			retries = tail->dup;
 			retain = tail->retain;
@@ -816,8 +816,8 @@ int mqtt3_db_message_write(struct mosquitto_db *db, struct mosquitto *context)
 			payload = tail->store->payload;
 
 			switch(tail->state){
-				case mosq_ms_publish_qos0:
-					rc = _mosquitto_send_publish(context, mid, topic, payloadlen, payload, qos, retain, retries);
+				case ecld_ms_publish_qos0:
+					rc = _eecloud_send_publish(context, mid, topic, payloadlen, payload, qos, retain, retries);
 					if(!rc){
 						_message_remove(db, context, &tail, last);
 					}else{
@@ -825,12 +825,12 @@ int mqtt3_db_message_write(struct mosquitto_db *db, struct mosquitto *context)
 					}
 					break;
 
-				case mosq_ms_publish_qos1:
-					rc = _mosquitto_send_publish(context, mid, topic, payloadlen, payload, qos, retain, retries);
+				case ecld_ms_publish_qos1:
+					rc = _eecloud_send_publish(context, mid, topic, payloadlen, payload, qos, retain, retries);
 					if(!rc){
-						tail->timestamp = mosquitto_time();
+						tail->timestamp = eecloud_time();
 						tail->dup = 1; /* Any retry attempts are a duplicate. */
-						tail->state = mosq_ms_wait_for_puback;
+						tail->state = ecld_ms_wait_for_puback;
 					}else{
 						return rc;
 					}
@@ -838,12 +838,12 @@ int mqtt3_db_message_write(struct mosquitto_db *db, struct mosquitto *context)
 					tail = tail->next;
 					break;
 
-				case mosq_ms_publish_qos2:
-					rc = _mosquitto_send_publish(context, mid, topic, payloadlen, payload, qos, retain, retries);
+				case ecld_ms_publish_qos2:
+					rc = _eecloud_send_publish(context, mid, topic, payloadlen, payload, qos, retain, retries);
 					if(!rc){
-						tail->timestamp = mosquitto_time();
+						tail->timestamp = eecloud_time();
 						tail->dup = 1; /* Any retry attempts are a duplicate. */
-						tail->state = mosq_ms_wait_for_pubrec;
+						tail->state = ecld_ms_wait_for_pubrec;
 					}else{
 						return rc;
 					}
@@ -851,10 +851,10 @@ int mqtt3_db_message_write(struct mosquitto_db *db, struct mosquitto *context)
 					tail = tail->next;
 					break;
 				
-				case mosq_ms_send_pubrec:
-					rc = _mosquitto_send_pubrec(context, mid);
+				case ecld_ms_send_pubrec:
+					rc = _eecloud_send_pubrec(context, mid);
 					if(!rc){
-						tail->state = mosq_ms_wait_for_pubrel;
+						tail->state = ecld_ms_wait_for_pubrel;
 					}else{
 						return rc;
 					}
@@ -862,10 +862,10 @@ int mqtt3_db_message_write(struct mosquitto_db *db, struct mosquitto *context)
 					tail = tail->next;
 					break;
 
-				case mosq_ms_resend_pubrel:
-					rc = _mosquitto_send_pubrel(context, mid);
+				case ecld_ms_resend_pubrel:
+					rc = _eecloud_send_pubrel(context, mid);
 					if(!rc){
-						tail->state = mosq_ms_wait_for_pubcomp;
+						tail->state = ecld_ms_wait_for_pubcomp;
 					}else{
 						return rc;
 					}
@@ -873,10 +873,10 @@ int mqtt3_db_message_write(struct mosquitto_db *db, struct mosquitto *context)
 					tail = tail->next;
 					break;
 
-				case mosq_ms_resend_pubcomp:
-					rc = _mosquitto_send_pubcomp(context, mid);
+				case ecld_ms_resend_pubcomp:
+					rc = _eecloud_send_pubcomp(context, mid);
 					if(!rc){
-						tail->state = mosq_ms_wait_for_pubrel;
+						tail->state = ecld_ms_wait_for_pubrel;
 					}else{
 						return rc;
 					}
@@ -890,10 +890,10 @@ int mqtt3_db_message_write(struct mosquitto_db *db, struct mosquitto *context)
 					break;
 			}
 		}else{
-			/* state == mosq_ms_queued */
-			if(tail->direction == mosq_md_in && (max_inflight == 0 || msg_count < max_inflight)){
+			/* state == ecld_ms_queued */
+			if(tail->direction == ecld_md_in && (max_inflight == 0 || msg_count < max_inflight)){
 				if(tail->qos == 2){
-					tail->state = mosq_ms_send_pubrec;
+					tail->state = ecld_ms_send_pubrec;
 				}
 			}else{
 				last = tail;

@@ -16,32 +16,32 @@ test :
 	$(MAKE) -C lib test
 
 fake_user : fake_user.o
-	${CC} $^ -o $@ ../lib/libmosquitto.so.${SOVERSION}
-	#${CC} $^ -o $@ -lmosquitto
+	${CC} $^ -o $@ ../lib/libeecloud.so.${SOVERSION}
+	#${CC} $^ -o $@ -leecloud
 
 fake_user.o : fake_user.c
 	${CC} $(CFLAGS) -c $< -o $@
 
 msgsps_pub : msgsps_pub.o
-	${CC} $^ -o $@ ../lib/libmosquitto.so.${SOVERSION}
+	${CC} $^ -o $@ ../lib/libeecloud.so.${SOVERSION}
 
 msgsps_pub.o : msgsps_pub.c msgsps_common.h
 	${CC} $(CFLAGS) -c $< -o $@
 
 msgsps_sub : msgsps_sub.o
-	${CC} $^ -o $@ ../lib/libmosquitto.so.${SOVERSION}
+	${CC} $^ -o $@ ../lib/libeecloud.so.${SOVERSION}
 
 msgsps_sub.o : msgsps_sub.c msgsps_common.h
 	${CC} $(CFLAGS) -c $< -o $@
 
 packet-gen : packet-gen.o
-	${CC} $^ -o $@ ../lib/libmosquitto.so.${SOVERSION}
+	${CC} $^ -o $@ ../lib/libeecloud.so.${SOVERSION}
 
 packet-gen.o : packet-gen.c
 	${CC} $(CFLAGS) -c $< -o $@
 
 qos : qos.o
-	${CC} $^ -o $@ ../lib/libmosquitto.so.${SOVERSION}
+	${CC} $^ -o $@ ../lib/libeecloud.so.${SOVERSION}
 
 qos.o : qos.c
 	${CC} $(CFLAGS) -c $< -o $@

@@ -5,11 +5,11 @@
 #include <time.h>
 #include <unistd.h>
 
-#include <mosquitto.h>
+#include <eecloud.h>
 
 struct msg_list{
 	struct msg_list *next;
-	struct mosquitto_message msg;
+	struct eecloud_message msg;
 	bool sent;
 };
 
@@ -26,7 +26,7 @@ struct msg_list *messages_sent = NULL;
 int sent_count = 0;
 int received_count = 0;
 
-void on_message(void *obj, const struct mosquitto_message *msg)
+void on_message(void *obj, const struct eecloud_message *msg)
 {
 	struct msg_list *tail, *new_list;
 
@@ -38,7 +38,7 @@ void on_message(void *obj, const struct mosquitto_message *msg)
 		return;
 	}
 	new_list->next = NULL;
-	if(!mosquitto_message_copy(&new_list->msg, msg)){
+	if(!eecloud_message_copy(&new_list->msg, msg)){
 		if(messages_received){
 			tail = messages_received;
 			while(tail->next){
@@ -91,7 +91,7 @@ void on_disconnect(void *obj)
 	printf("Disconnected cleanly.\n");
 }
 
-void rand_publish(struct mosquitto *mosq, const char *topic, int qos)
+void rand_publish(struct eecloud *ecld, const char *topic, int qos)
 {
 	int fd = open("/dev/urandom", O_RDONLY);
 	uint8_t buf[100];
@@ -100,7 +100,7 @@ void rand_publish(struct mosquitto *mosq, const char *topic, int qos)
 
 	if(fd >= 0){
 		if(read(fd, buf, 100) == 100){
-			if(!mosquitto_publish(mosq, &mid, topic, 100, buf, qos, false)){
+			if(!eecloud_publish(ecld, &mid, topic, 100, buf, qos, false)){
 				new_list = malloc(sizeof(struct msg_list));
 				if(new_list){
 					new_list->msg.mid = mid;
@@ -130,20 +130,20 @@ void rand_publish(struct mosquitto *mosq, const char *topic, int qos)
 
 int main(int argc, char *argv[])
 {
-	struct mosquitto *mosq;
+	struct eecloud *ecld;
 	int i;
 	time_t start;
 
-	mosquitto_lib_init();
+	eecloud_lib_init();
 
-	mosq = mosquitto_new("qos-test", NULL);
-	mosquitto_log_init(mosq, MOSQ_LOG_ALL, MOSQ_LOG_STDOUT);
-	mosquitto_message_callback_set(mosq, on_message);
-	mosquitto_publish_callback_set(mosq, on_publish);
-	mosquitto_subscribe_callback_set(mosq, on_subscribe);
-	mosquitto_disconnect_callback_set(mosq, on_disconnect);
+	ecld = eecloud_new("qos-test", NULL);
+	eecloud_log_init(ecld, MOSQ_LOG_ALL, MOSQ_LOG_STDOUT);
+	eecloud_message_callback_set(ecld, on_message);
+	eecloud_publish_callback_set(ecld, on_publish);
+	eecloud_subscribe_callback_set(ecld, on_subscribe);
+	eecloud_disconnect_callback_set(ecld, on_disconnect);
 
-	mosquitto_connect(mosq, "127.0.0.1", 1883, 60, true);
+	eecloud_connect(ecld, "127.0.0.1", 1883, 60, true);
 	subs[0].topic = "qos-test/0";
 	subs[0].qos = 0;
 	subs[0].complete = false;
@@ -153,31 +153,31 @@ int main(int argc, char *argv[])
 	subs[2].topic = "qos-test/2";
 	subs[2].qos = 2;
 	subs[2].complete = false;
-	mosquitto_subscribe(mosq, &subs[0].mid, subs[0].topic, subs[0].qos);
-	mosquitto_subscribe(mosq, &subs[1].mid, subs[1].topic, subs[1].qos);
-	mosquitto_subscribe(mosq, &subs[2].mid, subs[2].topic, subs[2].qos);
+	eecloud_subscribe(ecld, &subs[0].mid, subs[0].topic, subs[0].qos);
+	eecloud_subscribe(ecld, &subs[1].mid, subs[1].topic, subs[1].qos);
+	eecloud_subscribe(ecld, &subs[2].mid, subs[2].topic, subs[2].qos);
 
 	for(i=0; i<1; i++){
-		rand_publish(mosq, "qos-test/0", 0);
-		rand_publish(mosq, "qos-test/0", 1);
-		rand_publish(mosq, "qos-test/0", 2);
-		rand_publish(mosq, "qos-test/1", 0);
-		rand_publish(mosq, "qos-test/1", 1);
-		rand_publish(mosq, "qos-test/1", 2);
-		rand_publish(mosq, "qos-test/2", 0);
-		rand_publish(mosq, "qos-test/2", 1);
-		rand_publish(mosq, "qos-test/2", 2);
+		rand_publish(ecld, "qos-test/0", 0);
+		rand_publish(ecld, "qos-test/0", 1);
+		rand_publish(ecld, "qos-test/0", 2);
+		rand_publish(ecld, "qos-test/1", 0);
+		rand_publish(ecld, "qos-test/1", 1);
+		rand_publish(ecld, "qos-test/1", 2);
+		rand_publish(ecld, "qos-test/2", 0);
+		rand_publish(ecld, "qos-test/2", 1);
+		rand_publish(ecld, "qos-test/2", 2);
 	}
 	start = time(NULL);
-	while(!mosquitto_loop(mosq, -1)){
+	while(!eecloud_loop(ecld, -1)){
 		if(time(NULL)-start > 20){
-			mosquitto_disconnect(mosq);
+			eecloud_disconnect(ecld);
 		}
 	}
 
-	mosquitto_destroy(mosq);
+	eecloud_destroy(ecld);
 
-	mosquitto_lib_cleanup();
+	eecloud_lib_cleanup();
 
 	printf("Sent messages: %d\n", sent_count);
 	printf("Received messages: %d\n", received_count);

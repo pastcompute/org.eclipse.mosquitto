@@ -51,22 +51,22 @@ Contributors:
 #include <stdio.h>
 #include <string.h>
 
-#include <mosquitto_broker.h>
-#include <memory_mosq.h>
-#include <util_mosq.h>
+#include <eecloud_broker.h>
+#include <memory_ecld.h>
+#include <util_ecld.h>
 
 struct _sub_token {
 	struct _sub_token *next;
 	char *topic;
 };
 
-static int _subs_process(struct mosquitto_db *db, struct _mosquitto_subhier *hier, const char *source_id, const char *topic, int qos, int retain, struct mosquitto_msg_store *stored, bool set_retain)
+static int _subs_process(struct eecloud_db *db, struct _eecloud_subhier *hier, const char *source_id, const char *topic, int qos, int retain, struct eecloud_msg_store *stored, bool set_retain)
 {
 	int rc = 0;
 	int rc2;
 	int client_qos, msg_qos;
 	uint16_t mid;
-	struct _mosquitto_subleaf *leaf;
+	struct _eecloud_subleaf *leaf;
 	bool client_retain;
 
 	leaf = hier->subs;
@@ -80,7 +80,7 @@ static int _subs_process(struct mosquitto_db *db, struct _mosquitto_subhier *hie
 		}
 #endif
 		if(hier->retained){
-			mosquitto__db_msg_store_deref(db, &hier->retained);
+			eecloud__db_msg_store_deref(db, &hier->retained);
 #ifdef WITH_SYS_TREE
 			db->retained_count--;
 #endif
@@ -101,7 +101,7 @@ static int _subs_process(struct mosquitto_db *db, struct _mosquitto_subhier *hie
 			continue;
 		}
 		/* Check for ACL topic access. */
-		rc2 = mosquitto_acl_check(db, leaf->context, topic, MOSQ_ACL_READ);
+		rc2 = eecloud_acl_check(db, leaf->context, topic, MOSQ_ACL_READ);
 		if(rc2 == MOSQ_ERR_ACL_DENIED){
 			leaf = leaf->next;
 			continue;
@@ -118,7 +118,7 @@ static int _subs_process(struct mosquitto_db *db, struct _mosquitto_subhier *hie
 				}
 			}
 			if(msg_qos){
-				mid = _mosquitto_mid_generate(leaf->context);
+				mid = _eecloud_mid_generate(leaf->context);
 			}else{
 				mid = 0;
 			}
@@ -132,7 +132,7 @@ static int _subs_process(struct mosquitto_db *db, struct _mosquitto_subhier *hie
 				 * retain should be false. */
 				client_retain = false;
 			}
-			if(mqtt3_db_message_insert(db, leaf->context, mid, mosq_md_out, msg_qos, client_retain, stored) == 1) rc = 1;
+			if(mqtt3_db_message_insert(db, leaf->context, mid, ecld_md_out, msg_qos, client_retain, stored) == 1) rc = 1;
 		}else{
 			return 1; /* Application error */
 		}
@@ -148,9 +148,9 @@ static struct _sub_token *_sub_topic_append(struct _sub_token **tail, struct _su
 	if(!topic){
 		return NULL;
 	}
-	new_topic = _mosquitto_malloc(sizeof(struct _sub_token));
+	new_topic = _eecloud_malloc(sizeof(struct _sub_token));
 	if(!new_topic){
-		_mosquitto_free(topic);
+		_eecloud_free(topic);
 		return NULL;
 	}
 	new_topic->next = NULL;
@@ -178,14 +178,14 @@ static int _sub_topic_tokenise(const char *subtopic, struct _sub_token **topics)
 	assert(topics);
 
 	if(subtopic[0] != '$'){
-		new_topic = _sub_topic_append(&tail, topics, _mosquitto_strdup(""));
+		new_topic = _sub_topic_append(&tail, topics, _eecloud_strdup(""));
 		if(!new_topic) goto cleanup;
 	}
 
 	len = strlen(subtopic);
 
 	if(subtopic[0] == '/'){
-		new_topic = _sub_topic_append(&tail, topics, _mosquitto_strdup(""));
+		new_topic = _sub_topic_append(&tail, topics, _eecloud_strdup(""));
 		if(!new_topic) goto cleanup;
 
 		start = 1;
@@ -201,12 +201,12 @@ static int _sub_topic_tokenise(const char *subtopic, struct _sub_token **topics)
 			if(start != stop){
 				tlen = stop-start;
 
-				topic = _mosquitto_malloc(tlen+1);
+				topic = _eecloud_malloc(tlen+1);
 				if(!topic) goto cleanup;
 				memcpy(topic, &subtopic[start], tlen);
 				topic[tlen] = '\0';
 			}else{
-				topic = _mosquitto_strdup("");
+				topic = _eecloud_strdup("");
 				if(!topic) goto cleanup;
 			}
 			new_topic = _sub_topic_append(&tail, topics, topic);
@@ -221,9 +221,9 @@ cleanup:
 	tail = *topics;
 	*topics = NULL;
 	while(tail){
-		if(tail->topic) _mosquitto_free(tail->topic);
+		if(tail->topic) _eecloud_free(tail->topic);
 		new_topic = tail->next;
-		_mosquitto_free(tail);
+		_eecloud_free(tail);
 		tail = new_topic;
 	}
 	return 1;
@@ -236,18 +236,18 @@ static void _sub_topic_tokens_free(struct _sub_token *tokens)
 	while(tokens){
 		tail = tokens->next;
 		if(tokens->topic){
-			_mosquitto_free(tokens->topic);
+			_eecloud_free(tokens->topic);
 		}
-		_mosquitto_free(tokens);
+		_eecloud_free(tokens);
 		tokens = tail;
 	}
 }
 
-static int _sub_add(struct mosquitto_db *db, struct mosquitto *context, int qos, struct _mosquitto_subhier *subhier, struct _sub_token *tokens)
+static int _sub_add(struct eecloud_db *db, struct eecloud *context, int qos, struct _eecloud_subhier *subhier, struct _sub_token *tokens)
 {
-	struct _mosquitto_subhier *branch, *last = NULL;
-	struct _mosquitto_subleaf *leaf, *last_leaf;
-	struct _mosquitto_subhier **subs;
+	struct _eecloud_subhier *branch, *last = NULL;
+	struct _eecloud_subleaf *leaf, *last_leaf;
+	struct _eecloud_subhier **subs;
 	int i;
 
 	if(!tokens){
@@ -260,7 +260,7 @@ static int _sub_add(struct mosquitto_db *db, struct mosquitto *context, int qos,
 					 * need to update QoS. Return -1 to indicate this to the
 					 * calling function. */
 					leaf->qos = qos;
-					if(context->protocol == mosq_p_mqtt31){
+					if(context->protocol == ecld_p_mqtt31){
 						return -1;
 					}else{
 						/* mqttv311 requires retained messages are resent on
@@ -271,7 +271,7 @@ static int _sub_add(struct mosquitto_db *db, struct mosquitto *context, int qos,
 				last_leaf = leaf;
 				leaf = leaf->next;
 			}
-			leaf = _mosquitto_malloc(sizeof(struct _mosquitto_subleaf));
+			leaf = _eecloud_malloc(sizeof(struct _eecloud_subleaf));
 			if(!leaf) return MOSQ_ERR_NOMEM;
 			leaf->next = NULL;
 			leaf->context = context;
@@ -285,9 +285,9 @@ static int _sub_add(struct mosquitto_db *db, struct mosquitto *context, int qos,
 				}
 				if(i == context->sub_count){
 					context->sub_count++;
-					subs = _mosquitto_realloc(context->subs, sizeof(struct _mosquitto_subhier *)*context->sub_count);
+					subs = _eecloud_realloc(context->subs, sizeof(struct _eecloud_subhier *)*context->sub_count);
 					if(!subs){
-						_mosquitto_free(leaf);
+						_eecloud_free(leaf);
 						return MOSQ_ERR_NOMEM;
 					}
 					context->subs = subs;
@@ -295,9 +295,9 @@ static int _sub_add(struct mosquitto_db *db, struct mosquitto *context, int qos,
 				}
 			}else{
 				context->sub_count = 1;
-				context->subs = _mosquitto_malloc(sizeof(struct _mosquitto_subhier *)*context->sub_count);
+				context->subs = _eecloud_malloc(sizeof(struct _eecloud_subhier *)*context->sub_count);
 				if(!context->subs){
-					_mosquitto_free(leaf);
+					_eecloud_free(leaf);
 					return MOSQ_ERR_NOMEM;
 				}
 				context->subs[0] = subhier;
@@ -325,11 +325,11 @@ static int _sub_add(struct mosquitto_db *db, struct mosquitto *context, int qos,
 		branch = branch->next;
 	}
 	/* Not found */
-	branch = _mosquitto_calloc(1, sizeof(struct _mosquitto_subhier));
+	branch = _eecloud_calloc(1, sizeof(struct _eecloud_subhier));
 	if(!branch) return MOSQ_ERR_NOMEM;
-	branch->topic = _mosquitto_strdup(tokens->topic);
+	branch->topic = _eecloud_strdup(tokens->topic);
 	if(!branch->topic){
-		_mosquitto_free(branch);
+		_eecloud_free(branch);
 		return MOSQ_ERR_NOMEM;
 	}
 	if(!last){
@@ -340,10 +340,10 @@ static int _sub_add(struct mosquitto_db *db, struct mosquitto *context, int qos,
 	return _sub_add(db, context, qos, branch, tokens->next);
 }
 
-static int _sub_remove(struct mosquitto_db *db, struct mosquitto *context, struct _mosquitto_subhier *subhier, struct _sub_token *tokens)
+static int _sub_remove(struct eecloud_db *db, struct eecloud *context, struct _eecloud_subhier *subhier, struct _sub_token *tokens)
 {
-	struct _mosquitto_subhier *branch, *last = NULL;
-	struct _mosquitto_subleaf *leaf;
+	struct _eecloud_subhier *branch, *last = NULL;
+	struct _eecloud_subleaf *leaf;
 	int i;
 
 	if(!tokens){
@@ -361,7 +361,7 @@ static int _sub_remove(struct mosquitto_db *db, struct mosquitto *context, struc
 				if(leaf->next){
 					leaf->next->prev = leaf->prev;
 				}
-				_mosquitto_free(leaf);
+				_eecloud_free(leaf);
 
 				/* Remove the reference to the sub that the client is keeping.
 				 * It would be nice to be able to use the reference directly,
@@ -390,8 +390,8 @@ static int _sub_remove(struct mosquitto_db *db, struct mosquitto *context, struc
 				}else{
 					subhier->children = branch->next;
 				}
-				_mosquitto_free(branch->topic);
-				_mosquitto_free(branch);
+				_eecloud_free(branch->topic);
+				_eecloud_free(branch);
 			}
 			return MOSQ_ERR_SUCCESS;
 		}
@@ -401,10 +401,10 @@ static int _sub_remove(struct mosquitto_db *db, struct mosquitto *context, struc
 	return MOSQ_ERR_SUCCESS;
 }
 
-static void _sub_search(struct mosquitto_db *db, struct _mosquitto_subhier *subhier, struct _sub_token *tokens, const char *source_id, const char *topic, int qos, int retain, struct mosquitto_msg_store *stored, bool set_retain)
+static void _sub_search(struct eecloud_db *db, struct _eecloud_subhier *subhier, struct _sub_token *tokens, const char *source_id, const char *topic, int qos, int retain, struct eecloud_msg_store *stored, bool set_retain)
 {
 	/* FIXME - need to take into account source_id if the client is a bridge */
-	struct _mosquitto_subhier *branch;
+	struct _eecloud_subhier *branch;
 	bool sr;
 
 	branch = subhier->children;
@@ -433,10 +433,10 @@ static void _sub_search(struct mosquitto_db *db, struct _mosquitto_subhier *subh
 	}
 }
 
-int mqtt3_sub_add(struct mosquitto_db *db, struct mosquitto *context, const char *sub, int qos, struct _mosquitto_subhier *root)
+int mqtt3_sub_add(struct eecloud_db *db, struct eecloud *context, const char *sub, int qos, struct _eecloud_subhier *root)
 {
 	int rc = 0;
-	struct _mosquitto_subhier *subhier, *child;
+	struct _eecloud_subhier *subhier, *child;
 	struct _sub_token *tokens = NULL;
 
 	assert(root);
@@ -453,16 +453,16 @@ int mqtt3_sub_add(struct mosquitto_db *db, struct mosquitto *context, const char
 		subhier = subhier->next;
 	}
 	if(!subhier){
-		child = _mosquitto_malloc(sizeof(struct _mosquitto_subhier));
+		child = _eecloud_malloc(sizeof(struct _eecloud_subhier));
 		if(!child){
 			_sub_topic_tokens_free(tokens);
-			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
+			_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 			return MOSQ_ERR_NOMEM;
 		}
-		child->topic = _mosquitto_strdup(tokens->topic);
+		child->topic = _eecloud_strdup(tokens->topic);
 		if(!child->topic){
 			_sub_topic_tokens_free(tokens);
-			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
+			_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 			return MOSQ_ERR_NOMEM;
 		}
 		child->subs = NULL;
@@ -485,10 +485,10 @@ int mqtt3_sub_add(struct mosquitto_db *db, struct mosquitto *context, const char
 	return rc;
 }
 
-int mqtt3_sub_remove(struct mosquitto_db *db, struct mosquitto *context, const char *sub, struct _mosquitto_subhier *root)
+int mqtt3_sub_remove(struct eecloud_db *db, struct eecloud *context, const char *sub, struct _eecloud_subhier *root)
 {
 	int rc = 0;
-	struct _mosquitto_subhier *subhier;
+	struct _eecloud_subhier *subhier;
 	struct _sub_token *tokens = NULL;
 
 	assert(root);
@@ -510,10 +510,10 @@ int mqtt3_sub_remove(struct mosquitto_db *db, struct mosquitto *context, const c
 	return rc;
 }
 
-int mqtt3_db_messages_queue(struct mosquitto_db *db, const char *source_id, const char *topic, int qos, int retain, struct mosquitto_msg_store **stored)
+int mqtt3_db_messages_queue(struct eecloud_db *db, const char *source_id, const char *topic, int qos, int retain, struct eecloud_msg_store **stored)
 {
 	int rc = 0;
-	struct _mosquitto_subhier *subhier;
+	struct _eecloud_subhier *subhier;
 	struct _sub_token *tokens = NULL;
 
 	assert(db);
@@ -543,17 +543,17 @@ int mqtt3_db_messages_queue(struct mosquitto_db *db, const char *source_id, cons
 	_sub_topic_tokens_free(tokens);
 
 	/* Remove our reference and free if needed. */
-	mosquitto__db_msg_store_deref(db, stored);
+	eecloud__db_msg_store_deref(db, stored);
 
 	return rc;
 }
 
 /* Remove all subscriptions for a client.
  */
-int mqtt3_subs_clean_session(struct mosquitto_db *db, struct mosquitto *context)
+int mqtt3_subs_clean_session(struct eecloud_db *db, struct eecloud *context)
 {
 	int i;
-	struct _mosquitto_subleaf *leaf;
+	struct _eecloud_subleaf *leaf;
 
 	for(i=0; i<context->sub_count; i++){
 		if(context->subs[i] == NULL){
@@ -573,24 +573,24 @@ int mqtt3_subs_clean_session(struct mosquitto_db *db, struct mosquitto *context)
 				if(leaf->next){
 					leaf->next->prev = leaf->prev;
 				}
-				_mosquitto_free(leaf);
+				_eecloud_free(leaf);
 				break;
 			}
 			leaf = leaf->next;
 		}
 	}
-	_mosquitto_free(context->subs);
+	_eecloud_free(context->subs);
 	context->subs = NULL;
 	context->sub_count = 0;
 
 	return MOSQ_ERR_SUCCESS;
 }
 
-void mqtt3_sub_tree_print(struct _mosquitto_subhier *root, int level)
+void mqtt3_sub_tree_print(struct _eecloud_subhier *root, int level)
 {
 	int i;
-	struct _mosquitto_subhier *branch;
-	struct _mosquitto_subleaf *leaf;
+	struct _eecloud_subhier *branch;
+	struct _eecloud_subleaf *leaf;
 
 	for(i=0; i<level*2; i++){
 		printf(" ");
@@ -617,13 +617,13 @@ void mqtt3_sub_tree_print(struct _mosquitto_subhier *root, int level)
 	}
 }
 
-static int _retain_process(struct mosquitto_db *db, struct mosquitto_msg_store *retained, struct mosquitto *context, const char *sub, int sub_qos)
+static int _retain_process(struct eecloud_db *db, struct eecloud_msg_store *retained, struct eecloud *context, const char *sub, int sub_qos)
 {
 	int rc = 0;
 	int qos;
 	uint16_t mid;
 
-	rc = mosquitto_acl_check(db, context, retained->topic, MOSQ_ACL_READ);
+	rc = eecloud_acl_check(db, context, retained->topic, MOSQ_ACL_READ);
 	if(rc == MOSQ_ERR_ACL_DENIED){
 		return MOSQ_ERR_SUCCESS;
 	}else if(rc != MOSQ_ERR_SUCCESS){
@@ -634,16 +634,16 @@ static int _retain_process(struct mosquitto_db *db, struct mosquitto_msg_store *
 
 	if(qos > sub_qos) qos = sub_qos;
 	if(qos > 0){
-		mid = _mosquitto_mid_generate(context);
+		mid = _eecloud_mid_generate(context);
 	}else{
 		mid = 0;
 	}
-	return mqtt3_db_message_insert(db, context, mid, mosq_md_out, qos, true, retained);
+	return mqtt3_db_message_insert(db, context, mid, ecld_md_out, qos, true, retained);
 }
 
-static int _retain_search(struct mosquitto_db *db, struct _mosquitto_subhier *subhier, struct _sub_token *tokens, struct mosquitto *context, const char *sub, int sub_qos, int level)
+static int _retain_search(struct eecloud_db *db, struct _eecloud_subhier *subhier, struct _sub_token *tokens, struct eecloud *context, const char *sub, int sub_qos, int level)
 {
-	struct _mosquitto_subhier *branch;
+	struct _eecloud_subhier *branch;
 	int flag = 0;
 
 	branch = subhier->children;
@@ -684,9 +684,9 @@ static int _retain_search(struct mosquitto_db *db, struct _mosquitto_subhier *su
 	return flag;
 }
 
-int mqtt3_retain_queue(struct mosquitto_db *db, struct mosquitto *context, const char *sub, int sub_qos)
+int mqtt3_retain_queue(struct eecloud_db *db, struct eecloud *context, const char *sub, int sub_qos)
 {
-	struct _mosquitto_subhier *subhier;
+	struct _eecloud_subhier *subhier;
 	struct _sub_token *tokens = NULL, *tail;
 
 	assert(db);
@@ -705,8 +705,8 @@ int mqtt3_retain_queue(struct mosquitto_db *db, struct mosquitto *context, const
 	}
 	while(tokens){
 		tail = tokens->next;
-		_mosquitto_free(tokens->topic);
-		_mosquitto_free(tokens);
+		_eecloud_free(tokens->topic);
+		_eecloud_free(tokens);
 		tokens = tail;
 	}
 

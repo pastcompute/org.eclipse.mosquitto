@@ -28,19 +28,19 @@ cmd_subfolder = os.path.realpath(os.path.abspath(os.path.join(os.path.split(insp
 if cmd_subfolder not in sys.path:
     sys.path.insert(0, cmd_subfolder)
 
-import mosq_test
+import ecld_test
 
 rc = 1
 keepalive = 60
-connect_packet = mosq_test.gen_connect("publish-qos1-test", keepalive=keepalive)
-connack_packet = mosq_test.gen_connack(rc=0)
+connect_packet = ecld_test.gen_connect("publish-qos1-test", keepalive=keepalive)
+connack_packet = ecld_test.gen_connack(rc=0)
 
-disconnect_packet = mosq_test.gen_disconnect()
+disconnect_packet = ecld_test.gen_disconnect()
 
 mid = 1
-publish_packet = mosq_test.gen_publish("pub/qos1/test", qos=1, mid=mid, payload="message")
-publish_packet_dup = mosq_test.gen_publish("pub/qos1/test", qos=1, mid=mid, payload="message", dup=True)
-puback_packet = mosq_test.gen_puback(mid)
+publish_packet = ecld_test.gen_publish("pub/qos1/test", qos=1, mid=mid, payload="message")
+publish_packet_dup = ecld_test.gen_publish("pub/qos1/test", qos=1, mid=mid, payload="message", dup=True)
+puback_packet = ecld_test.gen_puback(mid)
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -56,22 +56,22 @@ try:
 except KeyError:
     pp = ''
 env['PYTHONPATH'] = '../../lib/python:'+pp
-client = mosq_test.start_client(filename=sys.argv[1].replace('/', '-'), cmd=client_args, env=env)
+client = ecld_test.start_client(filename=sys.argv[1].replace('/', '-'), cmd=client_args, env=env)
 
 try:
     (conn, address) = sock.accept()
     conn.settimeout(10)
 
-    if mosq_test.expect_packet(conn, "connect", connect_packet):
+    if ecld_test.expect_packet(conn, "connect", connect_packet):
         conn.send(connack_packet)
 
-        if mosq_test.expect_packet(conn, "publish", publish_packet):
+        if ecld_test.expect_packet(conn, "publish", publish_packet):
             # Delay for > 3 seconds (message retry time)
 
-            if mosq_test.expect_packet(conn, "dup publish", publish_packet_dup):
+            if ecld_test.expect_packet(conn, "dup publish", publish_packet_dup):
                 conn.send(puback_packet)
 
-                if mosq_test.expect_packet(conn, "disconnect", disconnect_packet):
+                if ecld_test.expect_packet(conn, "disconnect", disconnect_packet):
                     rc = 0
 
     conn.close()

@@ -2,9 +2,9 @@
 #include <cstring>
 
 #include "temperature_conversion.h"
-#include <mosquittopp.h>
+#include <eecloudpp.h>
 
-mqtt_tempconv::mqtt_tempconv(const char *id, const char *host, int port) : mosquittopp(id)
+mqtt_tempconv::mqtt_tempconv(const char *id, const char *host, int port) : eecloudpp(id)
 {
 	int keepalive = 60;
 
@@ -26,7 +26,7 @@ void mqtt_tempconv::on_connect(int rc)
 	}
 }
 
-void mqtt_tempconv::on_message(const struct mosquitto_message *message)
+void mqtt_tempconv::on_message(const struct eecloud_message *message)
 {
 	double temp_celsius, temp_farenheit;
 	char buf[51];

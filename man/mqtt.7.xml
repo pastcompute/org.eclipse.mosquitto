@@ -5,7 +5,7 @@
 	<refmeta>
 		<refentrytitle>mqtt</refentrytitle>
 		<manvolnum>7</manvolnum>
-		<refmiscinfo class="source">Mosquitto Project</refmiscinfo>
+		<refmiscinfo class="source">Eecloud Project</refmiscinfo>
 		<refmiscinfo class="manual">Conventions and miscellaneous</refmiscinfo>
 	</refmeta>
 
@@ -161,19 +161,19 @@
 		<simplelist type="inline">
 			<member>
 				<citerefentry>
-					<refentrytitle><link xlink:href="mosquitto-8.php">mosquitto</link></refentrytitle>
+					<refentrytitle><link xlink:href="eecloud-8.php">eecloud</link></refentrytitle>
 					<manvolnum>8</manvolnum>
 				</citerefentry>
 			</member>
 			<member>
 				<citerefentry>
-					<refentrytitle><link xlink:href="mosquitto_pub-1.php">mosquitto_pub</link></refentrytitle>
+					<refentrytitle><link xlink:href="eecloud_pub-1.php">eecloud_pub</link></refentrytitle>
 					<manvolnum>1</manvolnum>
 				</citerefentry>
 			</member>
 			<member>
 				<citerefentry>
-					<refentrytitle><link xlink:href="mosquitto_sub-1.php">mosquitto_sub</link></refentrytitle>
+					<refentrytitle><link xlink:href="eecloud_sub-1.php">eecloud_sub</link></refentrytitle>
 					<manvolnum>1</manvolnum>
 				</citerefentry>
 			</member>

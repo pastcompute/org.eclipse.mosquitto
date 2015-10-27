@@ -21,9 +21,9 @@ Contributors:
 
 #include <config.h>
 
-#include <mosquitto_broker.h>
-#include <memory_mosq.h>
-#include <time_mosq.h>
+#include <eecloud_broker.h>
+#include <memory_ecld.h>
+#include <time_ecld.h>
 
 #define BUFLEN 100
 
@@ -40,7 +40,7 @@ int g_clients_expired = 0;
 unsigned int g_socket_connections = 0;
 unsigned int g_connection_count = 0;
 
-static void _sys_update_clients(struct mosquitto_db *db, char *buf)
+static void _sys_update_clients(struct eecloud_db *db, char *buf)
 {
 	static unsigned int client_count = -1;
 	static int clients_expired = -1;
@@ -85,19 +85,19 @@ static void _sys_update_clients(struct mosquitto_db *db, char *buf)
 }
 
 #ifdef REAL_WITH_MEMORY_TRACKING
-static void _sys_update_memory(struct mosquitto_db *db, char *buf)
+static void _sys_update_memory(struct eecloud_db *db, char *buf)
 {
 	static unsigned long current_heap = -1;
 	static unsigned long max_heap = -1;
 	unsigned long value_ul;
 
-	value_ul = _mosquitto_memory_used();
+	value_ul = _eecloud_memory_used();
 	if(current_heap != value_ul){
 		current_heap = value_ul;
 		snprintf(buf, BUFLEN, "%lu", current_heap);
 		mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/heap/current", 2, strlen(buf), buf, 1);
 	}
-	value_ul =_mosquitto_max_memory_used();
+	value_ul =_eecloud_max_memory_used();
 	if(max_heap != value_ul){
 		max_heap = value_ul;
 		snprintf(buf, BUFLEN, "%lu", max_heap);
@@ -106,7 +106,7 @@ static void _sys_update_memory(struct mosquitto_db *db, char *buf)
 }
 #endif
 
-static void calc_load(struct mosquitto_db *db, char *buf, const char *topic, double exponent, double interval, double *current)
+static void calc_load(struct eecloud_db *db, char *buf, const char *topic, double exponent, double interval, double *current)
 {
 	double new_value;
 
@@ -124,7 +124,7 @@ static void calc_load(struct mosquitto_db *db, char *buf, const char *topic, dou
  * messages are sent for the $SYS hierarchy.
  * 'start_time' is the result of time() that the broker was started at.
  */
-void mqtt3_db_sys_update(struct mosquitto_db *db, int interval, time_t start_time)
+void mqtt3_db_sys_update(struct eecloud_db *db, int interval, time_t start_time)
 {
 	static time_t last_update = 0;
 	time_t now;
@@ -184,7 +184,7 @@ void mqtt3_db_sys_update(struct mosquitto_db *db, int interval, time_t start_tim
 	double exponent;
 	double i_mult;
 
-	now = mosquitto_time();
+	now = eecloud_time();
 
 	if(interval && now - interval > last_update){
 		uptime = now - start_time;
@@ -326,7 +326,7 @@ void mqtt3_db_sys_update(struct mosquitto_db *db, int interval, time_t start_tim
 			mqtt3_db_messages_easy_queue(db, NULL, "$SYS/broker/publish/bytes/sent", 2, strlen(buf), buf, 1);
 		}
 
-		last_update = mosquitto_time();
+		last_update = eecloud_time();
 	}
 }
 

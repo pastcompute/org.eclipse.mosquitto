@@ -24,7 +24,7 @@ Client library:
 - Fix possibility of select() being called with a socket that is >FD_SETSIZE.
   This is a fix for #464632 that will be followed up by removing the select()
   call in a future version.
-- Fix calls to mosquitto_connect*_async() not completing.
+- Fix calls to eecloud_connect*_async() not completing.
 
 
 1.4.1 - 20150403
@@ -42,11 +42,11 @@ Broker:
 Client library:
 - Inflight limits should only apply to outgoing messages. Closes #461620.
 - Fix reconnect bug on Windows. Closes #463000.
-- Return -1 on error from mosquitto_socket(). Closes #461705.
-- Fix crash on multiple calls to mosquitto_lib_init/mosquitto_lib_cleanup.
+- Return -1 on error from eecloud_socket(). Closes #461705.
+- Fix crash on multiple calls to eecloud_lib_init/eecloud_lib_cleanup.
   Closes #462780.
 - Allow longer paths on Windows. Closes #462781.
-- Make _mosquitto_mid_generate() thread safe. Closes #463479.
+- Make _eecloud_mid_generate() thread safe. Closes #463479.
 
 
 1.4 - 20150218
@@ -93,7 +93,7 @@ Broker:
   v3.1.1 client connects with a zero length client id.
 - Anonymous clients are no longer accidently disconnected from the broker
   after a SIGHUP.
-- mosquitto_passwd now supports -b (batch mode) to allow the password to be
+- eecloud_passwd now supports -b (batch mode) to allow the password to be
   provided at the command line.
 - Removed $SYS/broker/changeset. This was intended for use with debugging, but
   in practice is of no use.
@@ -124,7 +124,7 @@ Broker:
 
 Clients:
 - Both clients can now load default configuration options from a file.
-- Add -C option to mosquitto_sub to allow the client to quit after receiving a
+- Add -C option to eecloud_sub to allow the client to quit after receiving a
   certain count of messages. Closes bug #453850.
 - Add --proxy SOCKS5 support for both clients.
 - Pub client supports setting its keepalive. Closes bug #454852.
@@ -133,13 +133,13 @@ Clients:
 
 Client library:
 - Add experimental SOCKS5 support.
-- mosquitto_loop_forever now quits after a fatal error, rather than blindly
+- eecloud_loop_forever now quits after a fatal error, rather than blindly
   retrying.
 - SRV support is now not compiled in by default.
 - Wildcard TLS certificates are now supported.
-- mosquittopp now has a virtual destructor. Closes bug #452915.
+- eecloudpp now has a virtual destructor. Closes bug #452915.
 - Add support for MQTT v3.1.1.
-- Don't quit mosquitto_loop_forever() if broker not available on first
+- Don't quit eecloud_loop_forever() if broker not available on first
   connect. Closes bug #453293, but requires more work.
 
 
@@ -195,7 +195,7 @@ Broker:
 
 Client library:
 - Fix topic matching edge case.
-- Fix callback deadlocks after calling mosquitto_disconnect(), when using the
+- Fix callback deadlocks after calling eecloud_disconnect(), when using the
   threaded interfaces. Closes bug #1313725.
 - Fix SRV support when building with CMake.
 - Remove strict protocol #ifdefs.
@@ -219,13 +219,13 @@ Broker:
 Client library:
 - Fix socketpair code on the Mac.
 - Fix compilation for WITH_THREADING=no.
-- Break out of select() when calling mosquitto_loop_stop().
+- Break out of select() when calling eecloud_loop_stop().
 - Reject invalid un/subscriptions e.g. foo/+bar #/bar.
-- Add mosquitto_threaded_set().
+- Add eecloud_threaded_set().
 
 Clients:
-- Fix keepalive value on mosquitto_pub.
-- Fix possibility of mosquitto_pub not exiting after sending messages when
+- Fix keepalive value on eecloud_pub.
+- Fix possibility of eecloud_pub not exiting after sending messages when
   using -l.
 
 1.3 - 20140316
@@ -267,10 +267,10 @@ Client library:
 - Add support for un/subscribing to multiple topics at once in un/subscribe().
 - Clients now close their socket after sending DISCONNECT.
 - Python client now contains its version number.
-- C library mosquitto_want_write() now supports TLS clients.
+- C library eecloud_want_write() now supports TLS clients.
 - Fix possible memory leak in C/C++ library when communicating with
   a broker that doesn't follow the spec.
-- Return strerror() through mosquitto_strerror() to make error printing
+- Return strerror() through eecloud_strerror() to make error printing
   easier.
 - Topics are no longer normalised from e.g a///topic to a/topic. This matches
   the behaviour as clarified by the Oasis MQTT spec. This will lead to
@@ -279,7 +279,7 @@ Client library:
 - Break out of select() on publish(), subscribe() etc. when using the threaded
   interface. Fixes bug #1270062.
 - Handle incoming and outgoing messages separately. Fixes bug #1263172.
-- Don't terminate threads on mosquitto_destroy() when a client is not using
+- Don't terminate threads on eecloud_destroy() when a client is not using
   the threaded interface but does use their own thread. Fixes bug #1291473.
 
 Clients:
@@ -305,10 +305,10 @@ Client library:
 - Block in Python loop_stop() until all messages are sent, as the
   documentation states should happen.
 - Fix for asynchronous connections on Windows. Closes bug #1249202.
-- Module version is now available in mosquitto.py.
+- Module version is now available in eecloud.py.
 
 Clients:
-- mosquitto_sub now uses fwrite() instead of printf() to output messages, so
+- eecloud_sub now uses fwrite() instead of printf() to output messages, so
   messages with NULL characters aren't truncated.
 
 1.2.2 - 20131021
@@ -324,7 +324,7 @@ Client library:
 - Fix potential memory corruption when sending QoS>0 messages at a high rate
   using the threaded interface. Further fix for #1237351.
 - Fix incorrect delay scaling when exponential_backoff=true in
-  mosquitto_reconnect_delay_set().
+  eecloud_reconnect_delay_set().
 - Some pep8 fixes for Python.
 
 1.2.1 - 20130918
@@ -340,7 +340,7 @@ Broker:
 - Clients loaded from the persistence file on startup were not being added to
   the client hash, causing subtle problems when the client reconnected,
   including ACLs failing. This has been fixed.
-- Add note to mosquitto-tls man page stating that certificates need to be
+- Add note to eecloud-tls man page stating that certificates need to be
   unique. Closes bug #1221285.
 - Fix incorrect retained message delivery when using wildcard subs in some
   circumstances. Fixes bug #1226040.
@@ -374,7 +374,7 @@ Broker:
 - Persistence data is now written to a temporary file which is atomically
   renamed on completion, so a crash during writing will not produce a corrupt
   file.
-- mosquitto.conf is now installed as mosquitto.conf.example
+- eecloud.conf is now installed as eecloud.conf.example
 - Configuration file errors are now reported with filename and line number.
 - The broker now uses a monotonic clock if available, to avoid changes in time
   causing client disconnections or message retries.
@@ -421,24 +421,24 @@ Broker:
   they fail to connect the state can still be seen.
 - Fix bridge notification payload length - no need to send a null byte.
 
-- mosquitto_passwd utility now reports errors more clearly.
-- Fix "mosquitto_passwd -U".
+- eecloud_passwd utility now reports errors more clearly.
+- Fix "eecloud_passwd -U".
 
 Client library:
 - Add support for TLSv1.2 and TLSv1.1, except for on the Python module.
 - Add support for verifying remote server certificate subject against the
   remote hostname.
-- Add mosquitto_reconnect_async() support and make asynchronous connections
+- Add eecloud_reconnect_async() support and make asynchronous connections
   truely asynchronous rather than simply deferred. DNS lookups are still
   blocking, so asynchronous connections require an IP address instead of
   hostname.
-- Allow control of reconnection timeouts in mosquitto_loop_forever() and after
-  mosquitto_loop_start() by using mosquitto_reconnect_delay_set().
+- Allow control of reconnection timeouts in eecloud_loop_forever() and after
+  eecloud_loop_start() by using eecloud_reconnect_delay_set().
 - Fix building on Android NDK.
 - Re-raise unhandled errors in Python so as not to provide confusing error
   messages later on.
 - Python module supports IPv6 connections.
-- mosquitto_sub_topic_tokenise() was behaving incorrectly if the last topic
+- eecloud_sub_topic_tokenise() was behaving incorrectly if the last topic
   hierarchy had only a single character. This has been fixed. Closes bug
   #1163348.
 - Fix possible crash after disconnects when using the threaded interface with
@@ -449,7 +449,7 @@ Client library:
 - Fix Python client not handling will_payload==None.
 - Fix potential memory leak when setting username/password.
 - Fix handling of QoS 2 messages on reconnect.
-- Improve handling of mosquitto_disconnect() with threaded mode.
+- Improve handling of eecloud_disconnect() with threaded mode.
 
 
 Clients:
@@ -462,7 +462,7 @@ Clients:
 ================
 
 Broker:
-- mosquitto_passwd utility now uses tmpfile() to generate its temporary data
+- eecloud_passwd utility now uses tmpfile() to generate its temporary data
   storage file. It also creates a backup file that can be used to recover data
   if an errors occur.
 
@@ -503,7 +503,7 @@ Broker:
 - ACL files can now have comment lines with # as the first character.
 - Display message on startup about which config is being loaded.
 - Fix max_inflight_messages and max_queued_messages not being applied.
-- Fix documentation error in mosquitto.conf.
+- Fix documentation error in eecloud.conf.
 - Ensure that QoS 2 queued messages are sent out in a timely manner.
 - Local bridges now act on clean_session correctly.
 - Local bridges with clean_session==false now remove unused subscriptions on
@@ -512,27 +512,27 @@ Broker:
   string for ease of use.
 
 Client library:
-- Free memory used by OpenSSL in mosquitto_lib_cleanup() where possible.
+- Free memory used by OpenSSL in eecloud_lib_cleanup() where possible.
 - Change WebSocket subprotocol name to mqttv3.1 to make future changes easier
   and for compatibility with other implementations.
-- mosquitto_loop_read() and mosquitto_loop_write() now handle errors
-  themselves rather than having mosquitto_loop() handle their errors. This
+- eecloud_loop_read() and eecloud_loop_write() now handle errors
+  themselves rather than having eecloud_loop() handle their errors. This
   makes using them in a separate event loop more straightforward.
-- Add mosquitto_loop_forever() / loop_forever() function call to make simple
+- Add eecloud_loop_forever() / loop_forever() function call to make simple
   clients easier.
 - Disable SSL compression. This reduces memory usage significantly and removes
   the possibility of CRIME type attacks.
 - Enable SSL_MODE_RELEASE_BUFFERS mode to reduce SSL memory usage further.
-- mosquitto_tls_set() will now return an error or raise an exception
+- eecloud_tls_set() will now return an error or raise an exception
   immediately if the CA certificate or client certificate/key cannot be
   accessed.
 - Fix potential memory leaks on connection failures.
-- Don't produce return error from mosquitto_loop() if a system call is
+- Don't produce return error from eecloud_loop() if a system call is
   interrupted. This prevents disconnects/reconnects in threaded mode and
   simplifies non-threaded client handling.
 - Ignore SIGPIPE to prevent unnecessary client quits in threaded mode.
-- Fix document error for mosquitto_message_retry_set().
-- Fix mosquitto_topic_matches_sub() for subscriptions with + as the final
+- Fix document error for eecloud_message_retry_set().
+- Fix eecloud_topic_matches_sub() for subscriptions with + as the final
   character. Fixes bug #1085797.
 - Rename all "obj" parameters to "userdata" for consistency with other
   libraries.
@@ -549,13 +549,13 @@ Client library:
 Clients:
 - Clients now display their own version number and library version number in
   their help messages.
-- Fix "mosquitto_pub -l -q 2" disconnecting before all messages were
+- Fix "eecloud_pub -l -q 2" disconnecting before all messages were
   transmitted.
 - Fix potential out-of-bounds array access with client ids. Fixes bug
   #1083182.
 
 Other:
-- mosquitto_passwd can now convert password files with plain text files to
+- eecloud_passwd can now convert password files with plain text files to
   hashed versions.
 
 1.0.5 - 20121103
@@ -564,7 +564,7 @@ Other:
 Broker:
 - Fix crash when the broker has use_identity_as_username set to true but a
   client connects without a certificate.
-- mosquitto_passwd should only be installed if WITH_TLS=yes.
+- eecloud_passwd should only be installed if WITH_TLS=yes.
 
 Library:
 - Use symbolic errno values rather than numbers in Python module to avoid
@@ -586,7 +586,7 @@ Library:
   Python module. Fixes bug #1064977.
 
 Clients:
-- Fix "mosquitto_sub -l" incorrectly only sending one message per second.
+- Fix "eecloud_sub -l" incorrectly only sending one message per second.
 
 1.0.3 - 20120927
 ================
@@ -595,8 +595,8 @@ Broker:
 - Fix loading of psk files.
 - Don't return an error when reloading config if an ACL file isn't defined.
   This was preventing psk files being reloaded.
-- Clarify meaning of $SYS/broker/clients/total in mosquitto(8) man page.
-- Clarify meaning of $SYS/broker/messages/stored in mosquitto(8) man page.
+- Clarify meaning of $SYS/broker/clients/total in eecloud(8) man page.
+- Clarify meaning of $SYS/broker/messages/stored in eecloud(8) man page.
 - Fix non-retained message delivery when subscribing to #.
 - Fix retained message delivery for subs to foo/# with retained messages at
   foo.
@@ -653,7 +653,7 @@ Build scripts:
 Documentation:
 - Fix mqtt/MQTT capitalisation in man pages.
 - Update compiling.txt.
-- Fix incorrect callback docs in mosquitto.py. Fixes bug #1036607.
+- Fix incorrect callback docs in eecloud.py. Fixes bug #1036607.
 - Fix various doc typos and remove obsolete script. Fixes bug #1037088.
 
 1.0 - 20120814
@@ -665,7 +665,7 @@ Broker:
 - Add TLS-PSK support, providing a simpler encryption method for constrained
   devices.
 - Passwords are now salted+hashed if compiled with WITH_TLS (recommended).
-- Add mosquitto_passwd for handling password files.
+- Add eecloud_passwd for handling password files.
 - Add $SYS/broker/publish/messages/{sent|received} to show the number of
   PUBLISH messages sent/received.
 - Add $SYS/broker/publish/bytes/{sent|received} to show the number of
@@ -705,7 +705,7 @@ Broker:
   outgoing bridged topics should always work.
 - Local bridges are now no longer restricted by local ACLs.
 - Discard publish messages with zero length topics.
-- Drop to "mosquitto" user even if no config file specified.
+- Drop to "eecloud" user even if no config file specified.
 - Don't incorrectly allow topic access if ACL patterns but no normal ACL rules
   are defined.
 
@@ -715,52 +715,52 @@ Client library:
 - Add TLS-PSK support, providing a simpler encryption method for constrained
   devices.
 - Add javascript/websockets client library.
-- Add "struct mosquitto *mosq" parameter for all callbacks in the client
+- Add "struct eecloud *ecld" parameter for all callbacks in the client
   library. This is a binary incompatible change so the soversion of the
   libraries has been incremented. The new parameter should make it easier to
   use callbacks in practice.
-- Add mosquitto_want_write() for use when using own select() loop with
-  mosquitto_socket().
-- Add mosquitto_connect_async() to provide a non-blocking connect client call.
-- Add mosquitto_user_data_set() to allow user data pointer to be updated.
+- Add eecloud_want_write() for use when using own select() loop with
+  eecloud_socket().
+- Add eecloud_connect_async() to provide a non-blocking connect client call.
+- Add eecloud_user_data_set() to allow user data pointer to be updated.
 - Add "int rc" parameter to disconnect callback to indicate whether disconnect
-  was unexpected or the result of calling mosquitto_disconnect().
-- Add mosquitto_strerror() for obtaining a string description of error numbers.
-- Add mosquitto_connack_string() for obtaining a string description of MQTT
+  was unexpected or the result of calling eecloud_disconnect().
+- Add eecloud_strerror() for obtaining a string description of error numbers.
+- Add eecloud_connack_string() for obtaining a string description of MQTT
   connection results.
-- Add mosquitto_will_clear() and change mosquitto_will_set() to only set the
+- Add eecloud_will_clear() and change eecloud_will_set() to only set the
   will.
-- Add mosquitto_sub_topic_tokenise() and mosquitto_sub_topic_tokens_free()
+- Add eecloud_sub_topic_tokenise() and eecloud_sub_topic_tokens_free()
   utility functions to tokenise a subscription/topic string into a string
   array.
-- Add mosquitto_topic_matches_sub() to check whether a topic matches a
+- Add eecloud_topic_matches_sub() to check whether a topic matches a
   subscription.
-- Replaced mosquitto_log_init() with mosquitto_log_callback_set() to allow
+- Replaced eecloud_log_init() with eecloud_log_callback_set() to allow
   clients to decide what to do with log messages.
 - Client will now disconnect itself from the broker if it doesn't receive a
   PINGRESP in the keepalive period after sending a PINGREQ.
 - Client will now send a PINGREQ if it has not received a message from the
   broker in keepalive seconds.
-- mosquitto_new() will now generate a random client id if the id parameter is
+- eecloud_new() will now generate a random client id if the id parameter is
   NULL.
-- Added max_packets to mosquitto_loop(), mosquitto_loop_read() and
-  mosquitto_loop_write() to control the maximum number of packets that are
+- Added max_packets to eecloud_loop(), eecloud_loop_read() and
+  eecloud_loop_write() to control the maximum number of packets that are
   handled per call.
 - Payload parameters are now void * instead of uint8_t *.
-- The clean_session parameter has been moved from mosquitto_connect() to
-  mosquitto_new() because it is a client parameter rather than a connection
+- The clean_session parameter has been moved from eecloud_connect() to
+  eecloud_new() because it is a client parameter rather than a connection
   parameter.
 - Functions now use int instead of uint*_t where possible.
-- mosquitto_new() now sets errno to indicate failure type.
+- eecloud_new() now sets errno to indicate failure type.
 - Return MOSQ_ERR_INVAL on zero length topic.
 - Fix automatic client id generation on Windows.
-- mosquitto_loop_misq() can now return MOSQ_ERR_NO_CONN.
+- eecloud_loop_misq() can now return MOSQ_ERR_NO_CONN.
 - Compile static library as well as dynamic library with default makefiles.
-- Rename C++ namespace from mosquittopp to mosqpp to remove ambiguity.
-- C++ lib_init(), lib_version() and lib_cleanup() are now in the mosqpp
-  namespace directly, not mosquittopp class members.
+- Rename C++ namespace from eecloudpp to ecldpp to remove ambiguity.
+- C++ lib_init(), lib_version() and lib_cleanup() are now in the ecldpp
+  namespace directly, not eecloudpp class members.
 - The Python library is now written in pure Python and so no longer depends on
-  libmosquitto. 
+  libeecloud. 
 - The Python library includes SSL/TLS support.
 - The Python library should now be compatible with Python 3.
 
@@ -780,7 +780,7 @@ Other:
 - Add support for $SYS/broker/clients/maximum and $SYS/broker/clients/active
   topics.
 - Add support for $SYS messages/byte per second received/sent topics.
-- Updated mosquitto man page - $SYS hierarchy and signal support were out of
+- Updated eecloud man page - $SYS hierarchy and signal support were out of
   date.
 - Auto generated pub/sub client ids now include the hostname.
 - Tool for dumping persistent DB contents is available in src/db_dump. It isn't
@@ -790,9 +790,9 @@ Other:
 - Add new return type MOSQ_ERR_ERRNO to indicate that the errno variable should
   be checked for the real error code.
 - Add support for connection_messages config option.
-- mosquitto_sub will now refuse to run if the -c option (disable clean session)
+- eecloud_sub will now refuse to run if the -c option (disable clean session)
   is given and no client id is provided.
-- mosquitto_pub now gives more useful error messages on invalid input or other
+- eecloud_pub now gives more useful error messages on invalid input or other
   error conditions.
 - Fix Python will_set() true/True typo.
 - Fix messages to topic "a/b" incorrectly matching on a subscription "a" if
@@ -857,15 +857,15 @@ Other:
 
 - Implement bridge state notification messages.
 - Save client last used mid in persistent database (DB version number bumped).
-- Expose message id in Python MosquittoMessage.
+- Expose message id in Python EecloudMessage.
 - It is now possible to set the topic QoS level for bridges.
-- Python MosquittoMessage payload parameter is now a Python string, not a
+- Python EecloudMessage payload parameter is now a Python string, not a
   ctypes object which makes it much easier to use.
 - Fix queueing of messages for disconnected clients. The max_queued_messages
   option is now obeyed.
-- C++ library is now in its own namespace, mosquittopp.
+- C++ library is now in its own namespace, eecloudpp.
 - Add support for adding log message timestamps in the broker.
-- Fix missing mosquitto_username_pw_set() python binding.
+- Fix missing eecloud_username_pw_set() python binding.
 - Fix keepalive timeout for reconnecting non clean-session clients. Prevents
   immediate disconnection on reconnection.
 - Fix subscription wildcard matching - a subscription of +/+ will now match
@@ -883,18 +883,18 @@ Other:
 
 - Reload (most) configuration on SIGHUP.
 - Memory tracking is no longer compiled in the client library.
-- Add --help option to mosquitto to display usage.
+- Add --help option to eecloud to display usage.
 - Add --id-prefix option to clients to allow easier use with brokers that are
   using the clientid_prefix option.
 - Fix compilation on QNX.
 - Add -P as a synonym argument for --pw in the clients.
-- Fix python MosquittoMessage payload parameter. This is now returned as a
+- Fix python EecloudMessage payload parameter. This is now returned as a
   pointer to an array of c_uint8 values so binary data is handled correctly.
   If a string is needed, use msg.payload_str
 - Fix memory leaks on client authentication.
 - If password_file is not defined then clients can now connect even if they
   use a username/password.
-- Add mosquitto_reconnect() to the client library.
+- Add eecloud_reconnect() to the client library.
 - Add option for compiling with liberal protocol compliance support (enabled
   by default). 
 - Fix problems with clients reconnecting and old messages remaining in the
@@ -953,8 +953,8 @@ Other:
   has disconnected unexpectedly.
 - Always close persistent DB file after restoring.
 - Return error code when exiting the clients.
-- mosquitto_publish() now returns MOSQ_ERR_INVAL if the topic contains + or #
-- mosquitto now silently rejects published messages with + or # in the topic.
+- eecloud_publish() now returns MOSQ_ERR_INVAL if the topic contains + or #
+- eecloud now silently rejects published messages with + or # in the topic.
 - max_connections is now a per-listener setting instead of global.
 - Connection count is now reduced when clients disconnect (bug #797983).
 
@@ -973,7 +973,7 @@ Other:
 =================
 
 - Fix Windows compilation.
-- Fix mosquitto.py on Windows - call lib init/cleanup.
+- Fix eecloud.py on Windows - call lib init/cleanup.
 - Don't abort when connecting if given an unknown address type (assuming an
   IPv4 or IPv6 address is given).
 
@@ -983,7 +983,7 @@ Other:
 - Implement support for the password_file option and accompanying
   authentication requirements in the broker.
 - Implement topic Access Control Lists. 
-- mosquitto_will_set() and mosquitto_publish() now return
+- eecloud_will_set() and eecloud_publish() now return
   MOSQ_ERR_PAYLOAD_SIZE if the payload is too large (>268,435,455 bytes).
 - Bridge support can now be disabled at compile time.
 - Group together network writes for outgoing packets - don't send single byte
@@ -1002,8 +1002,8 @@ Other:
 - Only abort with an error when opening listening sockets if no address family
   is available, rather than aborting when any address family is not available.
 - Don't clean queued messages when a non clean session client reconnects.
-- Make mosquitto.py compatible with Python <2.6.
-- Fix mosquitto.h header includes for Windows.
+- Make eecloud.py compatible with Python <2.6.
+- Fix eecloud.h header includes for Windows.
 
 0.9.2 - 20110208
 ================
@@ -1017,7 +1017,7 @@ Other:
   connection.
 - Fix a number of potential problems caused when a client with a duplicate id
   connects.
-- Install mosquitto.conf under cmake.
+- Install eecloud.conf under cmake.
 
 0.9.1 - 20101203
 ================
@@ -1034,16 +1034,16 @@ Other:
   sqlite3-pcre. It also means that the persistent database format has had to
   be reimplemented in a custom format. Optional support for importing old
   sqlite databases is provided.
-- Added IPv6 support for mosquitto and the clients.
+- Added IPv6 support for eecloud and the clients.
 - Provide username and password support for the clients and client libraries.
   This is part of the new MQTT v3.1 spec.
 - The broker supports the username and password connection flags, but will not
   do anything with the username and password.
 - Python callback functions now optionally take an extra argument which will
-  return the user object passed to the Mosquitto() constructor, or the calling
-  python object itself if nothing was given to Mosquitto().
-- Remove the mosquitto command line option "-i interface".
-- Remove the mosquitto.conf "interface" variable.
+  return the user object passed to the Eecloud() constructor, or the calling
+  python object itself if nothing was given to Eecloud().
+- Remove the eecloud command line option "-i interface".
+- Remove the eecloud.conf "interface" variable.
 - Add support for the listener config variable (replaces the interface
   variable)
 - Add support for the bind_address config variable.
@@ -1061,8 +1061,8 @@ Other:
 - Fix max_inflight_messages and max_queued_messages operation. These
   parameters now apply only to QoS 1 and 2 messages and are used regardless of
   the client connection state.
-- mosquitto.conf now installed to /etc/mosquitto/mosquitto.conf instead of
-  /etc/mosquitto.conf. The /etc/mosquitto/ directory will be used for password
+- eecloud.conf now installed to /etc/eecloud/eecloud.conf instead of
+  /etc/eecloud.conf. The /etc/eecloud/ directory will be used for password
   and access control files in the future.
 - Give the compile time option of using 32-bit integers for the database IDs
   instead of 64-bit integers. This is useful where htobe64()/be64toh() are not
@@ -1081,7 +1081,7 @@ Other:
 0.8.2 - 20100815
 ================
 
-- Fix default loop() timeout value in mosquitto.py. Previous value was 0,
+- Fix default loop() timeout value in eecloud.py. Previous value was 0,
   causing high cpu load.
 - Fix message handling problem in client library when more than one message was
   in the client queue.
@@ -1110,7 +1110,7 @@ Other:
   and be more compatible with rsmb.
 - Add cleansession variable for configuring bridges.
 - Add keepalive_interval variable for bridges.
-- Remove default topic subscription for mosquitto_sub because the old
+- Remove default topic subscription for eecloud_sub because the old
   behaviour was too confusing.
 - Added a C client library, which the pub and sub clients now use.
 - Added a C++ client library (bound to the C library).
@@ -1121,7 +1121,7 @@ Other:
 0.7 - 20100615
 ==============
 
-- mosquitto_pub can now send null (zero length) messages.
+- eecloud_pub can now send null (zero length) messages.
 - Don't store QoS=0 messages for disconnected clients with subscriptions of
   QoS>0.
 - accept() all available sockets when new clients are connecting, rather than
@@ -1148,19 +1148,19 @@ Other:
 ==============
 
 - Basic support for connecting multiple MQTT brokers together (bridging).
-- mosquitto_sub can now subscribe to multiple topics (limited to a global QoS).
-- mosquitto_pub can now send a file as a message.
-- mosquitto_pub can now read all of stdin and send it as a message.
-- mosquitto_pub can now read stdin and send each line as a message.
-- mosquitto will now correctly run VACUUM on the persistent database on exit.
+- eecloud_sub can now subscribe to multiple topics (limited to a global QoS).
+- eecloud_pub can now send a file as a message.
+- eecloud_pub can now read all of stdin and send it as a message.
+- eecloud_pub can now read stdin and send each line as a message.
+- eecloud will now correctly run VACUUM on the persistent database on exit.
 - Implement a more efficient database design, so that only one copy of each
   message is held in the database, rather than one per subscribed client.
 - Add the store_cleanup_interval config option for dealing with the internal
   message store.
 - Add support for disabling "clean session" for the sub client.
-- Add support for automatic upgrading of the mosquitto DB from v1 to v2.
+- Add support for automatic upgrading of the eecloud DB from v1 to v2.
 - Add persistence_file config option to allow changing the filename of the
-  persistence database. This allows multiple mosquitto DBs to be stored in the
+  persistence database. This allows multiple eecloud DBs to be stored in the
   same location whilst keeping persistence_location compatible with rsmb.
 - Don't store QoS=0 messages for disconnected clients. Fixes bug #572608. This
   wasn't correctly fixed in version 0.5.
@@ -1179,7 +1179,7 @@ Other:
 
 - Fix memory allocation in mqtt3_fix_sub_topic() (bug #531861).
 - Remove accidental limit of 100 client connections.
-- Fix mosquitto_pub handling of messages with QoS>0 (bug #537061).
+- Fix eecloud_pub handling of messages with QoS>0 (bug #537061).
 
 0.5.3 - 20100303
 ================
@@ -1196,7 +1196,7 @@ Other:
 - Always update last backup time, so that the backup doesn't run every time
   through the main loop once autosave_interval has been reached.
 - Report $SYS/broker/uptime in the same format as rsmb.
-- Make mandatory options obvious in usage output and man page of mosquitto_pub.
+- Make mandatory options obvious in usage output and man page of eecloud_pub.
   Fixes bug #529990.
 - Treat subscriptions with a trailing slash correctly. This should fix bugs
   #530369 and #530099.
@@ -1213,9 +1213,9 @@ Other:
   clean start set.
 - Rename msg_timeout option to retry_interval for better rsmb compatibility.
 - Change persistence behaviour. The database is now stored in memory even if
-  persistence is enabled. It is written to disk when mosquitto exits and also at
+  persistence is enabled. It is written to disk when eecloud exits and also at
   periodic intervals as defined by the new autosave_interval option.
-- The writing of the persistence database may be forced by sending mosquitto
+- The writing of the persistence database may be forced by sending eecloud
   the SIGUSR1 signal.
 - Clients that do not send CONNECT as their first command are now
   disconnected.
@@ -1224,7 +1224,7 @@ Other:
 - Log message on CONNECT with invalid protocol or protocol version.
 - Default sqlite3-pcre path on Linux is now /usr/lib/sqlite3/pcre.so to match
   future sqlite3-pcre packages.
-- Add mosquitto_sub and mosquitto_pub, simple clients for subscribe/publish.
+- Add eecloud_sub and eecloud_pub, simple clients for subscribe/publish.
 - Add man pages for clients.
 - Add general man page on mqtt.
 - Root privileges are now dropped only after attempting to write a pid file
@@ -1267,7 +1267,7 @@ Other:
 ==============
 
 - The port option in the configuration file and --port command line argument
-  may now be given any number of times to make mosquitto listen on multiple
+  may now be given any number of times to make eecloud listen on multiple
   sockets.
 - Add new config file and command line option "interface" to specify an
   interface to listen on, rather than all interfaces.
@@ -1291,10 +1291,10 @@ Other:
 - Don't use persistence by default.
 - Default behaviour is now more sane when run by a normal user with no command
   line options (combination of above changes).
-- Added option user to config file, defaulting to a value of mosquitto. If
-  this value isn't blank and mosquitto is started by root, then it will drop
+- Added option user to config file, defaulting to a value of eecloud. If
+  this value isn't blank and eecloud is started by root, then it will drop
   privileges by changing to the user and its primary group. This replaces the
   current behaviour of refusing to start if run by root.
 - Fix non-persistent mode, which would never work in the previous release.
 - Added information on default values of msg_timeout and sys_interval to the
-  mosquitto.conf man page. (closes bug #492045).
+  eecloud.conf man page. (closes bug #492045).

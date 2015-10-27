@@ -33,7 +33,7 @@ my $dbusername = "powermeter";
 my $dbpassword = "password";
 my $dbtable = "powermeter";
 
-my $subclient = "/usr/bin/mosquitto_sub -t sensors/cc128";
+my $subclient = "/usr/bin/eecloud_sub -t sensors/cc128";
 open(SUB, "$subclient|");
 SUB->autoflush(1);
 

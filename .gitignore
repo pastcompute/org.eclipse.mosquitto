@@ -6,21 +6,21 @@ cpp/*.test
 *.pyc
 *.vglog
 
-client/mosquitto_pub
-client/mosquitto_sub
-examples/mysql_log/mosquitto_mysql_log
+client/eecloud_pub
+client/eecloud_sub
+examples/mysql_log/eecloud_mysql_log
 examples/temperature_conversion/mqtt_temperature_conversion
-man/mosquitto.8
-man/mosquitto-tls.7
-man/mosquitto.conf.5
-man/libmosquitto.3
-man/mosquitto_passwd.1
-man/mosquitto_pub.1
-man/mosquitto_sub.1
+man/eecloud.8
+man/eecloud-tls.7
+man/eecloud.conf.5
+man/libeecloud.3
+man/eecloud_passwd.1
+man/eecloud_pub.1
+man/eecloud_sub.1
 man/mqtt.7
-src/db_dump/mosquitto_db_dump
-src/mosquitto
-src/mosquitto_passwd
+src/db_dump/eecloud_db_dump
+src/eecloud
+src/eecloud_passwd
 test/broker/broker.pid
 test/test_client
 test/fake_user
@@ -30,9 +30,9 @@ test/msgsps_pub.dat
 test/msgsps_sub.dat
 test/broker/c/auth_plugin.so
 
-lib/cpp/libmosquittopp.so*
-lib/libmosquitto.so*
-lib/libmosquitto.a
+lib/cpp/libeecloudpp.so*
+lib/libeecloud.so*
+lib/libeecloud.a
 
 test/ssl/*.csr
 

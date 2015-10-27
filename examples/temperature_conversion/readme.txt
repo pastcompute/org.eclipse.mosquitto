@@ -1,4 +1,4 @@
-This is a simple example of the C++ library mosquittopp.
+This is a simple example of the C++ library eecloudpp.
 
 It is a client that subscribes to the topic temperature/celsius which should
 have temperature data in text form being published to it. It reads this data as

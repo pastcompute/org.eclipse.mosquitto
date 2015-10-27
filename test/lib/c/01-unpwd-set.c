@@ -2,25 +2,25 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <mosquitto.h>
+#include <eecloud.h>
 
 static int run = -1;
 int main(int argc, char *argv[])
 {
 	int rc;
-	struct mosquitto *mosq;
+	struct eecloud *ecld;
 
-	mosquitto_lib_init();
+	eecloud_lib_init();
 
-	mosq = mosquitto_new("01-unpwd-set", true, NULL);
-	mosquitto_username_pw_set(mosq, "uname", ";'[08gn=#");
+	ecld = eecloud_new("01-unpwd-set", true, NULL);
+	eecloud_username_pw_set(ecld, "uname", ";'[08gn=#");
 
-	rc = mosquitto_connect(mosq, "localhost", 1888, 60);
+	rc = eecloud_connect(ecld, "localhost", 1888, 60);
 
 	while(run == -1){
-		mosquitto_loop(mosq, -1, 1);
+		eecloud_loop(ecld, -1, 1);
 	}
 
-	mosquitto_lib_cleanup();
+	eecloud_lib_cleanup();
 	return run;
 }

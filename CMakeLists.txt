@@ -6,7 +6,7 @@
 
 set(CMAKE_LEGACY_CYGWIN_WIN32 0)
 
-project(mosquitto)
+project(eecloud)
 
 cmake_minimum_required(VERSION 2.8)
 # Only for version 3 and up. cmake_policy(SET CMP0042 NEW)
@@ -38,9 +38,9 @@ else (WIN32)
 	set (BINDIR bin)
 	set (SBINDIR sbin)
 	if (${CMAKE_INSTALL_PREFIX} STREQUAL /usr)
-		set (SYSCONFDIR /etc/mosquitto)
+		set (SYSCONFDIR /etc/eecloud)
 	else (${CMAKE_INSTALL_PREFIX} STREQUAL /usr)
-		set (SYSCONFDIR etc/mosquitto)
+		set (SYSCONFDIR etc/eecloud)
 	endif (${CMAKE_INSTALL_PREFIX} STREQUAL /usr)
 	
 	set (LIBDIR lib${LIB_SUFFIX})
@@ -48,7 +48,7 @@ else (WIN32)
 	set (INCLUDEDIR include)
 	set (DATAROOTDIR share)
 	set (MANDIR ${DATAROOTDIR}/man)
-	set (SHAREDIR ${DATAROOTDIR}/mosquitto)
+	set (SHAREDIR ${DATAROOTDIR}/eecloud)
 endif (WIN32)
 
 option(WITH_TLS
@@ -92,4 +92,4 @@ add_subdirectory(man)
 # Install config file
 # ========================================
 
-install(FILES mosquitto.conf aclfile.example pskfile.example pwfile.example DESTINATION ${SYSCONFDIR})
+install(FILES eecloud.conf aclfile.example pskfile.example pwfile.example DESTINATION ${SYSCONFDIR})

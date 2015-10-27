@@ -1,25 +1,25 @@
 /* Fudge a file description into a client instead of a socket connection so
  * that we can write out packets to a file.
- * See http://answers.launchpad.net/mosquitto/+question/123594
- * also http://answers.launchpad.net/mosquitto/+question/136821
+ * See http://answers.launchpad.net/eecloud/+question/123594
+ * also http://answers.launchpad.net/eecloud/+question/136821
  */
 #include <fcntl.h>
 #include <stdio.h>
 #include <unistd.h>
 
-#include <mosquitto.h>
-#include <mosquitto_internal.h>
-#include <send_mosq.h>
+#include <eecloud.h>
+#include <eecloud_internal.h>
+#include <send_ecld.h>
 
 int main(int argc, char *argv[])
 {
-	struct mosquitto *mosq;
+	struct eecloud *ecld;
 	int fd;
 	bool clean_session = true;
 	int keepalive = 60;
 
-	mosq = mosquitto_new("packetgen", NULL);
-	if(!mosq){
+	ecld = eecloud_new("packetgen", NULL);
+	if(!ecld){
 		fprintf(stderr, "Error: Out of memory.\n");
 		return 1;
 	}
@@ -30,9 +30,9 @@ int main(int argc, char *argv[])
 		fprintf(stderr, "Error: Unable to open mqtt.connect for writing.\n");
 		return 1;
 	}
-	mosq->core.sock = fd;
-	printf("_mosquitto_send_connect(): %d\n", _mosquitto_send_connect(mosq, keepalive, clean_session));
-	printf("loop: %d\n", mosquitto_loop_write(mosq));
+	ecld->core.sock = fd;
+	printf("_eecloud_send_connect(): %d\n", _eecloud_send_connect(ecld, keepalive, clean_session));
+	printf("loop: %d\n", eecloud_loop_write(ecld));
 	close(fd);
 
 	/* SUBSCRIBE */
@@ -41,12 +41,12 @@ int main(int argc, char *argv[])
 		fprintf(stderr, "Error: Unable to open mqtt.subscribe for writing.\n");
 		return 1;
 	}
-	mosq->core.sock = fd;
-	printf("_mosquitto_send_subscribe(): %d\n", _mosquitto_send_subscribe(mosq, NULL, false, "subscribe/topic", 2));
-	printf("loop: %d\n", mosquitto_loop_write(mosq));
+	ecld->core.sock = fd;
+	printf("_eecloud_send_subscribe(): %d\n", _eecloud_send_subscribe(ecld, NULL, false, "subscribe/topic", 2));
+	printf("loop: %d\n", eecloud_loop_write(ecld));
 	close(fd);
 
-	mosquitto_destroy(mosq);
+	eecloud_destroy(ecld);
 
 	return 0;
 }

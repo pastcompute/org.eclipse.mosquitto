@@ -1,12 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <mosquitto.h>
+#include <eecloud.h>
 
 void do_check(const char *sub, const char *topic, bool bad_res)
 {
 	bool match;
 
-	mosquitto_topic_matches_sub(sub, topic, &match);
+	eecloud_topic_matches_sub(sub, topic, &match);
 	
 	if(match == bad_res){
 		printf("s: %s t: %s\n", sub, topic);

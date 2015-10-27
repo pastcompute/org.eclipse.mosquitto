@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <string.h>
-#include <mosquitto.h>
+#include <eecloud.h>
 
 void print_error(const char *topic, char **topics, int topic_count)
 {
@@ -22,7 +22,7 @@ int main(int argc, char *argv[])
 	int topic_count;
 	bool match;
 
-	if(mosquitto_sub_topic_tokenise("topic", &topics, &topic_count)){
+	if(eecloud_sub_topic_tokenise("topic", &topics, &topic_count)){
 		printf("Out of memory.\n");
 		return 1;
 	}
@@ -31,7 +31,7 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	if(mosquitto_sub_topic_tokenise("a/deep/topic/hierarchy", &topics, &topic_count)){
+	if(eecloud_sub_topic_tokenise("a/deep/topic/hierarchy", &topics, &topic_count)){
 		printf("Out of memory.\n");
 		return 1;
 	}
@@ -44,7 +44,7 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	if(mosquitto_sub_topic_tokenise("/a/deep/topic/hierarchy", &topics, &topic_count)){
+	if(eecloud_sub_topic_tokenise("/a/deep/topic/hierarchy", &topics, &topic_count)){
 		printf("Out of memory.\n");
 		return 1;
 	}
@@ -58,7 +58,7 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	if(mosquitto_sub_topic_tokenise("a/b/c", &topics, &topic_count)){
+	if(eecloud_sub_topic_tokenise("a/b/c", &topics, &topic_count)){
 		printf("Out of memory.\n");
 		return 1;
 	}
@@ -70,7 +70,7 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	if(mosquitto_sub_topic_tokenise("/a/b/c", &topics, &topic_count)){
+	if(eecloud_sub_topic_tokenise("/a/b/c", &topics, &topic_count)){
 		printf("Out of memory.\n");
 		return 1;
 	}
@@ -83,7 +83,7 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	if(mosquitto_sub_topic_tokenise("a///hierarchy", &topics, &topic_count)){
+	if(eecloud_sub_topic_tokenise("a///hierarchy", &topics, &topic_count)){
 		printf("Out of memory.\n");
 		return 1;
 	}
@@ -96,7 +96,7 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	if(mosquitto_sub_topic_tokenise("/a///hierarchy", &topics, &topic_count)){
+	if(eecloud_sub_topic_tokenise("/a///hierarchy", &topics, &topic_count)){
 		printf("Out of memory.\n");
 		return 1;
 	}
@@ -110,7 +110,7 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	if(mosquitto_sub_topic_tokenise("/a///hierarchy/", &topics, &topic_count)){
+	if(eecloud_sub_topic_tokenise("/a///hierarchy/", &topics, &topic_count)){
 		printf("Out of memory.\n");
 		return 1;
 	}

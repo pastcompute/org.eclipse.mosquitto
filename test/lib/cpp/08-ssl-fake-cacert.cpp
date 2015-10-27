@@ -1,39 +1,39 @@
 #include <errno.h>
-#include <mosquittopp.h>
+#include <eecloudpp.h>
 
 static int run = -1;
 
-class mosquittopp_test : public mosqpp::mosquittopp
+class eecloudpp_test : public ecldpp::eecloudpp
 {
 	public:
-		mosquittopp_test(const char *id);
+		eecloudpp_test(const char *id);
 
 		void on_connect(int rc);
 };
 
-mosquittopp_test::mosquittopp_test(const char *id) : mosqpp::mosquittopp(id)
+eecloudpp_test::eecloudpp_test(const char *id) : ecldpp::eecloudpp(id)
 {
 }
 
-void mosquittopp_test::on_connect(int rc)
+void eecloudpp_test::on_connect(int rc)
 {
 	exit(1);
 }
 
 int main(int argc, char *argv[])
 {
-	struct mosquittopp_test *mosq;
+	struct eecloudpp_test *ecld;
 	int rc;
 
-	mosqpp::lib_init();
+	ecldpp::lib_init();
 
-	mosq = new mosquittopp_test("08-ssl-fake-cacert");
+	ecld = new eecloudpp_test("08-ssl-fake-cacert");
 
-	mosq->tls_opts_set(1, "tlsv1", NULL);
-	mosq->tls_set("../ssl/test-fake-root-ca.crt", NULL, "../ssl/client.crt", "../ssl/client.key");
-	mosq->connect("localhost", 1888, 60);
+	ecld->tls_opts_set(1, "tlsv1", NULL);
+	ecld->tls_set("../ssl/test-fake-root-ca.crt", NULL, "../ssl/client.crt", "../ssl/client.key");
+	ecld->connect("localhost", 1888, 60);
 
-	rc = mosq->loop_forever();
+	rc = ecld->loop_forever();
 	if(rc == MOSQ_ERR_ERRNO && errno == EPROTO){
 		return 0;
 	}else{

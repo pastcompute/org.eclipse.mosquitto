@@ -5,7 +5,7 @@ int main(int argc, char *argv[])
 	class mqtt_tempconv *tempconv;
 	int rc;
 
-	mosqpp::lib_init();
+	ecldpp::lib_init();
 
 	tempconv = new mqtt_tempconv("tempconv", "localhost", 1883);
 	
@@ -16,7 +16,7 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	mosqpp::lib_cleanup();
+	ecldpp::lib_cleanup();
 
 	return 0;
 }

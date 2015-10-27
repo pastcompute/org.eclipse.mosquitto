@@ -1,4 +1,4 @@
-check process mosquitto with pidfile /var/run/mosquitto.pid
-	start = "/etc/init.d/mosquitto start"
-	stop = "/etc/init.d/mosquitto stop"
+check process eecloud with pidfile /var/run/eecloud.pid
+	start = "/etc/init.d/eecloud start"
+	stop = "/etc/init.d/eecloud stop"
 

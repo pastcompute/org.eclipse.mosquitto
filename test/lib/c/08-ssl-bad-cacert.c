@@ -2,20 +2,20 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <mosquitto.h>
+#include <eecloud.h>
 
 int main(int argc, char *argv[])
 {
 	int rc = 1;
-	struct mosquitto *mosq;
+	struct eecloud *ecld;
 
-	mosquitto_lib_init();
+	eecloud_lib_init();
 
-	mosq = mosquitto_new("08-ssl-bad-cacert", true, NULL);
-	mosquitto_tls_opts_set(mosq, 1, "tlsv1", NULL);
-	if(mosquitto_tls_set(mosq, "this/file/doesnt/exist", NULL, NULL, NULL, NULL) == MOSQ_ERR_INVAL){
+	ecld = eecloud_new("08-ssl-bad-cacert", true, NULL);
+	eecloud_tls_opts_set(ecld, 1, "tlsv1", NULL);
+	if(eecloud_tls_set(ecld, "this/file/doesnt/exist", NULL, NULL, NULL, NULL) == MOSQ_ERR_INVAL){
 		rc = 0;
 	}
-	mosquitto_lib_cleanup();
+	eecloud_lib_cleanup();
 	return rc;
 }

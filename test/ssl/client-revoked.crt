@@ -3,7 +3,7 @@ Certificate:
         Version: 3 (0x2)
         Serial Number: 4 (0x4)
     Signature Algorithm: sha1WithRSAEncryption
-        Issuer: C=GB, ST=Derbyshire, O=Mosquitto Project, OU=Testing, CN=Signing CA
+        Issuer: C=GB, ST=Derbyshire, O=Eecloud Project, OU=Testing, CN=Signing CA
         Validity
             Not Before: Aug 30 22:03:34 2013 GMT
             Not After : Aug 29 22:03:34 2018 GMT

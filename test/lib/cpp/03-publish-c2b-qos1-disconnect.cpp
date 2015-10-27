@@ -1,26 +1,26 @@
 #include <cstdlib>
 #include <cstring>
 
-#include <mosquittopp.h>
+#include <eecloudpp.h>
 
 static int run = -1;
 static int first_connection = 1;
 
-class mosquittopp_test : public mosqpp::mosquittopp
+class eecloudpp_test : public ecldpp::eecloudpp
 {
 	public:
-		mosquittopp_test(const char *id);
+		eecloudpp_test(const char *id);
 
 		void on_connect(int rc);
 		void on_disconnect(int rc);
 		void on_publish(int mid);
 };
 
-mosquittopp_test::mosquittopp_test(const char *id) : mosqpp::mosquittopp(id)
+eecloudpp_test::eecloudpp_test(const char *id) : ecldpp::eecloudpp(id)
 {
 }
 
-void mosquittopp_test::on_connect(int rc)
+void eecloudpp_test::on_connect(int rc)
 {
 	if(rc){
 		exit(1);
@@ -32,7 +32,7 @@ void mosquittopp_test::on_connect(int rc)
 	}
 }
 
-void mosquittopp_test::on_disconnect(int rc)
+void eecloudpp_test::on_disconnect(int rc)
 {
 	if(rc){
 		reconnect();
@@ -41,27 +41,27 @@ void mosquittopp_test::on_disconnect(int rc)
 	}
 }
 
-void mosquittopp_test::on_publish(int mid)
+void eecloudpp_test::on_publish(int mid)
 {
 	disconnect();
 }
 
 int main(int argc, char *argv[])
 {
-	struct mosquittopp_test *mosq;
+	struct eecloudpp_test *ecld;
 
-	mosqpp::lib_init();
+	ecldpp::lib_init();
 
-	mosq = new mosquittopp_test("publish-qos1-test");
-	mosq->message_retry_set(3);
+	ecld = new eecloudpp_test("publish-qos1-test");
+	ecld->message_retry_set(3);
 
-	mosq->connect("localhost", 1888, 60);
+	ecld->connect("localhost", 1888, 60);
 
 	while(run == -1){
-		mosq->loop();
+		ecld->loop();
 	}
 
-	mosqpp::lib_cleanup();
+	ecldpp::lib_cleanup();
 
 	return run;
 }

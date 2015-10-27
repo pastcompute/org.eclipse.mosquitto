@@ -46,14 +46,14 @@ Contributors:
 #include <sys/socket.h>
 #endif
 
-#include <mosquitto_broker.h>
+#include <eecloud_broker.h>
 #include <mqtt3_protocol.h>
-#include <memory_mosq.h>
-#include <net_mosq.h>
-#include <util_mosq.h>
+#include <memory_ecld.h>
+#include <net_ecld.h>
+#include <util_ecld.h>
 
 #ifdef WITH_TLS
-#include "tls_mosq.h"
+#include "tls_ecld.h"
 #include <openssl/err.h>
 static int tls_ex_index_context = -1;
 static int tls_ex_index_listener = -1;
@@ -63,12 +63,12 @@ static int tls_ex_index_listener = -1;
 extern unsigned int g_socket_connections;
 #endif
 
-int mqtt3_socket_accept(struct mosquitto_db *db, mosq_sock_t listensock)
+int mqtt3_socket_accept(struct eecloud_db *db, ecld_sock_t listensock)
 {
 	int i;
 	int j;
-	mosq_sock_t new_sock = INVALID_SOCKET;
-	struct mosquitto *new_context;
+	ecld_sock_t new_sock = INVALID_SOCKET;
+	struct eecloud *new_context;
 #ifdef WITH_TLS
 	BIO *bio;
 	int rc;
@@ -87,18 +87,18 @@ int mqtt3_socket_accept(struct mosquitto_db *db, mosq_sock_t listensock)
 	g_socket_connections++;
 #endif
 
-	if(_mosquitto_socket_nonblock(new_sock)){
+	if(_eecloud_socket_nonblock(new_sock)){
 		return INVALID_SOCKET;
 	}
 
 #ifdef WITH_WRAP
 	/* Use tcpd / libwrap to determine whether a connection is allowed. */
-	request_init(&wrap_req, RQ_FILE, new_sock, RQ_DAEMON, "mosquitto", 0);
+	request_init(&wrap_req, RQ_FILE, new_sock, RQ_DAEMON, "eecloud", 0);
 	fromhost(&wrap_req);
 	if(!hosts_access(&wrap_req)){
 		/* Access is denied */
-		if(!_mosquitto_socket_get_address(new_sock, address, 1024)){
-			_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "Client connection from %s denied access by tcpd.", address);
+		if(!_eecloud_socket_get_address(new_sock, address, 1024)){
+			_eecloud_log_printf(NULL, MOSQ_LOG_NOTICE, "Client connection from %s denied access by tcpd.", address);
 		}
 		COMPAT_CLOSE(new_sock);
 		return -1;
@@ -124,7 +124,7 @@ int mqtt3_socket_accept(struct mosquitto_db *db, mosq_sock_t listensock)
 	}
 
 	if(new_context->listener->max_connections > 0 && new_context->listener->client_count > new_context->listener->max_connections){
-		_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "Client connection from %s denied: max_connections exceeded.", new_context->address);
+		_eecloud_log_printf(NULL, MOSQ_LOG_NOTICE, "Client connection from %s denied: max_connections exceeded.", new_context->address);
 		mqtt3_context_cleanup(db, new_context, true);
 		return -1;
 	}
@@ -155,7 +155,7 @@ int mqtt3_socket_accept(struct mosquitto_db *db, mosq_sock_t listensock)
 						}else{
 							e = ERR_get_error();
 							while(e){
-								_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE,
+								_eecloud_log_printf(NULL, MOSQ_LOG_NOTICE,
 										"Client connection from %s failed: %s.",
 										new_context->address, ERR_error_string(e, ebuf));
 								e = ERR_get_error();
@@ -170,7 +170,7 @@ int mqtt3_socket_accept(struct mosquitto_db *db, mosq_sock_t listensock)
 	}
 #endif
 
-	_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "New connection from %s on port %d.", new_context->address, new_context->listener->port);
+	_eecloud_log_printf(NULL, MOSQ_LOG_NOTICE, "New connection from %s on port %d.", new_context->address, new_context->listener->port);
 
 	return new_sock;
 }
@@ -186,8 +186,8 @@ static int client_certificate_verify(int preverify_ok, X509_STORE_CTX *ctx)
 #ifdef REAL_WITH_TLS_PSK
 static unsigned int psk_server_callback(SSL *ssl, const char *identity, unsigned char *psk, unsigned int max_psk_len)
 {
-	struct mosquitto_db *db;
-	struct mosquitto *context;
+	struct eecloud_db *db;
+	struct eecloud *context;
 	struct _mqtt3_listener *listener;
 	char *psk_key = NULL;
 	int len;
@@ -195,7 +195,7 @@ static unsigned int psk_server_callback(SSL *ssl, const char *identity, unsigned
 
 	if(!identity) return 0;
 
-	db = _mosquitto_get_db();
+	db = _eecloud_get_db();
 
 	context = SSL_get_ex_data(ssl, tls_ex_index_context);
 	if(!context) return 0;
@@ -207,35 +207,35 @@ static unsigned int psk_server_callback(SSL *ssl, const char *identity, unsigned
 
 	/* The hex to BN conversion results in the length halving, so we can pass
 	 * max_psk_len*2 as the max hex key here. */
-	psk_key = _mosquitto_calloc(1, max_psk_len*2 + 1);
+	psk_key = _eecloud_calloc(1, max_psk_len*2 + 1);
 	if(!psk_key) return 0;
 
-	if(mosquitto_psk_key_get(db, psk_hint, identity, psk_key, max_psk_len*2) != MOSQ_ERR_SUCCESS){
-		_mosquitto_free(psk_key);
+	if(eecloud_psk_key_get(db, psk_hint, identity, psk_key, max_psk_len*2) != MOSQ_ERR_SUCCESS){
+		_eecloud_free(psk_key);
 		return 0;
 	}
 
-	len = _mosquitto_hex2bin(psk_key, psk, max_psk_len);
+	len = _eecloud_hex2bin(psk_key, psk, max_psk_len);
 	if (len < 0){
-		_mosquitto_free(psk_key);
+		_eecloud_free(psk_key);
 		return 0;
 	}
 
 	if(listener->use_identity_as_username){
-		context->username = _mosquitto_strdup(identity);
+		context->username = _eecloud_strdup(identity);
 		if(!context->username){
-			_mosquitto_free(psk_key);
+			_eecloud_free(psk_key);
 			return 0;
 		}
 	}
 
-	_mosquitto_free(psk_key);
+	_eecloud_free(psk_key);
 	return len;
 }
 #endif
 
 #ifdef WITH_TLS
-static int _mosquitto_tls_server_ctx(struct _mqtt3_listener *listener)
+static int _eecloud_tls_server_ctx(struct _mqtt3_listener *listener)
 {
 	int ssl_options = 0;
 	char buf[256];
@@ -260,7 +260,7 @@ static int _mosquitto_tls_server_ctx(struct _mqtt3_listener *listener)
 	listener->ssl_ctx = SSL_CTX_new(SSLv23_server_method());
 #endif
 	if(!listener->ssl_ctx){
-		_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to create TLS context.");
+		_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to create TLS context.");
 		return 1;
 	}
 
@@ -287,7 +287,7 @@ static int _mosquitto_tls_server_ctx(struct _mqtt3_listener *listener)
 #elif OPENSSL_VERSION_NUMBER >= 0x10000000L && OPENSSL_VERSION_NUMBER < 0x10002000L
 	ecdh = EC_KEY_new_by_curve_name(NID_X9_62_prime256v1);
 	if(!ecdh){
-		_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to create TLS ECDH curve.");
+		_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to create TLS ECDH curve.");
 		return 1;
 	}
 	SSL_CTX_set_tmp_ecdh(listener->ssl_ctx, ecdh);
@@ -295,19 +295,19 @@ static int _mosquitto_tls_server_ctx(struct _mqtt3_listener *listener)
 #endif
 #endif
 
-	snprintf(buf, 256, "mosquitto-%d", listener->port);
+	snprintf(buf, 256, "eecloud-%d", listener->port);
 	SSL_CTX_set_session_id_context(listener->ssl_ctx, (unsigned char *)buf, strlen(buf));
 
 	if(listener->ciphers){
 		rc = SSL_CTX_set_cipher_list(listener->ssl_ctx, listener->ciphers);
 		if(rc == 0){
-			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to set TLS ciphers. Check cipher list \"%s\".", listener->ciphers);
+			_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to set TLS ciphers. Check cipher list \"%s\".", listener->ciphers);
 			return 1;
 		}
 	}else{
 		rc = SSL_CTX_set_cipher_list(listener->ssl_ctx, "DEFAULT:!aNULL:!eNULL:!LOW:!EXPORT:!SSLv2:@STRENGTH");
 		if(rc == 0){
-			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to set TLS ciphers. Check cipher list \"%s\".", listener->ciphers);
+			_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to set TLS ciphers. Check cipher list \"%s\".", listener->ciphers);
 			return 1;
 		}
 	}
@@ -321,7 +321,7 @@ static int _mosquitto_tls_server_ctx(struct _mqtt3_listener *listener)
  */
 int mqtt3_socket_listen(struct _mqtt3_listener *listener)
 {
-	mosq_sock_t sock = INVALID_SOCKET;
+	ecld_sock_t sock = INVALID_SOCKET;
 	struct addrinfo hints;
 	struct addrinfo *ainfo, *rp;
 	char service[10];
@@ -352,9 +352,9 @@ int mqtt3_socket_listen(struct _mqtt3_listener *listener)
 
 	for(rp = ainfo; rp; rp = rp->ai_next){
 		if(rp->ai_family == AF_INET){
-			_mosquitto_log_printf(NULL, MOSQ_LOG_INFO, "Opening ipv4 listen socket on port %d.", ntohs(((struct sockaddr_in *)rp->ai_addr)->sin_port));
+			_eecloud_log_printf(NULL, MOSQ_LOG_INFO, "Opening ipv4 listen socket on port %d.", ntohs(((struct sockaddr_in *)rp->ai_addr)->sin_port));
 		}else if(rp->ai_family == AF_INET6){
-			_mosquitto_log_printf(NULL, MOSQ_LOG_INFO, "Opening ipv6 listen socket on port %d.", ntohs(((struct sockaddr_in6 *)rp->ai_addr)->sin6_port));
+			_eecloud_log_printf(NULL, MOSQ_LOG_INFO, "Opening ipv6 listen socket on port %d.", ntohs(((struct sockaddr_in6 *)rp->ai_addr)->sin6_port));
 		}else{
 			continue;
 		}
@@ -362,13 +362,13 @@ int mqtt3_socket_listen(struct _mqtt3_listener *listener)
 		sock = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
 		if(sock == INVALID_SOCKET){
 			strerror_r(errno, buf, 256);
-			_mosquitto_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: %s", buf);
+			_eecloud_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: %s", buf);
 			continue;
 		}
 		listener->sock_count++;
-		listener->socks = _mosquitto_realloc(listener->socks, sizeof(mosq_sock_t)*listener->sock_count);
+		listener->socks = _eecloud_realloc(listener->socks, sizeof(ecld_sock_t)*listener->sock_count);
 		if(!listener->socks){
-			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
+			_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
 			return MOSQ_ERR_NOMEM;
 		}
 		listener->socks[listener->sock_count-1] = sock;
@@ -380,7 +380,7 @@ int mqtt3_socket_listen(struct _mqtt3_listener *listener)
 		ss_opt = 1;
 		setsockopt(sock, IPPROTO_IPV6, IPV6_V6ONLY, &ss_opt, sizeof(ss_opt));
 
-		if(_mosquitto_socket_nonblock(sock)){
+		if(_eecloud_socket_nonblock(sock)){
 			return 1;
 		}
 
@@ -389,7 +389,7 @@ int mqtt3_socket_listen(struct _mqtt3_listener *listener)
 			errno = WSAGetLastError();
 #endif
 			strerror_r(errno, buf, 256);
-			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: %s", buf);
+			_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: %s", buf);
 			COMPAT_CLOSE(sock);
 			return 1;
 		}
@@ -399,7 +399,7 @@ int mqtt3_socket_listen(struct _mqtt3_listener *listener)
 			errno = WSAGetLastError();
 #endif
 			strerror_r(errno, buf, 256);
-			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: %s", buf);
+			_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: %s", buf);
 			COMPAT_CLOSE(sock);
 			return 1;
 		}
@@ -410,7 +410,7 @@ int mqtt3_socket_listen(struct _mqtt3_listener *listener)
 	if(listener->sock_count > 0){
 #ifdef WITH_TLS
 		if((listener->cafile || listener->capath) && listener->certfile && listener->keyfile){
-			if(_mosquitto_tls_server_ctx(listener)){
+			if(_eecloud_tls_server_ctx(listener)){
 				COMPAT_CLOSE(sock);
 				return 1;
 			}
@@ -418,11 +418,11 @@ int mqtt3_socket_listen(struct _mqtt3_listener *listener)
 			rc = SSL_CTX_load_verify_locations(listener->ssl_ctx, listener->cafile, listener->capath);
 			if(rc == 0){
 				if(listener->cafile && listener->capath){
-					_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to load CA certificates. Check cafile \"%s\" and capath \"%s\".", listener->cafile, listener->capath);
+					_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to load CA certificates. Check cafile \"%s\" and capath \"%s\".", listener->cafile, listener->capath);
 				}else if(listener->cafile){
-					_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to load CA certificates. Check cafile \"%s\".", listener->cafile);
+					_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to load CA certificates. Check cafile \"%s\".", listener->cafile);
 				}else{
-					_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to load CA certificates. Check capath \"%s\".", listener->capath);
+					_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to load CA certificates. Check capath \"%s\".", listener->capath);
 				}
 				COMPAT_CLOSE(sock);
 				return 1;
@@ -435,19 +435,19 @@ int mqtt3_socket_listen(struct _mqtt3_listener *listener)
 			}
 			rc = SSL_CTX_use_certificate_chain_file(listener->ssl_ctx, listener->certfile);
 			if(rc != 1){
-				_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to load server certificate \"%s\". Check certfile.", listener->certfile);
+				_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to load server certificate \"%s\". Check certfile.", listener->certfile);
 				COMPAT_CLOSE(sock);
 				return 1;
 			}
 			rc = SSL_CTX_use_PrivateKey_file(listener->ssl_ctx, listener->keyfile, SSL_FILETYPE_PEM);
 			if(rc != 1){
-				_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to load server key file \"%s\". Check keyfile.", listener->keyfile);
+				_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to load server key file \"%s\". Check keyfile.", listener->keyfile);
 				COMPAT_CLOSE(sock);
 				return 1;
 			}
 			rc = SSL_CTX_check_private_key(listener->ssl_ctx);
 			if(rc != 1){
-				_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Server certificate/key are inconsistent.");
+				_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Server certificate/key are inconsistent.");
 				COMPAT_CLOSE(sock);
 				return 1;
 			}
@@ -455,14 +455,14 @@ int mqtt3_socket_listen(struct _mqtt3_listener *listener)
 			if(listener->crlfile){
 				store = SSL_CTX_get_cert_store(listener->ssl_ctx);
 				if(!store){
-					_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to obtain TLS store.");
+					_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to obtain TLS store.");
 					COMPAT_CLOSE(sock);
 					return 1;
 				}
 				lookup = X509_STORE_add_lookup(store, X509_LOOKUP_file());
 				rc = X509_load_crl_file(lookup, listener->crlfile, X509_FILETYPE_PEM);
 				if(rc != 1){
-					_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to load certificate revocation file \"%s\". Check crlfile.", listener->crlfile);
+					_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to load certificate revocation file \"%s\". Check crlfile.", listener->crlfile);
 					COMPAT_CLOSE(sock);
 					return 1;
 				}
@@ -478,7 +478,7 @@ int mqtt3_socket_listen(struct _mqtt3_listener *listener)
 				tls_ex_index_listener = SSL_get_ex_new_index(0, "listener", NULL, NULL, NULL);
 			}
 
-			if(_mosquitto_tls_server_ctx(listener)){
+			if(_eecloud_tls_server_ctx(listener)){
 				COMPAT_CLOSE(sock);
 				return 1;
 			}
@@ -486,7 +486,7 @@ int mqtt3_socket_listen(struct _mqtt3_listener *listener)
 			if(listener->psk_hint){
 				rc = SSL_CTX_use_psk_identity_hint(listener->ssl_ctx, listener->psk_hint);
 				if(rc == 0){
-					_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to set TLS PSK hint.");
+					_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to set TLS PSK hint.");
 					COMPAT_CLOSE(sock);
 					return 1;
 				}
@@ -500,7 +500,7 @@ int mqtt3_socket_listen(struct _mqtt3_listener *listener)
 	}
 }
 
-int _mosquitto_socket_get_address(mosq_sock_t sock, char *buf, int len)
+int _eecloud_socket_get_address(ecld_sock_t sock, char *buf, int len)
 {
 	struct sockaddr_storage addr;
 	socklen_t addrlen;

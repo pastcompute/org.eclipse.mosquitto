@@ -1,5 +1,5 @@
 CFLAGS=-Wall -ggdb -I../../lib -I../../lib/cpp
-LDFLAGS=-L../../lib ../../lib/cpp/libmosquittopp.so.1 ../../lib/libmosquitto.so.1
+LDFLAGS=-L../../lib ../../lib/cpp/libeecloudpp.so.1 ../../lib/libeecloud.so.1
 
 .PHONY: all clean
 
