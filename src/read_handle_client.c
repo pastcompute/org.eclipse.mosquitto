@@ -34,9 +34,9 @@ int mqtt3_handle_connack(struct eecloud_db *db, struct eecloud *context)
 	char notification_payload;
 
 	if(!context){
-		return MOSQ_ERR_INVAL;
+		return ECLD_ERR_INVAL;
 	}
-	_eecloud_log_printf(NULL, MOSQ_LOG_DEBUG, "Received CONNACK on connection %s.", context->id);
+	_eecloud_log_printf(NULL, ECLD_LOG_DEBUG, "Received CONNACK on connection %s.", context->id);
 	if(_eecloud_read_byte(&context->in_packet, &byte)) return 1; // Reserved byte, not used
 	if(_eecloud_read_byte(&context->in_packet, &rc)) return 1;
 	switch(rc){
@@ -54,7 +54,7 @@ int mqtt3_handle_connack(struct eecloud_db *db, struct eecloud *context)
 					}else{
 						notification_topic_len = strlen(context->bridge->remote_clientid)+strlen("$SYS/broker/connection//state");
 						notification_topic = _eecloud_malloc(sizeof(char)*(notification_topic_len+1));
-						if(!notification_topic) return MOSQ_ERR_NOMEM;
+						if(!notification_topic) return ECLD_ERR_NOMEM;
 
 						snprintf(notification_topic, notification_topic_len+1, "$SYS/broker/connection/%s/state", context->bridge->remote_clientid);
 						notification_payload = '1';
@@ -86,27 +86,27 @@ int mqtt3_handle_connack(struct eecloud_db *db, struct eecloud *context)
 				}
 			}
 			context->state = ecld_cs_connected;
-			return MOSQ_ERR_SUCCESS;
+			return ECLD_ERR_SUCCESS;
 		case CONNACK_REFUSED_PROTOCOL_VERSION:
 			if(context->bridge){
 				context->bridge->try_private_accepted = false;
 			}
-			_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Connection Refused: unacceptable protocol version");
+			_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Connection Refused: unacceptable protocol version");
 			return 1;
 		case CONNACK_REFUSED_IDENTIFIER_REJECTED:
-			_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Connection Refused: identifier rejected");
+			_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Connection Refused: identifier rejected");
 			return 1;
 		case CONNACK_REFUSED_SERVER_UNAVAILABLE:
-			_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Connection Refused: broker unavailable");
+			_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Connection Refused: broker unavailable");
 			return 1;
 		case CONNACK_REFUSED_BAD_USERNAME_PASSWORD:
-			_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Connection Refused: broker unavailable");
+			_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Connection Refused: broker unavailable");
 			return 1;
 		case CONNACK_REFUSED_NOT_AUTHORIZED:
-			_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Connection Refused: not authorised");
+			_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Connection Refused: not authorised");
 			return 1;
 		default:
-			_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Connection Refused: unknown reason");
+			_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Connection Refused: unknown reason");
 			return 1;
 	}
 	return 1;

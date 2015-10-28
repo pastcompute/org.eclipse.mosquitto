@@ -41,7 +41,7 @@ int eecloud_security_init_default(struct eecloud_db *db, bool reload)
 	if(db->config->password_file){
 		rc = _unpwd_file_parse(db);
 		if(rc){
-			_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error opening password file \"%s\".", db->config->password_file);
+			_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error opening password file \"%s\".", db->config->password_file);
 			return rc;
 		}
 	}
@@ -50,7 +50,7 @@ int eecloud_security_init_default(struct eecloud_db *db, bool reload)
 	if(db->config->acl_file){
 		rc = _aclfile_parse(db);
 		if(rc){
-			_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error opening acl file \"%s\".", db->config->acl_file);
+			_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error opening acl file \"%s\".", db->config->acl_file);
 			return rc;
 		}
 	}
@@ -59,21 +59,21 @@ int eecloud_security_init_default(struct eecloud_db *db, bool reload)
 	if(db->config->psk_file){
 		rc = _psk_file_parse(db);
 		if(rc){
-			_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error opening psk file \"%s\".", db->config->psk_file);
+			_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error opening psk file \"%s\".", db->config->psk_file);
 			return rc;
 		}
 	}
 
-	return MOSQ_ERR_SUCCESS;
+	return ECLD_ERR_SUCCESS;
 }
 
 int eecloud_security_cleanup_default(struct eecloud_db *db, bool reload)
 {
 	int rc;
 	rc = _acl_cleanup(db, reload);
-	if(rc != MOSQ_ERR_SUCCESS) return rc;
+	if(rc != ECLD_ERR_SUCCESS) return rc;
 	rc = _unpwd_cleanup(&db->unpwd, reload);
-	if(rc != MOSQ_ERR_SUCCESS) return rc;
+	if(rc != ECLD_ERR_SUCCESS) return rc;
 	return _unpwd_cleanup(&db->psk_id, reload);
 }
 
@@ -85,11 +85,11 @@ int _add_acl(struct eecloud_db *db, const char *user, const char *topic, int acc
 	char *local_topic;
 	bool new_user = false;
 
-	if(!db || !topic) return MOSQ_ERR_INVAL;
+	if(!db || !topic) return ECLD_ERR_INVAL;
 
 	local_topic = _eecloud_strdup(topic);
 	if(!local_topic){
-		return MOSQ_ERR_NOMEM;
+		return ECLD_ERR_NOMEM;
 	}
 
 	if(db->acl_list){
@@ -111,7 +111,7 @@ int _add_acl(struct eecloud_db *db, const char *user, const char *topic, int acc
 		acl_user = _eecloud_malloc(sizeof(struct _eecloud_acl_user));
 		if(!acl_user){
 			_eecloud_free(local_topic);
-			return MOSQ_ERR_NOMEM;
+			return ECLD_ERR_NOMEM;
 		}
 		new_user = true;
 		if(user){
@@ -119,7 +119,7 @@ int _add_acl(struct eecloud_db *db, const char *user, const char *topic, int acc
 			if(!acl_user->username){
 				_eecloud_free(local_topic);
 				_eecloud_free(acl_user);
-				return MOSQ_ERR_NOMEM;
+				return ECLD_ERR_NOMEM;
 			}
 		}else{
 			acl_user->username = NULL;
@@ -131,7 +131,7 @@ int _add_acl(struct eecloud_db *db, const char *user, const char *topic, int acc
 	acl = _eecloud_malloc(sizeof(struct _eecloud_acl));
 	if(!acl){
 		_eecloud_free(local_topic);
-		return MOSQ_ERR_NOMEM;
+		return ECLD_ERR_NOMEM;
 	}
 	acl->access = access;
 	acl->topic = local_topic;
@@ -163,7 +163,7 @@ int _add_acl(struct eecloud_db *db, const char *user, const char *topic, int acc
 		}
 	}
 
-	return MOSQ_ERR_SUCCESS;
+	return ECLD_ERR_SUCCESS;
 }
 
 int _add_acl_pattern(struct eecloud_db *db, const char *topic, int access)
@@ -172,17 +172,17 @@ int _add_acl_pattern(struct eecloud_db *db, const char *topic, int access)
 	char *local_topic;
 	char *s;
 
-	if(!db || !topic) return MOSQ_ERR_INVAL;
+	if(!db || !topic) return ECLD_ERR_INVAL;
 
 	local_topic = _eecloud_strdup(topic);
 	if(!local_topic){
-		return MOSQ_ERR_NOMEM;
+		return ECLD_ERR_NOMEM;
 	}
 
 	acl = _eecloud_malloc(sizeof(struct _eecloud_acl));
 	if(!acl){
 		_eecloud_free(local_topic);
-		return MOSQ_ERR_NOMEM;
+		return ECLD_ERR_NOMEM;
 	}
 	acl->access = access;
 	acl->topic = local_topic;
@@ -218,7 +218,7 @@ int _add_acl_pattern(struct eecloud_db *db, const char *topic, int access)
 		db->acl_patterns = acl;
 	}
 
-	return MOSQ_ERR_SUCCESS;
+	return ECLD_ERR_SUCCESS;
 }
 
 int eecloud_acl_check_default(struct eecloud_db *db, struct eecloud *context, const char *topic, int access)
@@ -230,10 +230,10 @@ int eecloud_acl_check_default(struct eecloud_db *db, struct eecloud *context, co
 	int len, tlen, clen, ulen;
 	char *s;
 
-	if(!db || !context || !topic) return MOSQ_ERR_INVAL;
-	if(!db->acl_list && !db->acl_patterns) return MOSQ_ERR_SUCCESS;
-	if(context->bridge) return MOSQ_ERR_SUCCESS;
-	if(!context->acl_list && !db->acl_patterns) return MOSQ_ERR_ACL_DENIED;
+	if(!db || !context || !topic) return ECLD_ERR_INVAL;
+	if(!db->acl_list && !db->acl_patterns) return ECLD_ERR_SUCCESS;
+	if(context->bridge) return ECLD_ERR_SUCCESS;
+	if(!context->acl_list && !db->acl_patterns) return ECLD_ERR_ACL_DENIED;
 
 	if(context->acl_list){
 		acl_root = context->acl_list->acl;
@@ -254,7 +254,7 @@ int eecloud_acl_check_default(struct eecloud_db *db, struct eecloud *context, co
 		if(result){
 			if(access & acl_root->access){
 				/* And access is allowed. */
-				return MOSQ_ERR_SUCCESS;
+				return ECLD_ERR_SUCCESS;
 			}
 		}
 		acl_root = acl_root->next;
@@ -305,14 +305,14 @@ int eecloud_acl_check_default(struct eecloud_db *db, struct eecloud *context, co
 		if(result){
 			if(access & acl_root->access){
 				/* And access is allowed. */
-				return MOSQ_ERR_SUCCESS;
+				return ECLD_ERR_SUCCESS;
 			}
 		}
 
 		acl_root = acl_root->next;
 	}
 
-	return MOSQ_ERR_ACL_DENIED;
+	return ECLD_ERR_ACL_DENIED;
 }
 
 static int _aclfile_parse(struct eecloud_db *db)
@@ -329,12 +329,12 @@ static int _aclfile_parse(struct eecloud_db *db)
 	int topic_pattern;
 	char *saveptr = NULL;
 
-	if(!db || !db->config) return MOSQ_ERR_INVAL;
-	if(!db->config->acl_file) return MOSQ_ERR_SUCCESS;
+	if(!db || !db->config) return ECLD_ERR_INVAL;
+	if(!db->config->acl_file) return ECLD_ERR_SUCCESS;
 
 	aclfile = _eecloud_fopen(db->config->acl_file, "rt");
 	if(!aclfile){
-		_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to open acl_file \"%s\".", db->config->acl_file);
+		_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Unable to open acl_file \"%s\".", db->config->acl_file);
 		return 1;
 	}
 
@@ -361,10 +361,10 @@ static int _aclfile_parse(struct eecloud_db *db)
 
 				access_s = strtok_r(NULL, " ", &saveptr);
 				if(!access_s){
-					_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Empty topic in acl_file.");
+					_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Empty topic in acl_file.");
 					if(user) _eecloud_free(user);
 					fclose(aclfile);
-					return MOSQ_ERR_INVAL;
+					return ECLD_ERR_INVAL;
 				}
 				token = strtok_r(NULL, "", &saveptr);
 				if(token){
@@ -379,19 +379,19 @@ static int _aclfile_parse(struct eecloud_db *db)
 				}
 				if(access_s){
 					if(!strcmp(access_s, "read")){
-						access = MOSQ_ACL_READ;
+						access = ECLD_ACL_READ;
 					}else if(!strcmp(access_s, "write")){
-						access = MOSQ_ACL_WRITE;
+						access = ECLD_ACL_WRITE;
 					}else if(!strcmp(access_s, "readwrite")){
-						access = MOSQ_ACL_READ | MOSQ_ACL_WRITE;
+						access = ECLD_ACL_READ | ECLD_ACL_WRITE;
 					}else{
-						_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid topic access type \"%s\" in acl_file.", access_s);
+						_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Invalid topic access type \"%s\" in acl_file.", access_s);
 						if(user) _eecloud_free(user);
 						fclose(aclfile);
-						return MOSQ_ERR_INVAL;
+						return ECLD_ERR_INVAL;
 					}
 				}else{
-					access = MOSQ_ACL_READ | MOSQ_ACL_WRITE;
+					access = ECLD_ACL_READ | ECLD_ACL_WRITE;
 				}
 				if(topic_pattern == 0){
 					rc = _add_acl(db, user, topic, access);
@@ -414,10 +414,10 @@ static int _aclfile_parse(struct eecloud_db *db)
 					user = _eecloud_strdup(token);
 					if(!user){
 						fclose(aclfile);
-						return MOSQ_ERR_NOMEM;
+						return ECLD_ERR_NOMEM;
 					}
 				}else{
-					_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Missing username in acl_file.");
+					_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Missing username in acl_file.");
 					if(user) _eecloud_free(user);
 					fclose(aclfile);
 					return 1;
@@ -429,7 +429,7 @@ static int _aclfile_parse(struct eecloud_db *db)
 	if(user) _eecloud_free(user);
 	fclose(aclfile);
 
-	return MOSQ_ERR_SUCCESS;
+	return ECLD_ERR_SUCCESS;
 }
 
 static void _free_acl(struct _eecloud_acl *acl)
@@ -450,8 +450,8 @@ static int _acl_cleanup(struct eecloud_db *db, bool reload)
 	struct eecloud *context, *ctxt_tmp;
 	struct _eecloud_acl_user *user_tail;
 
-	if(!db) return MOSQ_ERR_INVAL;
-	if(!db->acl_list) return MOSQ_ERR_SUCCESS;
+	if(!db) return ECLD_ERR_INVAL;
+	if(!db->acl_list) return ECLD_ERR_SUCCESS;
 
 	/* As we're freeing ACLs, we must clear context->acl_list to ensure no
 	 * invalid memory accesses take place later.
@@ -479,7 +479,7 @@ static int _acl_cleanup(struct eecloud_db *db, bool reload)
 		_free_acl(db->acl_patterns);
 		db->acl_patterns = NULL;
 	}
-	return MOSQ_ERR_SUCCESS;
+	return ECLD_ERR_SUCCESS;
 }
 
 static int _pwfile_parse(const char *file, struct _eecloud_unpwd **root)
@@ -493,7 +493,7 @@ static int _pwfile_parse(const char *file, struct _eecloud_unpwd **root)
 
 	pwfile = _eecloud_fopen(file, "rt");
 	if(!pwfile){
-		_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to open pwfile \"%s\".", file);
+		_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Unable to open pwfile \"%s\".", file);
 		return 1;
 	}
 
@@ -504,13 +504,13 @@ static int _pwfile_parse(const char *file, struct _eecloud_unpwd **root)
 				unpwd = _eecloud_calloc(1, sizeof(struct _eecloud_unpwd));
 				if(!unpwd){
 					fclose(pwfile);
-					return MOSQ_ERR_NOMEM;
+					return ECLD_ERR_NOMEM;
 				}
 				unpwd->username = _eecloud_strdup(username);
 				if(!unpwd->username){
 					_eecloud_free(unpwd);
 					fclose(pwfile);
-					return MOSQ_ERR_NOMEM;
+					return ECLD_ERR_NOMEM;
 				}
 				len = strlen(unpwd->username);
 				while(unpwd->username[len-1] == 10 || unpwd->username[len-1] == 13){
@@ -524,7 +524,7 @@ static int _pwfile_parse(const char *file, struct _eecloud_unpwd **root)
 						fclose(pwfile);
 						_eecloud_free(unpwd->username);
 						_eecloud_free(unpwd);
-						return MOSQ_ERR_NOMEM;
+						return ECLD_ERR_NOMEM;
 					}
 					len = strlen(unpwd->password);
 					while(len && (unpwd->password[len-1] == 10 || unpwd->password[len-1] == 13)){
@@ -538,7 +538,7 @@ static int _pwfile_parse(const char *file, struct _eecloud_unpwd **root)
 	}
 	fclose(pwfile);
 
-	return MOSQ_ERR_SUCCESS;
+	return ECLD_ERR_SUCCESS;
 }
 
 static int _unpwd_file_parse(struct eecloud_db *db)
@@ -553,9 +553,9 @@ static int _unpwd_file_parse(struct eecloud_db *db)
 	unsigned int password_len;
 #endif
 
-	if(!db || !db->config) return MOSQ_ERR_INVAL;
+	if(!db || !db->config) return ECLD_ERR_INVAL;
 
-	if(!db->config->password_file) return MOSQ_ERR_SUCCESS;
+	if(!db->config->password_file) return ECLD_ERR_SUCCESS;
 
 	rc = _pwfile_parse(db->config->password_file, &db->unpwd);
 #ifdef WITH_TLS
@@ -570,8 +570,8 @@ static int _unpwd_file_parse(struct eecloud_db *db)
 				if(token){
 					rc = _base64_decode(token, &salt, &salt_len);
 					if(rc){
-						_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to decode password salt for user %s.", u->username);
-						return MOSQ_ERR_INVAL;
+						_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Unable to decode password salt for user %s.", u->username);
+						return ECLD_ERR_INVAL;
 					}
 					u->salt = salt;
 					u->salt_len = salt_len;
@@ -579,23 +579,23 @@ static int _unpwd_file_parse(struct eecloud_db *db)
 					if(token){
 						rc = _base64_decode(token, &password, &password_len);
 						if(rc){
-							_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to decode password for user %s.", u->username);
-							return MOSQ_ERR_INVAL;
+							_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Unable to decode password for user %s.", u->username);
+							return ECLD_ERR_INVAL;
 						}
 						_eecloud_free(u->password);
 						u->password = (char *)password;
 						u->password_len = password_len;
 					}else{
-						_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid password hash for user %s.", u->username);
-						return MOSQ_ERR_INVAL;
+						_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Invalid password hash for user %s.", u->username);
+						return ECLD_ERR_INVAL;
 					}
 				}else{
-					_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid password hash for user %s.", u->username);
-					return MOSQ_ERR_INVAL;
+					_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Invalid password hash for user %s.", u->username);
+					return ECLD_ERR_INVAL;
 				}
 			}else{
-				_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid password hash for user %s.", u->username);
-				return MOSQ_ERR_INVAL;
+				_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Invalid password hash for user %s.", u->username);
+				return ECLD_ERR_INVAL;
 			}
 		}
 	}
@@ -608,10 +608,10 @@ static int _psk_file_parse(struct eecloud_db *db)
 	int rc;
 	struct _eecloud_unpwd *u, *tmp;
 
-	if(!db || !db->config) return MOSQ_ERR_INVAL;
+	if(!db || !db->config) return ECLD_ERR_INVAL;
 
 	/* We haven't been asked to parse a psk file. */
-	if(!db->config->psk_file) return MOSQ_ERR_SUCCESS;
+	if(!db->config->psk_file) return ECLD_ERR_SUCCESS;
 
 	rc = _pwfile_parse(db->config->psk_file, &db->psk_id);
 	if(rc) return rc;
@@ -619,15 +619,15 @@ static int _psk_file_parse(struct eecloud_db *db)
 	HASH_ITER(hh, db->psk_id, u, tmp){
 		/* Check for hex only digits */
 		if(!u->password){
-			_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Empty psk for identity \"%s\".", u->username);
-			return MOSQ_ERR_INVAL;
+			_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Empty psk for identity \"%s\".", u->username);
+			return ECLD_ERR_INVAL;
 		}
 		if(strspn(u->password, "0123456789abcdefABCDEF") < strlen(u->password)){
-			_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: psk for identity \"%s\" contains non-hexadecimal characters.", u->username);
-			return MOSQ_ERR_INVAL;
+			_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: psk for identity \"%s\" contains non-hexadecimal characters.", u->username);
+			return ECLD_ERR_INVAL;
 		}
 	}
-	return MOSQ_ERR_SUCCESS;
+	return ECLD_ERR_SUCCESS;
 }
 
 int eecloud_unpwd_check_default(struct eecloud_db *db, const char *username, const char *password)
@@ -639,9 +639,9 @@ int eecloud_unpwd_check_default(struct eecloud_db *db, const char *username, con
 	int rc;
 #endif
 
-	if(!db) return MOSQ_ERR_INVAL;
-	if(!db->unpwd) return MOSQ_ERR_SUCCESS;
-	if(!username) return MOSQ_ERR_INVAL; /* Check must be made only after checking db->unpwd. */
+	if(!db) return ECLD_ERR_INVAL;
+	if(!db->unpwd) return ECLD_ERR_SUCCESS;
+	if(!username) return ECLD_ERR_INVAL; /* Check must be made only after checking db->unpwd. */
 
 	HASH_ITER(hh, db->unpwd, u, tmp){
 		if(!strcmp(u->username, username)){
@@ -649,37 +649,37 @@ int eecloud_unpwd_check_default(struct eecloud_db *db, const char *username, con
 				if(password){
 #ifdef WITH_TLS
 					rc = _pw_digest(password, u->salt, u->salt_len, hash, &hash_len);
-					if(rc == MOSQ_ERR_SUCCESS){
+					if(rc == ECLD_ERR_SUCCESS){
 						if(hash_len == u->password_len && !memcmp(u->password, hash, hash_len)){
-							return MOSQ_ERR_SUCCESS;
+							return ECLD_ERR_SUCCESS;
 						}else{
-							return MOSQ_ERR_AUTH;
+							return ECLD_ERR_AUTH;
 						}
 					}else{
 						return rc;
 					}
 #else
 					if(!strcmp(u->password, password)){
-						return MOSQ_ERR_SUCCESS;
+						return ECLD_ERR_SUCCESS;
 					}
 #endif
 				}else{
-					return MOSQ_ERR_AUTH;
+					return ECLD_ERR_AUTH;
 				}
 			}else{
-				return MOSQ_ERR_SUCCESS;
+				return ECLD_ERR_SUCCESS;
 			}
 		}
 	}
 
-	return MOSQ_ERR_AUTH;
+	return ECLD_ERR_AUTH;
 }
 
 static int _unpwd_cleanup(struct _eecloud_unpwd **root, bool reload)
 {
 	struct _eecloud_unpwd *u, *tmp;
 
-	if(!root) return MOSQ_ERR_INVAL;
+	if(!root) return ECLD_ERR_INVAL;
 
 	HASH_ITER(hh, *root, u, tmp){
 		HASH_DEL(*root, u);
@@ -693,7 +693,7 @@ static int _unpwd_cleanup(struct _eecloud_unpwd **root, bool reload)
 
 	*root = NULL;
 
-	return MOSQ_ERR_SUCCESS;
+	return ECLD_ERR_SUCCESS;
 }
 
 /* Apply security settings after a reload.
@@ -708,7 +708,7 @@ int eecloud_security_apply_default(struct eecloud_db *db)
 	struct _eecloud_acl_user *acl_user_tail;
 	bool allow_anonymous;
 
-	if(!db) return MOSQ_ERR_INVAL;
+	if(!db) return ECLD_ERR_INVAL;
 
 	allow_anonymous = db->config->allow_anonymous;
 	
@@ -720,7 +720,7 @@ int eecloud_security_apply_default(struct eecloud_db *db)
 			continue;
 		}
 		/* Check for connected clients that are no longer authorised */
-		if(eecloud_unpwd_check_default(db, context->username, context->password) != MOSQ_ERR_SUCCESS){
+		if(eecloud_unpwd_check_default(db, context->username, context->password) != ECLD_ERR_SUCCESS){
 			context->state = ecld_cs_disconnecting;
 			do_disconnect(db, context);
 			continue;
@@ -746,24 +746,24 @@ int eecloud_security_apply_default(struct eecloud_db *db)
 			}
 		}
 	}
-	return MOSQ_ERR_SUCCESS;
+	return ECLD_ERR_SUCCESS;
 }
 
 int eecloud_psk_key_get_default(struct eecloud_db *db, const char *hint, const char *identity, char *key, int max_key_len)
 {
 	struct _eecloud_unpwd *u, *tmp;
 
-	if(!db || !hint || !identity || !key) return MOSQ_ERR_INVAL;
-	if(!db->psk_id) return MOSQ_ERR_AUTH;
+	if(!db || !hint || !identity || !key) return ECLD_ERR_INVAL;
+	if(!db->psk_id) return ECLD_ERR_AUTH;
 
 	HASH_ITER(hh, db->psk_id, u, tmp){
 		if(!strcmp(u->username, identity)){
 			strncpy(key, u->password, max_key_len);
-			return MOSQ_ERR_SUCCESS;
+			return ECLD_ERR_SUCCESS;
 		}
 	}
 
-	return MOSQ_ERR_AUTH;
+	return ECLD_ERR_AUTH;
 }
 
 #ifdef WITH_TLS
@@ -786,7 +786,7 @@ int _pw_digest(const char *password, const unsigned char *salt, unsigned int sal
 	EVP_DigestFinal_ex(&context, hash, hash_len);
 	EVP_MD_CTX_cleanup(&context);
 
-	return MOSQ_ERR_SUCCESS;
+	return ECLD_ERR_SUCCESS;
 }
 
 int _base64_decode(char *in, unsigned char **decoded, unsigned int *decoded_len)

@@ -39,10 +39,10 @@ void LIB_ERROR(void)
 	char *buf;
 	FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_STRING,
 			NULL, GetLastError(), LANG_NEUTRAL, &buf, 0, NULL);
-	_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Load error: %s", buf);
+	_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Load error: %s", buf);
 	LocalFree(buf);
 #else
-	_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Load error: %s", dlerror());
+	_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Load error: %s", dlerror());
 #endif
 }
 
@@ -55,7 +55,7 @@ int eecloud_security_module_init(struct eecloud_db *db)
 	if(db->config->auth_plugin){
 		lib = LIB_LOAD(db->config->auth_plugin);
 		if(!lib){
-			_eecloud_log_printf(NULL, MOSQ_LOG_ERR, 
+			_eecloud_log_printf(NULL, ECLD_LOG_ERR, 
 					"Error: Unable to load auth plugin \"%s\".", db->config->auth_plugin);
 			LIB_ERROR();
 			return 1;
@@ -63,31 +63,31 @@ int eecloud_security_module_init(struct eecloud_db *db)
 
 		db->auth_plugin.lib = NULL;
 		if(!(plugin_version = (FUNC_auth_plugin_version)LIB_SYM(lib, "eecloud_auth_plugin_version"))){
-			_eecloud_log_printf(NULL, MOSQ_LOG_ERR,
+			_eecloud_log_printf(NULL, ECLD_LOG_ERR,
 					"Error: Unable to load auth plugin function eecloud_auth_plugin_version().");
 			LIB_ERROR();
 			LIB_CLOSE(lib);
 			return 1;
 		}
 		version = plugin_version();
-		if(version != MOSQ_AUTH_PLUGIN_VERSION){
-			_eecloud_log_printf(NULL, MOSQ_LOG_ERR,
+		if(version != ECLD_AUTH_PLUGIN_VERSION){
+			_eecloud_log_printf(NULL, ECLD_LOG_ERR,
 					"Error: Incorrect auth plugin version (got %d, expected %d).",
-					version, MOSQ_AUTH_PLUGIN_VERSION);
+					version, ECLD_AUTH_PLUGIN_VERSION);
 			LIB_ERROR();
 
 			LIB_CLOSE(lib);
 			return 1;
 		}
 		if(!(db->auth_plugin.plugin_init = (FUNC_auth_plugin_init)LIB_SYM(lib, "eecloud_auth_plugin_init"))){
-			_eecloud_log_printf(NULL, MOSQ_LOG_ERR,
+			_eecloud_log_printf(NULL, ECLD_LOG_ERR,
 					"Error: Unable to load auth plugin function eecloud_auth_plugin_init().");
 			LIB_ERROR();
 			LIB_CLOSE(lib);
 			return 1;
 		}
 		if(!(db->auth_plugin.plugin_cleanup = (FUNC_auth_plugin_cleanup)LIB_SYM(lib, "eecloud_auth_plugin_cleanup"))){
-			_eecloud_log_printf(NULL, MOSQ_LOG_ERR,
+			_eecloud_log_printf(NULL, ECLD_LOG_ERR,
 					"Error: Unable to load auth plugin function eecloud_auth_plugin_cleanup().");
 			LIB_ERROR();
 			LIB_CLOSE(lib);
@@ -95,7 +95,7 @@ int eecloud_security_module_init(struct eecloud_db *db)
 		}
 
 		if(!(db->auth_plugin.security_init = (FUNC_auth_plugin_security_init)LIB_SYM(lib, "eecloud_auth_security_init"))){
-			_eecloud_log_printf(NULL, MOSQ_LOG_ERR,
+			_eecloud_log_printf(NULL, ECLD_LOG_ERR,
 					"Error: Unable to load auth plugin function eecloud_auth_security_init().");
 			LIB_ERROR();
 			LIB_CLOSE(lib);
@@ -103,7 +103,7 @@ int eecloud_security_module_init(struct eecloud_db *db)
 		}
 
 		if(!(db->auth_plugin.security_cleanup = (FUNC_auth_plugin_security_cleanup)LIB_SYM(lib, "eecloud_auth_security_cleanup"))){
-			_eecloud_log_printf(NULL, MOSQ_LOG_ERR,
+			_eecloud_log_printf(NULL, ECLD_LOG_ERR,
 					"Error: Unable to load auth plugin function eecloud_auth_security_cleanup().");
 			LIB_ERROR();
 			LIB_CLOSE(lib);
@@ -111,7 +111,7 @@ int eecloud_security_module_init(struct eecloud_db *db)
 		}
 
 		if(!(db->auth_plugin.acl_check = (FUNC_auth_plugin_acl_check)LIB_SYM(lib, "eecloud_auth_acl_check"))){
-			_eecloud_log_printf(NULL, MOSQ_LOG_ERR,
+			_eecloud_log_printf(NULL, ECLD_LOG_ERR,
 					"Error: Unable to load auth plugin function eecloud_auth_acl_check().");
 			LIB_ERROR();
 			LIB_CLOSE(lib);
@@ -119,7 +119,7 @@ int eecloud_security_module_init(struct eecloud_db *db)
 		}
 
 		if(!(db->auth_plugin.unpwd_check = (FUNC_auth_plugin_unpwd_check)LIB_SYM(lib, "eecloud_auth_unpwd_check"))){
-			_eecloud_log_printf(NULL, MOSQ_LOG_ERR,
+			_eecloud_log_printf(NULL, ECLD_LOG_ERR,
 					"Error: Unable to load auth plugin function eecloud_auth_unpwd_check().");
 			LIB_ERROR();
 			LIB_CLOSE(lib);
@@ -127,7 +127,7 @@ int eecloud_security_module_init(struct eecloud_db *db)
 		}
 
 		if(!(db->auth_plugin.psk_key_get = (FUNC_auth_plugin_psk_key_get)LIB_SYM(lib, "eecloud_auth_psk_key_get"))){
-			_eecloud_log_printf(NULL, MOSQ_LOG_ERR,
+			_eecloud_log_printf(NULL, ECLD_LOG_ERR,
 					"Error: Unable to load auth plugin function eecloud_auth_psk_key_get().");
 			LIB_ERROR();
 			LIB_CLOSE(lib);
@@ -139,7 +139,7 @@ int eecloud_security_module_init(struct eecloud_db *db)
 		if(db->auth_plugin.plugin_init){
 			rc = db->auth_plugin.plugin_init(&db->auth_plugin.user_data, db->config->auth_options, db->config->auth_option_count);
 			if(rc){
-				_eecloud_log_printf(NULL, MOSQ_LOG_ERR,
+				_eecloud_log_printf(NULL, ECLD_LOG_ERR,
 						"Error: Authentication plugin returned %d when initialising.", rc);
 			}
 			return rc;
@@ -155,7 +155,7 @@ int eecloud_security_module_init(struct eecloud_db *db)
 		db->auth_plugin.psk_key_get = NULL;
 	}
 
-	return MOSQ_ERR_SUCCESS;
+	return ECLD_ERR_SUCCESS;
 }
 
 int eecloud_security_module_cleanup(struct eecloud_db *db)
@@ -180,7 +180,7 @@ int eecloud_security_module_cleanup(struct eecloud_db *db)
 	db->auth_plugin.unpwd_check = NULL;
 	db->auth_plugin.psk_key_get = NULL;
 
-	return MOSQ_ERR_SUCCESS;
+	return ECLD_ERR_SUCCESS;
 }
 
 int eecloud_security_init(struct eecloud_db *db, bool reload)
@@ -203,7 +203,7 @@ int eecloud_security_apply(struct eecloud_db *db)
 	if(!db->auth_plugin.lib){
 		return eecloud_security_apply_default(db);
 	}
-	return MOSQ_ERR_SUCCESS;
+	return ECLD_ERR_SUCCESS;
 }
 
 int eecloud_security_cleanup(struct eecloud_db *db, bool reload)
@@ -220,7 +220,7 @@ int eecloud_acl_check(struct eecloud_db *db, struct eecloud *context, const char
 	char *username;
 
 	if(!context->id){
-		return MOSQ_ERR_ACL_DENIED;
+		return ECLD_ERR_ACL_DENIED;
 	}
 	if(!db->auth_plugin.lib){
 		return eecloud_acl_check_default(db, context, topic, access);

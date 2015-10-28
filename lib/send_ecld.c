@@ -40,12 +40,12 @@ int _eecloud_send_pingreq(struct eecloud *ecld)
 	int rc;
 	assert(ecld);
 #ifdef WITH_BROKER
-	_eecloud_log_printf(NULL, MOSQ_LOG_DEBUG, "Sending PINGREQ to %s", ecld->id);
+	_eecloud_log_printf(NULL, ECLD_LOG_DEBUG, "Sending PINGREQ to %s", ecld->id);
 #else
-	_eecloud_log_printf(ecld, MOSQ_LOG_DEBUG, "Client %s sending PINGREQ", ecld->id);
+	_eecloud_log_printf(ecld, ECLD_LOG_DEBUG, "Client %s sending PINGREQ", ecld->id);
 #endif
 	rc = _eecloud_send_simple_command(ecld, PINGREQ);
-	if(rc == MOSQ_ERR_SUCCESS){
+	if(rc == ECLD_ERR_SUCCESS){
 		ecld->ping_t = eecloud_time();
 	}
 	return rc;
@@ -54,9 +54,9 @@ int _eecloud_send_pingreq(struct eecloud *ecld)
 int _eecloud_send_pingresp(struct eecloud *ecld)
 {
 #ifdef WITH_BROKER
-	if(ecld) _eecloud_log_printf(NULL, MOSQ_LOG_DEBUG, "Sending PINGRESP to %s", ecld->id);
+	if(ecld) _eecloud_log_printf(NULL, ECLD_LOG_DEBUG, "Sending PINGRESP to %s", ecld->id);
 #else
-	if(ecld) _eecloud_log_printf(ecld, MOSQ_LOG_DEBUG, "Client %s sending PINGRESP", ecld->id);
+	if(ecld) _eecloud_log_printf(ecld, ECLD_LOG_DEBUG, "Client %s sending PINGRESP", ecld->id);
 #endif
 	return _eecloud_send_simple_command(ecld, PINGRESP);
 }
@@ -64,9 +64,9 @@ int _eecloud_send_pingresp(struct eecloud *ecld)
 int _eecloud_send_puback(struct eecloud *ecld, uint16_t mid)
 {
 #ifdef WITH_BROKER
-	if(ecld) _eecloud_log_printf(NULL, MOSQ_LOG_DEBUG, "Sending PUBACK to %s (Mid: %d)", ecld->id, mid);
+	if(ecld) _eecloud_log_printf(NULL, ECLD_LOG_DEBUG, "Sending PUBACK to %s (Mid: %d)", ecld->id, mid);
 #else
-	if(ecld) _eecloud_log_printf(ecld, MOSQ_LOG_DEBUG, "Client %s sending PUBACK (Mid: %d)", ecld->id, mid);
+	if(ecld) _eecloud_log_printf(ecld, ECLD_LOG_DEBUG, "Client %s sending PUBACK (Mid: %d)", ecld->id, mid);
 #endif
 	return _eecloud_send_command_with_mid(ecld, PUBACK, mid, false);
 }
@@ -74,9 +74,9 @@ int _eecloud_send_puback(struct eecloud *ecld, uint16_t mid)
 int _eecloud_send_pubcomp(struct eecloud *ecld, uint16_t mid)
 {
 #ifdef WITH_BROKER
-	if(ecld) _eecloud_log_printf(NULL, MOSQ_LOG_DEBUG, "Sending PUBCOMP to %s (Mid: %d)", ecld->id, mid);
+	if(ecld) _eecloud_log_printf(NULL, ECLD_LOG_DEBUG, "Sending PUBCOMP to %s (Mid: %d)", ecld->id, mid);
 #else
-	if(ecld) _eecloud_log_printf(ecld, MOSQ_LOG_DEBUG, "Client %s sending PUBCOMP (Mid: %d)", ecld->id, mid);
+	if(ecld) _eecloud_log_printf(ecld, ECLD_LOG_DEBUG, "Client %s sending PUBCOMP (Mid: %d)", ecld->id, mid);
 #endif
 	return _eecloud_send_command_with_mid(ecld, PUBCOMP, mid, false);
 }
@@ -98,9 +98,9 @@ int _eecloud_send_publish(struct eecloud *ecld, uint16_t mid, const char *topic,
 	assert(topic);
 
 #if defined(WITH_BROKER) && defined(WITH_WEBSOCKETS)
-	if(ecld->sock == INVALID_SOCKET && !ecld->wsi) return MOSQ_ERR_NO_CONN;
+	if(ecld->sock == INVALID_SOCKET && !ecld->wsi) return ECLD_ERR_NO_CONN;
 #else
-	if(ecld->sock == INVALID_SOCKET) return MOSQ_ERR_NO_CONN;
+	if(ecld->sock == INVALID_SOCKET) return ECLD_ERR_NO_CONN;
 #endif
 
 #ifdef WITH_BROKER
@@ -110,7 +110,7 @@ int _eecloud_send_publish(struct eecloud *ecld, uint16_t mid, const char *topic,
 			topic += len;
 		}else{
 			/* Invalid topic string. Should never happen, but silently swallow the message anyway. */
-			return MOSQ_ERR_SUCCESS;
+			return ECLD_ERR_SUCCESS;
 		}
 	}
 #ifdef WITH_BRIDGE
@@ -127,14 +127,14 @@ int _eecloud_send_publish(struct eecloud *ecld, uint16_t mid, const char *topic,
 				}
 				if(match){
 					mapped_topic = _eecloud_strdup(topic);
-					if(!mapped_topic) return MOSQ_ERR_NOMEM;
+					if(!mapped_topic) return ECLD_ERR_NOMEM;
 					if(cur_topic->local_prefix){
 						/* This prefix needs removing. */
 						if(!strncmp(cur_topic->local_prefix, mapped_topic, strlen(cur_topic->local_prefix))){
 							topic_temp = _eecloud_strdup(mapped_topic+strlen(cur_topic->local_prefix));
 							_eecloud_free(mapped_topic);
 							if(!topic_temp){
-								return MOSQ_ERR_NOMEM;
+								return ECLD_ERR_NOMEM;
 							}
 							mapped_topic = topic_temp;
 						}
@@ -146,14 +146,14 @@ int _eecloud_send_publish(struct eecloud *ecld, uint16_t mid, const char *topic,
 						topic_temp = _eecloud_malloc(len+1);
 						if(!topic_temp){
 							_eecloud_free(mapped_topic);
-							return MOSQ_ERR_NOMEM;
+							return ECLD_ERR_NOMEM;
 						}
 						snprintf(topic_temp, len, "%s%s", cur_topic->remote_prefix, mapped_topic);
 						topic_temp[len] = '\0';
 						_eecloud_free(mapped_topic);
 						mapped_topic = topic_temp;
 					}
-					_eecloud_log_printf(NULL, MOSQ_LOG_DEBUG, "Sending PUBLISH to %s (d%d, q%d, r%d, m%d, '%s', ... (%ld bytes))", ecld->id, dup, qos, retain, mid, mapped_topic, (long)payloadlen);
+					_eecloud_log_printf(NULL, ECLD_LOG_DEBUG, "Sending PUBLISH to %s (d%d, q%d, r%d, m%d, '%s', ... (%ld bytes))", ecld->id, dup, qos, retain, mid, mapped_topic, (long)payloadlen);
 #ifdef WITH_SYS_TREE
 					g_pub_bytes_sent += payloadlen;
 #endif
@@ -165,12 +165,12 @@ int _eecloud_send_publish(struct eecloud *ecld, uint16_t mid, const char *topic,
 		}
 	}
 #endif
-	_eecloud_log_printf(NULL, MOSQ_LOG_DEBUG, "Sending PUBLISH to %s (d%d, q%d, r%d, m%d, '%s', ... (%ld bytes))", ecld->id, dup, qos, retain, mid, topic, (long)payloadlen);
+	_eecloud_log_printf(NULL, ECLD_LOG_DEBUG, "Sending PUBLISH to %s (d%d, q%d, r%d, m%d, '%s', ... (%ld bytes))", ecld->id, dup, qos, retain, mid, topic, (long)payloadlen);
 #  ifdef WITH_SYS_TREE
 	g_pub_bytes_sent += payloadlen;
 #  endif
 #else
-	_eecloud_log_printf(ecld, MOSQ_LOG_DEBUG, "Client %s sending PUBLISH (d%d, q%d, r%d, m%d, '%s', ... (%ld bytes))", ecld->id, dup, qos, retain, mid, topic, (long)payloadlen);
+	_eecloud_log_printf(ecld, ECLD_LOG_DEBUG, "Client %s sending PUBLISH (d%d, q%d, r%d, m%d, '%s', ... (%ld bytes))", ecld->id, dup, qos, retain, mid, topic, (long)payloadlen);
 #endif
 
 	return _eecloud_send_real_publish(ecld, mid, topic, payloadlen, payload, qos, retain, dup);
@@ -179,9 +179,9 @@ int _eecloud_send_publish(struct eecloud *ecld, uint16_t mid, const char *topic,
 int _eecloud_send_pubrec(struct eecloud *ecld, uint16_t mid)
 {
 #ifdef WITH_BROKER
-	if(ecld) _eecloud_log_printf(NULL, MOSQ_LOG_DEBUG, "Sending PUBREC to %s (Mid: %d)", ecld->id, mid);
+	if(ecld) _eecloud_log_printf(NULL, ECLD_LOG_DEBUG, "Sending PUBREC to %s (Mid: %d)", ecld->id, mid);
 #else
-	if(ecld) _eecloud_log_printf(ecld, MOSQ_LOG_DEBUG, "Client %s sending PUBREC (Mid: %d)", ecld->id, mid);
+	if(ecld) _eecloud_log_printf(ecld, ECLD_LOG_DEBUG, "Client %s sending PUBREC (Mid: %d)", ecld->id, mid);
 #endif
 	return _eecloud_send_command_with_mid(ecld, PUBREC, mid, false);
 }
@@ -189,9 +189,9 @@ int _eecloud_send_pubrec(struct eecloud *ecld, uint16_t mid)
 int _eecloud_send_pubrel(struct eecloud *ecld, uint16_t mid)
 {
 #ifdef WITH_BROKER
-	if(ecld) _eecloud_log_printf(NULL, MOSQ_LOG_DEBUG, "Sending PUBREL to %s (Mid: %d)", ecld->id, mid);
+	if(ecld) _eecloud_log_printf(NULL, ECLD_LOG_DEBUG, "Sending PUBREL to %s (Mid: %d)", ecld->id, mid);
 #else
-	if(ecld) _eecloud_log_printf(ecld, MOSQ_LOG_DEBUG, "Client %s sending PUBREL (Mid: %d)", ecld->id, mid);
+	if(ecld) _eecloud_log_printf(ecld, ECLD_LOG_DEBUG, "Client %s sending PUBREL (Mid: %d)", ecld->id, mid);
 #endif
 	return _eecloud_send_command_with_mid(ecld, PUBREL|2, mid, false);
 }
@@ -204,7 +204,7 @@ int _eecloud_send_command_with_mid(struct eecloud *ecld, uint8_t command, uint16
 
 	assert(ecld);
 	packet = _eecloud_calloc(1, sizeof(struct _eecloud_packet));
-	if(!packet) return MOSQ_ERR_NOMEM;
+	if(!packet) return ECLD_ERR_NOMEM;
 
 	packet->command = command;
 	if(dup){
@@ -217,8 +217,8 @@ int _eecloud_send_command_with_mid(struct eecloud *ecld, uint8_t command, uint16
 		return rc;
 	}
 
-	packet->payload[packet->pos+0] = MOSQ_MSB(mid);
-	packet->payload[packet->pos+1] = MOSQ_LSB(mid);
+	packet->payload[packet->pos+0] = ECLD_MSB(mid);
+	packet->payload[packet->pos+1] = ECLD_LSB(mid);
 
 	return _eecloud_packet_queue(ecld, packet);
 }
@@ -231,7 +231,7 @@ int _eecloud_send_simple_command(struct eecloud *ecld, uint8_t command)
 
 	assert(ecld);
 	packet = _eecloud_calloc(1, sizeof(struct _eecloud_packet));
-	if(!packet) return MOSQ_ERR_NOMEM;
+	if(!packet) return ECLD_ERR_NOMEM;
 
 	packet->command = command;
 	packet->remaining_length = 0;
@@ -257,7 +257,7 @@ int _eecloud_send_real_publish(struct eecloud *ecld, uint16_t mid, const char *t
 	packetlen = 2+strlen(topic) + payloadlen;
 	if(qos > 0) packetlen += 2; /* For message id */
 	packet = _eecloud_calloc(1, sizeof(struct _eecloud_packet));
-	if(!packet) return MOSQ_ERR_NOMEM;
+	if(!packet) return ECLD_ERR_NOMEM;
 
 	packet->mid = mid;
 	packet->command = PUBLISH | ((dup&0x1)<<3) | (qos<<1) | retain;

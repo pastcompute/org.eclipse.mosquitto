@@ -56,10 +56,10 @@ static int _eecloud_connect_init(struct eecloud *ecld, const char *host, int por
 
 int eecloud_lib_version(int *major, int *minor, int *revision)
 {
-	if(major) *major = LIBMOSQUITTO_MAJOR;
-	if(minor) *minor = LIBMOSQUITTO_MINOR;
-	if(revision) *revision = LIBMOSQUITTO_REVISION;
-	return LIBMOSQUITTO_VERSION_NUMBER;
+	if(major) *major = LIBEECLOUD_MAJOR;
+	if(minor) *minor = LIBEECLOUD_MINOR;
+	if(revision) *revision = LIBEECLOUD_REVISION;
+	return LIBEECLOUD_VERSION_NUMBER;
 }
 
 int eecloud_lib_init(void)
@@ -75,14 +75,14 @@ int eecloud_lib_init(void)
 
 	_eecloud_net_init();
 
-	return MOSQ_ERR_SUCCESS;
+	return ECLD_ERR_SUCCESS;
 }
 
 int eecloud_lib_cleanup(void)
 {
 	_eecloud_net_cleanup();
 
-	return MOSQ_ERR_SUCCESS;
+	return ECLD_ERR_SUCCESS;
 }
 
 struct eecloud *eecloud_new(const char *id, bool clean_session, void *userdata)
@@ -110,9 +110,9 @@ struct eecloud *eecloud_new(const char *id, bool clean_session, void *userdata)
 		rc = eecloud_reinitialise(ecld, id, clean_session, userdata);
 		if(rc){
 			eecloud_destroy(ecld);
-			if(rc == MOSQ_ERR_INVAL){
+			if(rc == ECLD_ERR_INVAL){
 				errno = EINVAL;
-			}else if(rc == MOSQ_ERR_NOMEM){
+			}else if(rc == ECLD_ERR_NOMEM){
 				errno = ENOMEM;
 			}
 			return NULL;
@@ -127,10 +127,10 @@ int eecloud_reinitialise(struct eecloud *ecld, const char *id, bool clean_sessio
 {
 	int i;
 
-	if(!ecld) return MOSQ_ERR_INVAL;
+	if(!ecld) return ECLD_ERR_INVAL;
 
 	if(clean_session == false && id == NULL){
-		return MOSQ_ERR_INVAL;
+		return ECLD_ERR_INVAL;
 	}
 
 	_eecloud_destroy(ecld);
@@ -151,13 +151,13 @@ int eecloud_reinitialise(struct eecloud *ecld, const char *id, bool clean_sessio
 	ecld->clean_session = clean_session;
 	if(id){
 		if(strlen(id) == 0){
-			return MOSQ_ERR_INVAL;
+			return ECLD_ERR_INVAL;
 		}
 		ecld->id = _eecloud_strdup(id);
 	}else{
 		ecld->id = (char *)_eecloud_calloc(24, sizeof(char));
 		if(!ecld->id){
-			return MOSQ_ERR_NOMEM;
+			return ECLD_ERR_NOMEM;
 		}
 		ecld->id[0] = 'm';
 		ecld->id[1] = 'o';
@@ -217,24 +217,24 @@ int eecloud_reinitialise(struct eecloud *ecld, const char *id, bool clean_sessio
 	ecld->thread_id = pthread_self();
 #endif
 
-	return MOSQ_ERR_SUCCESS;
+	return ECLD_ERR_SUCCESS;
 }
 
 int eecloud_will_set(struct eecloud *ecld, const char *topic, int payloadlen, const void *payload, int qos, bool retain)
 {
-	if(!ecld) return MOSQ_ERR_INVAL;
+	if(!ecld) return ECLD_ERR_INVAL;
 	return _eecloud_will_set(ecld, topic, payloadlen, payload, qos, retain);
 }
 
 int eecloud_will_clear(struct eecloud *ecld)
 {
-	if(!ecld) return MOSQ_ERR_INVAL;
+	if(!ecld) return ECLD_ERR_INVAL;
 	return _eecloud_will_clear(ecld);
 }
 
 int eecloud_username_pw_set(struct eecloud *ecld, const char *username, const char *password)
 {
-	if(!ecld) return MOSQ_ERR_INVAL;
+	if(!ecld) return ECLD_ERR_INVAL;
 
 	if(ecld->username){
 		_eecloud_free(ecld->username);
@@ -247,28 +247,28 @@ int eecloud_username_pw_set(struct eecloud *ecld, const char *username, const ch
 
 	if(username){
 		ecld->username = _eecloud_strdup(username);
-		if(!ecld->username) return MOSQ_ERR_NOMEM;
+		if(!ecld->username) return ECLD_ERR_NOMEM;
 		if(password){
 			ecld->password = _eecloud_strdup(password);
 			if(!ecld->password){
 				_eecloud_free(ecld->username);
 				ecld->username = NULL;
-				return MOSQ_ERR_NOMEM;
+				return ECLD_ERR_NOMEM;
 			}
 		}
 	}
-	return MOSQ_ERR_SUCCESS;
+	return ECLD_ERR_SUCCESS;
 }
 
 int eecloud_reconnect_delay_set(struct eecloud *ecld, unsigned int reconnect_delay, unsigned int reconnect_delay_max, bool reconnect_exponential_backoff)
 {
-	if(!ecld) return MOSQ_ERR_INVAL;
+	if(!ecld) return ECLD_ERR_INVAL;
 	
 	ecld->reconnect_delay = reconnect_delay;
 	ecld->reconnect_delay_max = reconnect_delay_max;
 	ecld->reconnect_exponential_backoff = reconnect_exponential_backoff;
 	
-	return MOSQ_ERR_SUCCESS;
+	return ECLD_ERR_SUCCESS;
 	
 }
 
@@ -391,28 +391,28 @@ int eecloud_socket(struct eecloud *ecld)
 
 static int _eecloud_connect_init(struct eecloud *ecld, const char *host, int port, int keepalive, const char *bind_address)
 {
-	if(!ecld) return MOSQ_ERR_INVAL;
-	if(!host || port <= 0) return MOSQ_ERR_INVAL;
+	if(!ecld) return ECLD_ERR_INVAL;
+	if(!host || port <= 0) return ECLD_ERR_INVAL;
 
 	if(ecld->host) _eecloud_free(ecld->host);
 	ecld->host = _eecloud_strdup(host);
-	if(!ecld->host) return MOSQ_ERR_NOMEM;
+	if(!ecld->host) return ECLD_ERR_NOMEM;
 	ecld->port = port;
 
 	if(ecld->bind_address) _eecloud_free(ecld->bind_address);
 	if(bind_address){
 		ecld->bind_address = _eecloud_strdup(bind_address);
-		if(!ecld->bind_address) return MOSQ_ERR_NOMEM;
+		if(!ecld->bind_address) return ECLD_ERR_NOMEM;
 	}
 
 	ecld->keepalive = keepalive;
 
 	if(_eecloud_socketpair(&ecld->sockpairR, &ecld->sockpairW)){
-		_eecloud_log_printf(ecld, MOSQ_LOG_WARNING,
+		_eecloud_log_printf(ecld, ECLD_LOG_WARNING,
 				"Warning: Unable to open socket pair, outgoing publish commands may be delayed.");
 	}
 
-	return MOSQ_ERR_SUCCESS;
+	return ECLD_ERR_SUCCESS;
 }
 
 int eecloud_connect(struct eecloud *ecld, const char *host, int port, int keepalive)
@@ -464,8 +464,8 @@ static int _eecloud_reconnect(struct eecloud *ecld, bool blocking)
 {
 	int rc;
 	struct _eecloud_packet *packet;
-	if(!ecld) return MOSQ_ERR_INVAL;
-	if(!ecld->host || ecld->port <= 0) return MOSQ_ERR_INVAL;
+	if(!ecld) return ECLD_ERR_INVAL;
+	if(!ecld->host || ecld->port <= 0) return ECLD_ERR_INVAL;
 
 	pthread_mutex_lock(&ecld->state_mutex);
 #ifdef WITH_SOCKS
@@ -535,13 +535,13 @@ static int _eecloud_reconnect(struct eecloud *ecld, bool blocking)
 
 int eecloud_disconnect(struct eecloud *ecld)
 {
-	if(!ecld) return MOSQ_ERR_INVAL;
+	if(!ecld) return ECLD_ERR_INVAL;
 
 	pthread_mutex_lock(&ecld->state_mutex);
 	ecld->state = ecld_cs_disconnecting;
 	pthread_mutex_unlock(&ecld->state_mutex);
 
-	if(ecld->sock == INVALID_SOCKET) return MOSQ_ERR_NO_CONN;
+	if(ecld->sock == INVALID_SOCKET) return ECLD_ERR_NO_CONN;
 	return _eecloud_send_disconnect(ecld);
 }
 
@@ -550,12 +550,12 @@ int eecloud_publish(struct eecloud *ecld, int *mid, const char *topic, int paylo
 	struct eecloud_message_all *message;
 	uint16_t local_mid;
 
-	if(!ecld || !topic || qos<0 || qos>2) return MOSQ_ERR_INVAL;
-	if(strlen(topic) == 0) return MOSQ_ERR_INVAL;
-	if(payloadlen < 0 || payloadlen > MQTT_MAX_PAYLOAD) return MOSQ_ERR_PAYLOAD_SIZE;
+	if(!ecld || !topic || qos<0 || qos>2) return ECLD_ERR_INVAL;
+	if(strlen(topic) == 0) return ECLD_ERR_INVAL;
+	if(payloadlen < 0 || payloadlen > MQTT_MAX_PAYLOAD) return ECLD_ERR_PAYLOAD_SIZE;
 
-	if(eecloud_pub_topic_check(topic) != MOSQ_ERR_SUCCESS){
-		return MOSQ_ERR_INVAL;
+	if(eecloud_pub_topic_check(topic) != ECLD_ERR_SUCCESS){
+		return ECLD_ERR_INVAL;
 	}
 
 	local_mid = _eecloud_mid_generate(ecld);
@@ -567,7 +567,7 @@ int eecloud_publish(struct eecloud *ecld, int *mid, const char *topic, int paylo
 		return _eecloud_send_publish(ecld, local_mid, topic, payloadlen, payload, qos, retain, false);
 	}else{
 		message = _eecloud_calloc(1, sizeof(struct eecloud_message_all));
-		if(!message) return MOSQ_ERR_NOMEM;
+		if(!message) return ECLD_ERR_NOMEM;
 
 		message->next = NULL;
 		message->timestamp = eecloud_time();
@@ -575,14 +575,14 @@ int eecloud_publish(struct eecloud *ecld, int *mid, const char *topic, int paylo
 		message->msg.topic = _eecloud_strdup(topic);
 		if(!message->msg.topic){
 			_eecloud_message_cleanup(&message);
-			return MOSQ_ERR_NOMEM;
+			return ECLD_ERR_NOMEM;
 		}
 		if(payloadlen){
 			message->msg.payloadlen = payloadlen;
 			message->msg.payload = _eecloud_malloc(payloadlen*sizeof(uint8_t));
 			if(!message->msg.payload){
 				_eecloud_message_cleanup(&message);
-				return MOSQ_ERR_NOMEM;
+				return ECLD_ERR_NOMEM;
 			}
 			memcpy(message->msg.payload, payload, payloadlen*sizeof(uint8_t));
 		}else{
@@ -606,27 +606,27 @@ int eecloud_publish(struct eecloud *ecld, int *mid, const char *topic, int paylo
 		}else{
 			message->state = ecld_ms_invalid;
 			pthread_mutex_unlock(&ecld->out_message_mutex);
-			return MOSQ_ERR_SUCCESS;
+			return ECLD_ERR_SUCCESS;
 		}
 	}
 }
 
 int eecloud_subscribe(struct eecloud *ecld, int *mid, const char *sub, int qos)
 {
-	if(!ecld) return MOSQ_ERR_INVAL;
-	if(ecld->sock == INVALID_SOCKET) return MOSQ_ERR_NO_CONN;
+	if(!ecld) return ECLD_ERR_INVAL;
+	if(ecld->sock == INVALID_SOCKET) return ECLD_ERR_NO_CONN;
 
-	if(eecloud_sub_topic_check(sub)) return MOSQ_ERR_INVAL;
+	if(eecloud_sub_topic_check(sub)) return ECLD_ERR_INVAL;
 
 	return _eecloud_send_subscribe(ecld, mid, sub, qos);
 }
 
 int eecloud_unsubscribe(struct eecloud *ecld, int *mid, const char *sub)
 {
-	if(!ecld) return MOSQ_ERR_INVAL;
-	if(ecld->sock == INVALID_SOCKET) return MOSQ_ERR_NO_CONN;
+	if(!ecld) return ECLD_ERR_INVAL;
+	if(ecld->sock == INVALID_SOCKET) return ECLD_ERR_NO_CONN;
 
-	if(eecloud_sub_topic_check(sub)) return MOSQ_ERR_INVAL;
+	if(eecloud_sub_topic_check(sub)) return ECLD_ERR_INVAL;
 
 	return _eecloud_send_unsubscribe(ecld, mid, sub);
 }
@@ -636,19 +636,19 @@ int eecloud_tls_set(struct eecloud *ecld, const char *cafile, const char *capath
 #ifdef WITH_TLS
 	FILE *fptr;
 
-	if(!ecld || (!cafile && !capath) || (certfile && !keyfile) || (!certfile && keyfile)) return MOSQ_ERR_INVAL;
+	if(!ecld || (!cafile && !capath) || (certfile && !keyfile) || (!certfile && keyfile)) return ECLD_ERR_INVAL;
 
 	if(cafile){
 		fptr = _eecloud_fopen(cafile, "rt");
 		if(fptr){
 			fclose(fptr);
 		}else{
-			return MOSQ_ERR_INVAL;
+			return ECLD_ERR_INVAL;
 		}
 		ecld->tls_cafile = _eecloud_strdup(cafile);
 
 		if(!ecld->tls_cafile){
-			return MOSQ_ERR_NOMEM;
+			return ECLD_ERR_NOMEM;
 		}
 	}else if(ecld->tls_cafile){
 		_eecloud_free(ecld->tls_cafile);
@@ -658,7 +658,7 @@ int eecloud_tls_set(struct eecloud *ecld, const char *cafile, const char *capath
 	if(capath){
 		ecld->tls_capath = _eecloud_strdup(capath);
 		if(!ecld->tls_capath){
-			return MOSQ_ERR_NOMEM;
+			return ECLD_ERR_NOMEM;
 		}
 	}else if(ecld->tls_capath){
 		_eecloud_free(ecld->tls_capath);
@@ -678,11 +678,11 @@ int eecloud_tls_set(struct eecloud *ecld, const char *cafile, const char *capath
 				_eecloud_free(ecld->tls_capath);
 				ecld->tls_capath = NULL;
 			}
-			return MOSQ_ERR_INVAL;
+			return ECLD_ERR_INVAL;
 		}
 		ecld->tls_certfile = _eecloud_strdup(certfile);
 		if(!ecld->tls_certfile){
-			return MOSQ_ERR_NOMEM;
+			return ECLD_ERR_NOMEM;
 		}
 	}else{
 		if(ecld->tls_certfile) _eecloud_free(ecld->tls_certfile);
@@ -706,11 +706,11 @@ int eecloud_tls_set(struct eecloud *ecld, const char *cafile, const char *capath
 				_eecloud_free(ecld->tls_certfile);
 				ecld->tls_certfile = NULL;
 			}
-			return MOSQ_ERR_INVAL;
+			return ECLD_ERR_INVAL;
 		}
 		ecld->tls_keyfile = _eecloud_strdup(keyfile);
 		if(!ecld->tls_keyfile){
-			return MOSQ_ERR_NOMEM;
+			return ECLD_ERR_NOMEM;
 		}
 	}else{
 		if(ecld->tls_keyfile) _eecloud_free(ecld->tls_keyfile);
@@ -720,9 +720,9 @@ int eecloud_tls_set(struct eecloud *ecld, const char *cafile, const char *capath
 	ecld->tls_pw_callback = pw_callback;
 
 
-	return MOSQ_ERR_SUCCESS;
+	return ECLD_ERR_SUCCESS;
 #else
-	return MOSQ_ERR_NOT_SUPPORTED;
+	return ECLD_ERR_NOT_SUPPORTED;
 
 #endif
 }
@@ -730,7 +730,7 @@ int eecloud_tls_set(struct eecloud *ecld, const char *cafile, const char *capath
 int eecloud_tls_opts_set(struct eecloud *ecld, int cert_reqs, const char *tls_version, const char *ciphers)
 {
 #ifdef WITH_TLS
-	if(!ecld) return MOSQ_ERR_INVAL;
+	if(!ecld) return ECLD_ERR_INVAL;
 
 	ecld->tls_cert_reqs = cert_reqs;
 	if(tls_version){
@@ -740,16 +740,16 @@ int eecloud_tls_opts_set(struct eecloud *ecld, int cert_reqs, const char *tls_ve
 				|| !strcasecmp(tls_version, "tlsv1")){
 
 			ecld->tls_version = _eecloud_strdup(tls_version);
-			if(!ecld->tls_version) return MOSQ_ERR_NOMEM;
+			if(!ecld->tls_version) return ECLD_ERR_NOMEM;
 		}else{
-			return MOSQ_ERR_INVAL;
+			return ECLD_ERR_INVAL;
 		}
 #else
 		if(!strcasecmp(tls_version, "tlsv1")){
 			ecld->tls_version = _eecloud_strdup(tls_version);
-			if(!ecld->tls_version) return MOSQ_ERR_NOMEM;
+			if(!ecld->tls_version) return ECLD_ERR_NOMEM;
 		}else{
-			return MOSQ_ERR_INVAL;
+			return ECLD_ERR_INVAL;
 		}
 #endif
 	}else{
@@ -758,19 +758,19 @@ int eecloud_tls_opts_set(struct eecloud *ecld, int cert_reqs, const char *tls_ve
 #else
 		ecld->tls_version = _eecloud_strdup("tlsv1");
 #endif
-		if(!ecld->tls_version) return MOSQ_ERR_NOMEM;
+		if(!ecld->tls_version) return ECLD_ERR_NOMEM;
 	}
 	if(ciphers){
 		ecld->tls_ciphers = _eecloud_strdup(ciphers);
-		if(!ecld->tls_ciphers) return MOSQ_ERR_NOMEM;
+		if(!ecld->tls_ciphers) return ECLD_ERR_NOMEM;
 	}else{
 		ecld->tls_ciphers = NULL;
 	}
 
 
-	return MOSQ_ERR_SUCCESS;
+	return ECLD_ERR_SUCCESS;
 #else
-	return MOSQ_ERR_NOT_SUPPORTED;
+	return ECLD_ERR_NOT_SUPPORTED;
 
 #endif
 }
@@ -779,11 +779,11 @@ int eecloud_tls_opts_set(struct eecloud *ecld, int cert_reqs, const char *tls_ve
 int eecloud_tls_insecure_set(struct eecloud *ecld, bool value)
 {
 #ifdef WITH_TLS
-	if(!ecld) return MOSQ_ERR_INVAL;
+	if(!ecld) return ECLD_ERR_INVAL;
 	ecld->tls_insecure = value;
-	return MOSQ_ERR_SUCCESS;
+	return ECLD_ERR_SUCCESS;
 #else
-	return MOSQ_ERR_NOT_SUPPORTED;
+	return ECLD_ERR_NOT_SUPPORTED;
 #endif
 }
 
@@ -791,30 +791,30 @@ int eecloud_tls_insecure_set(struct eecloud *ecld, bool value)
 int eecloud_tls_psk_set(struct eecloud *ecld, const char *psk, const char *identity, const char *ciphers)
 {
 #ifdef REAL_WITH_TLS_PSK
-	if(!ecld || !psk || !identity) return MOSQ_ERR_INVAL;
+	if(!ecld || !psk || !identity) return ECLD_ERR_INVAL;
 
 	/* Check for hex only digits */
 	if(strspn(psk, "0123456789abcdefABCDEF") < strlen(psk)){
-		return MOSQ_ERR_INVAL;
+		return ECLD_ERR_INVAL;
 	}
 	ecld->tls_psk = _eecloud_strdup(psk);
-	if(!ecld->tls_psk) return MOSQ_ERR_NOMEM;
+	if(!ecld->tls_psk) return ECLD_ERR_NOMEM;
 
 	ecld->tls_psk_identity = _eecloud_strdup(identity);
 	if(!ecld->tls_psk_identity){
 		_eecloud_free(ecld->tls_psk);
-		return MOSQ_ERR_NOMEM;
+		return ECLD_ERR_NOMEM;
 	}
 	if(ciphers){
 		ecld->tls_ciphers = _eecloud_strdup(ciphers);
-		if(!ecld->tls_ciphers) return MOSQ_ERR_NOMEM;
+		if(!ecld->tls_ciphers) return ECLD_ERR_NOMEM;
 	}else{
 		ecld->tls_ciphers = NULL;
 	}
 
-	return MOSQ_ERR_SUCCESS;
+	return ECLD_ERR_SUCCESS;
 #else
-	return MOSQ_ERR_NOT_SUPPORTED;
+	return ECLD_ERR_NOT_SUPPORTED;
 #endif
 }
 
@@ -832,10 +832,10 @@ int eecloud_loop(struct eecloud *ecld, int timeout, int max_packets)
 	char pairbuf;
 	int maxfd = 0;
 
-	if(!ecld || max_packets < 1) return MOSQ_ERR_INVAL;
+	if(!ecld || max_packets < 1) return ECLD_ERR_INVAL;
 #ifndef WIN32
 	if(ecld->sock >= FD_SETSIZE || ecld->sockpairR >= FD_SETSIZE){
-		return MOSQ_ERR_INVAL;
+		return ECLD_ERR_INVAL;
 	}
 #endif
 
@@ -876,12 +876,12 @@ int eecloud_loop(struct eecloud *ecld, int timeout, int max_packets)
 				}
 			}else{
 				pthread_mutex_unlock(&ecld->state_mutex);
-				return MOSQ_ERR_NO_CONN;
+				return ECLD_ERR_NO_CONN;
 			}
 			pthread_mutex_unlock(&ecld->state_mutex);
 		}
 #else
-		return MOSQ_ERR_NO_CONN;
+		return ECLD_ERR_NO_CONN;
 #endif
 	}
 	if(ecld->sockpairR != INVALID_SOCKET){
@@ -919,9 +919,9 @@ int eecloud_loop(struct eecloud *ecld, int timeout, int max_packets)
 		errno = WSAGetLastError();
 #endif
 		if(errno == EINTR){
-			return MOSQ_ERR_SUCCESS;
+			return ECLD_ERR_SUCCESS;
 		}else{
-			return MOSQ_ERR_ERRNO;
+			return ECLD_ERR_ERRNO;
 		}
 	}else{
 		if(ecld->sock != INVALID_SOCKET){
@@ -982,7 +982,7 @@ int eecloud_loop_forever(struct eecloud *ecld, int timeout, int max_packets)
 	unsigned int reconnects = 0;
 	unsigned long reconnect_delay;
 
-	if(!ecld) return MOSQ_ERR_INVAL;
+	if(!ecld) return ECLD_ERR_INVAL;
 
 	if(ecld->state == ecld_cs_connect_async){
 		eecloud_reconnect(ecld);
@@ -991,33 +991,33 @@ int eecloud_loop_forever(struct eecloud *ecld, int timeout, int max_packets)
 	while(run){
 		do{
 			rc = eecloud_loop(ecld, timeout, max_packets);
-			if (reconnects !=0 && rc == MOSQ_ERR_SUCCESS){
+			if (reconnects !=0 && rc == ECLD_ERR_SUCCESS){
 				reconnects = 0;
 			}
-		}while(run && rc == MOSQ_ERR_SUCCESS);
+		}while(run && rc == ECLD_ERR_SUCCESS);
 		/* Quit after fatal errors. */
 		switch(rc){
-			case MOSQ_ERR_NOMEM:
-			case MOSQ_ERR_PROTOCOL:
-			case MOSQ_ERR_INVAL:
-			case MOSQ_ERR_NOT_FOUND:
-			case MOSQ_ERR_TLS:
-			case MOSQ_ERR_PAYLOAD_SIZE:
-			case MOSQ_ERR_NOT_SUPPORTED:
-			case MOSQ_ERR_AUTH:
-			case MOSQ_ERR_ACL_DENIED:
-			case MOSQ_ERR_UNKNOWN:
-			case MOSQ_ERR_EAI:
-			case MOSQ_ERR_PROXY:
+			case ECLD_ERR_NOMEM:
+			case ECLD_ERR_PROTOCOL:
+			case ECLD_ERR_INVAL:
+			case ECLD_ERR_NOT_FOUND:
+			case ECLD_ERR_TLS:
+			case ECLD_ERR_PAYLOAD_SIZE:
+			case ECLD_ERR_NOT_SUPPORTED:
+			case ECLD_ERR_AUTH:
+			case ECLD_ERR_ACL_DENIED:
+			case ECLD_ERR_UNKNOWN:
+			case ECLD_ERR_EAI:
+			case ECLD_ERR_PROXY:
 				return rc;
-			case MOSQ_ERR_ERRNO:
+			case ECLD_ERR_ERRNO:
 				break;
 		}
 		if(errno == EPROTO){
 			return rc;
 		}
 		do{
-			rc = MOSQ_ERR_SUCCESS;
+			rc = ECLD_ERR_SUCCESS;
 			pthread_mutex_lock(&ecld->state_mutex);
 			if(ecld->state == ecld_cs_disconnecting){
 				run = 0;
@@ -1052,7 +1052,7 @@ int eecloud_loop_forever(struct eecloud *ecld, int timeout, int max_packets)
 					rc = eecloud_reconnect(ecld);
 				}
 			}
-		}while(run && rc != MOSQ_ERR_SUCCESS);
+		}while(run && rc != ECLD_ERR_SUCCESS);
 	}
 	return rc;
 }
@@ -1062,8 +1062,8 @@ int eecloud_loop_misc(struct eecloud *ecld)
 	time_t now;
 	int rc;
 
-	if(!ecld) return MOSQ_ERR_INVAL;
-	if(ecld->sock == INVALID_SOCKET) return MOSQ_ERR_NO_CONN;
+	if(!ecld) return ECLD_ERR_INVAL;
+	if(ecld->sock == INVALID_SOCKET) return ECLD_ERR_NO_CONN;
 
 	_eecloud_check_keepalive(ecld);
 	now = eecloud_time();
@@ -1078,7 +1078,7 @@ int eecloud_loop_misc(struct eecloud *ecld)
 		_eecloud_socket_close(ecld);
 		pthread_mutex_lock(&ecld->state_mutex);
 		if(ecld->state == ecld_cs_disconnecting){
-			rc = MOSQ_ERR_SUCCESS;
+			rc = ECLD_ERR_SUCCESS;
 		}else{
 			rc = 1;
 		}
@@ -1090,9 +1090,9 @@ int eecloud_loop_misc(struct eecloud *ecld)
 			ecld->in_callback = false;
 		}
 		pthread_mutex_unlock(&ecld->callback_mutex);
-		return MOSQ_ERR_CONN_LOST;
+		return ECLD_ERR_CONN_LOST;
 	}
-	return MOSQ_ERR_SUCCESS;
+	return ECLD_ERR_SUCCESS;
 }
 
 static int _eecloud_loop_rc_handle(struct eecloud *ecld, int rc)
@@ -1101,7 +1101,7 @@ static int _eecloud_loop_rc_handle(struct eecloud *ecld, int rc)
 		_eecloud_socket_close(ecld);
 		pthread_mutex_lock(&ecld->state_mutex);
 		if(ecld->state == ecld_cs_disconnecting){
-			rc = MOSQ_ERR_SUCCESS;
+			rc = ECLD_ERR_SUCCESS;
 		}
 		pthread_mutex_unlock(&ecld->state_mutex);
 		pthread_mutex_lock(&ecld->callback_mutex);
@@ -1120,7 +1120,7 @@ int eecloud_loop_read(struct eecloud *ecld, int max_packets)
 {
 	int rc;
 	int i;
-	if(max_packets < 1) return MOSQ_ERR_INVAL;
+	if(max_packets < 1) return ECLD_ERR_INVAL;
 
 	pthread_mutex_lock(&ecld->out_message_mutex);
 	max_packets = ecld->out_queue_len;
@@ -1154,7 +1154,7 @@ int eecloud_loop_write(struct eecloud *ecld, int max_packets)
 {
 	int rc;
 	int i;
-	if(max_packets < 1) return MOSQ_ERR_INVAL;
+	if(max_packets < 1) return ECLD_ERR_INVAL;
 
 	pthread_mutex_lock(&ecld->out_message_mutex);
 	max_packets = ecld->out_queue_len;
@@ -1194,23 +1194,23 @@ int eecloud_opts_set(struct eecloud *ecld, enum ecld_opt_t option, void *value)
 {
 	int ival;
 
-	if(!ecld || !value) return MOSQ_ERR_INVAL;
+	if(!ecld || !value) return ECLD_ERR_INVAL;
 
 	switch(option){
-		case MOSQ_OPT_PROTOCOL_VERSION:
+		case ECLD_OPT_PROTOCOL_VERSION:
 			ival = *((int *)value);
 			if(ival == MQTT_PROTOCOL_V31){
 				ecld->protocol = ecld_p_mqtt31;
 			}else if(ival == MQTT_PROTOCOL_V311){
 				ecld->protocol = ecld_p_mqtt311;
 			}else{
-				return MOSQ_ERR_INVAL;
+				return ECLD_ERR_INVAL;
 			}
 			break;
 		default:
-			return MOSQ_ERR_INVAL;
+			return ECLD_ERR_INVAL;
 	}
-	return MOSQ_ERR_SUCCESS;
+	return ECLD_ERR_SUCCESS;
 }
 
 
@@ -1273,37 +1273,37 @@ void eecloud_user_data_set(struct eecloud *ecld, void *userdata)
 const char *eecloud_strerror(int ecld_errno)
 {
 	switch(ecld_errno){
-		case MOSQ_ERR_SUCCESS:
+		case ECLD_ERR_SUCCESS:
 			return "No error.";
-		case MOSQ_ERR_NOMEM:
+		case ECLD_ERR_NOMEM:
 			return "Out of memory.";
-		case MOSQ_ERR_PROTOCOL:
+		case ECLD_ERR_PROTOCOL:
 			return "A network protocol error occurred when communicating with the broker.";
-		case MOSQ_ERR_INVAL:
+		case ECLD_ERR_INVAL:
 			return "Invalid function arguments provided.";
-		case MOSQ_ERR_NO_CONN:
+		case ECLD_ERR_NO_CONN:
 			return "The client is not currently connected.";
-		case MOSQ_ERR_CONN_REFUSED:
+		case ECLD_ERR_CONN_REFUSED:
 			return "The connection was refused.";
-		case MOSQ_ERR_NOT_FOUND:
+		case ECLD_ERR_NOT_FOUND:
 			return "Message not found (internal error).";
-		case MOSQ_ERR_CONN_LOST:
+		case ECLD_ERR_CONN_LOST:
 			return "The connection was lost.";
-		case MOSQ_ERR_TLS:
+		case ECLD_ERR_TLS:
 			return "A TLS error occurred.";
-		case MOSQ_ERR_PAYLOAD_SIZE:
+		case ECLD_ERR_PAYLOAD_SIZE:
 			return "Payload too large.";
-		case MOSQ_ERR_NOT_SUPPORTED:
+		case ECLD_ERR_NOT_SUPPORTED:
 			return "This feature is not supported.";
-		case MOSQ_ERR_AUTH:
+		case ECLD_ERR_AUTH:
 			return "Authorisation failed.";
-		case MOSQ_ERR_ACL_DENIED:
+		case ECLD_ERR_ACL_DENIED:
 			return "Access denied by ACL.";
-		case MOSQ_ERR_UNKNOWN:
+		case ECLD_ERR_UNKNOWN:
 			return "Unknown error.";
-		case MOSQ_ERR_ERRNO:
+		case ECLD_ERR_ERRNO:
 			return strerror(errno);
-		case MOSQ_ERR_PROXY:
+		case ECLD_ERR_PROXY:
 			return "Proxy error.";
 		default:
 			return "Unknown error.";
@@ -1339,7 +1339,7 @@ int eecloud_sub_topic_tokenise(const char *subtopic, char ***topics, int *count)
 	int tlen;
 	int i, j;
 
-	if(!subtopic || !topics || !count) return MOSQ_ERR_INVAL;
+	if(!subtopic || !topics || !count) return ECLD_ERR_INVAL;
 
 	len = strlen(subtopic);
 
@@ -1354,7 +1354,7 @@ int eecloud_sub_topic_tokenise(const char *subtopic, char ***topics, int *count)
 	}
 
 	(*topics) = _eecloud_calloc(hier_count, sizeof(char *));
-	if(!(*topics)) return MOSQ_ERR_NOMEM;
+	if(!(*topics)) return ECLD_ERR_NOMEM;
 
 	start = 0;
 	stop = 0;
@@ -1373,7 +1373,7 @@ int eecloud_sub_topic_tokenise(const char *subtopic, char ***topics, int *count)
 						}
 					}
 					_eecloud_free((*topics));
-					return MOSQ_ERR_NOMEM;
+					return ECLD_ERR_NOMEM;
 				}
 				for(j=start; j<stop; j++){
 					(*topics)[hier][j-start] = subtopic[j];
@@ -1386,20 +1386,20 @@ int eecloud_sub_topic_tokenise(const char *subtopic, char ***topics, int *count)
 
 	*count = hier_count;
 
-	return MOSQ_ERR_SUCCESS;
+	return ECLD_ERR_SUCCESS;
 }
 
 int eecloud_sub_topic_tokens_free(char ***topics, int count)
 {
 	int i;
 
-	if(!topics || !(*topics) || count<1) return MOSQ_ERR_INVAL;
+	if(!topics || !(*topics) || count<1) return ECLD_ERR_INVAL;
 
 	for(i=0; i<count; i++){
 		if((*topics)[i]) _eecloud_free((*topics)[i]);
 	}
 	_eecloud_free(*topics);
 
-	return MOSQ_ERR_SUCCESS;
+	return ECLD_ERR_SUCCESS;
 }
 

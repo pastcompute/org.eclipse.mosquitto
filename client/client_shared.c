@@ -231,7 +231,7 @@ int client_config_load(struct ecld_config *cfg, int pub_or_sub, int argc, char *
 	if(!cfg->host){
 		cfg->host = "localhost";
 	}
-	return MOSQ_ERR_SUCCESS;
+	return ECLD_ERR_SUCCESS;
 }
 
 /* Process a tokenised single line from a file or set of real argc/argv */
@@ -515,13 +515,13 @@ int client_config_line_proc(struct ecld_config *cfg, int pub_or_sub, int argc, c
 				return 1;
 			}else{
 				if(pub_or_sub == CLIENT_PUB){
-					if(eecloud_pub_topic_check(argv[i+1]) == MOSQ_ERR_INVAL){
+					if(eecloud_pub_topic_check(argv[i+1]) == ECLD_ERR_INVAL){
 						fprintf(stderr, "Error: Invalid publish topic '%s', does it contain '+' or '#'?\n", argv[i+1]);
 						return 1;
 					}
 					cfg->topic = strdup(argv[i+1]);
 				}else{
-					if(eecloud_sub_topic_check(argv[i+1]) == MOSQ_ERR_INVAL){
+					if(eecloud_sub_topic_check(argv[i+1]) == ECLD_ERR_INVAL){
 						fprintf(stderr, "Error: Invalid subscription topic '%s', are all '+' and '#' wildcards correct?\n", argv[i+1]);
 						return 1;
 					}
@@ -539,7 +539,7 @@ int client_config_line_proc(struct ecld_config *cfg, int pub_or_sub, int argc, c
 				fprintf(stderr, "Error: -T argument given but no topic filter specified.\n\n");
 				return 1;
 			}else{
-				if(eecloud_sub_topic_check(argv[i+1]) == MOSQ_ERR_INVAL){
+				if(eecloud_sub_topic_check(argv[i+1]) == ECLD_ERR_INVAL){
 					fprintf(stderr, "Error: Invalid filter topic '%s', are all '+' and '#' wildcards correct?\n", argv[i+1]);
 					return 1;
 				}
@@ -602,7 +602,7 @@ int client_config_line_proc(struct ecld_config *cfg, int pub_or_sub, int argc, c
 				fprintf(stderr, "Error: --will-topic argument given but no will topic specified.\n\n");
 				return 1;
 			}else{
-				if(eecloud_pub_topic_check(argv[i+1]) == MOSQ_ERR_INVAL){
+				if(eecloud_pub_topic_check(argv[i+1]) == ECLD_ERR_INVAL){
 					fprintf(stderr, "Error: Invalid will topic '%s', does it contain '+' or '#'?\n", argv[i+1]);
 					return 1;
 				}
@@ -634,7 +634,7 @@ int client_config_line_proc(struct ecld_config *cfg, int pub_or_sub, int argc, c
 		}
 	}
 
-	return MOSQ_ERR_SUCCESS;
+	return ECLD_ERR_SUCCESS;
 
 unknown_option:
 	fprintf(stderr, "Error: Unknown option '%s'.\n",argv[i]);
@@ -694,8 +694,8 @@ int client_opts_set(struct eecloud *ecld, struct ecld_config *cfg)
 		}
 	}
 #endif
-	eecloud_opts_set(ecld, MOSQ_OPT_PROTOCOL_VERSION, &(cfg->protocol_version));
-	return MOSQ_ERR_SUCCESS;
+	eecloud_opts_set(ecld, ECLD_OPT_PROTOCOL_VERSION, &(cfg->protocol_version));
+	return ECLD_ERR_SUCCESS;
 }
 
 int client_id_generate(struct ecld_config *cfg, const char *id_base)
@@ -723,12 +723,12 @@ int client_id_generate(struct ecld_config *cfg, const char *id_base)
 			return 1;
 		}
 		snprintf(cfg->id, len, "%s/%d-%s", id_base, getpid(), hostname);
-		if(strlen(cfg->id) > MOSQ_MQTT_ID_MAX_LENGTH){
+		if(strlen(cfg->id) > ECLD_MQTT_ID_MAX_LENGTH){
 			/* Enforce maximum client id length of 23 characters */
-			cfg->id[MOSQ_MQTT_ID_MAX_LENGTH] = '\0';
+			cfg->id[ECLD_MQTT_ID_MAX_LENGTH] = '\0';
 		}
 	}
-	return MOSQ_ERR_SUCCESS;
+	return ECLD_ERR_SUCCESS;
 }
 
 int client_connect(struct eecloud *ecld, struct ecld_config *cfg)
@@ -747,7 +747,7 @@ int client_connect(struct eecloud *ecld, struct ecld_config *cfg)
 #endif
 	if(rc>0){
 		if(!cfg->quiet){
-			if(rc == MOSQ_ERR_ERRNO){
+			if(rc == ECLD_ERR_ERRNO){
 #ifndef WIN32
 				strerror_r(errno, err, 1024);
 #else
@@ -761,7 +761,7 @@ int client_connect(struct eecloud *ecld, struct ecld_config *cfg)
 		eecloud_lib_cleanup();
 		return rc;
 	}
-	return MOSQ_ERR_SUCCESS;
+	return ECLD_ERR_SUCCESS;
 }
 
 #ifdef WITH_SOCKS

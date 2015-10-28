@@ -36,18 +36,18 @@ broker = ecld_test.start_broker(filename=os.path.basename(__file__), cmd=cmd)
 
 local_cmd = ['../../src/eecloud', '-c', '06-bridge-reconnect-local-out.conf']
 local_broker = ecld_test.start_broker(cmd=local_cmd, filename=os.path.basename(__file__)+'_local1')
-if os.environ.get('MOSQ_USE_VALGRIND') is not None:
+if os.environ.get('ECLD_USE_VALGRIND') is not None:
     time.sleep(5)
 else:
     time.sleep(0.5)
 local_broker.terminate()
 local_broker.wait()
-if os.environ.get('MOSQ_USE_VALGRIND') is not None:
+if os.environ.get('ECLD_USE_VALGRIND') is not None:
     time.sleep(5)
 else:
     time.sleep(0.5)
 local_broker = ecld_test.start_broker(cmd=local_cmd, filename=os.path.basename(__file__)+'_local2')
-if os.environ.get('MOSQ_USE_VALGRIND') is not None:
+if os.environ.get('ECLD_USE_VALGRIND') is not None:
     time.sleep(5)
 else:
     time.sleep(0.5)

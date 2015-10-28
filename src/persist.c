@@ -117,9 +117,9 @@ static int mqtt3_db_client_messages_write(struct eecloud_db *db, FILE *db_fptr, 
 		cmsg = cmsg->next;
 	}
 
-	return MOSQ_ERR_SUCCESS;
+	return ECLD_ERR_SUCCESS;
 error:
-	_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: %s.", strerror(errno));
+	_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: %s.", strerror(errno));
 	return 1;
 }
 
@@ -196,9 +196,9 @@ static int mqtt3_db_message_store_write(struct eecloud_db *db, FILE *db_fptr)
 		stored = stored->next;
 	}
 
-	return MOSQ_ERR_SUCCESS;
+	return ECLD_ERR_SUCCESS;
 error:
-	_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: %s.", strerror(errno));
+	_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: %s.", strerror(errno));
 	return 1;
 }
 
@@ -237,9 +237,9 @@ static int mqtt3_db_client_write(struct eecloud_db *db, FILE *db_fptr)
 		}
 	}
 
-	return MOSQ_ERR_SUCCESS;
+	return ECLD_ERR_SUCCESS;
 error:
-	_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: %s.", strerror(errno));
+	_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: %s.", strerror(errno));
 	return 1;
 }
 
@@ -255,7 +255,7 @@ static int _db_subs_retain_write(struct eecloud_db *db, FILE *db_fptr, struct _e
 
 	slen = strlen(topic) + strlen(node->topic) + 2;
 	thistopic = _eecloud_malloc(sizeof(char)*slen);
-	if(!thistopic) return MOSQ_ERR_NOMEM;
+	if(!thistopic) return ECLD_ERR_NOMEM;
 	if(strlen(topic)){
 		snprintf(thistopic, slen, "%s/%s", topic, node->topic);
 	}else{
@@ -305,9 +305,9 @@ static int _db_subs_retain_write(struct eecloud_db *db, FILE *db_fptr, struct _e
 		subhier = subhier->next;
 	}
 	_eecloud_free(thistopic);
-	return MOSQ_ERR_SUCCESS;
+	return ECLD_ERR_SUCCESS;
 error:
-	_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: %s.", strerror(errno));
+	_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: %s.", strerror(errno));
 	return 1;
 }
 
@@ -321,14 +321,14 @@ static int mqtt3_db_subs_retain_write(struct eecloud_db *db, FILE *db_fptr)
 		subhier = subhier->next;
 	}
 	
-	return MOSQ_ERR_SUCCESS;
+	return ECLD_ERR_SUCCESS;
 }
 
 int mqtt3_db_backup(struct eecloud_db *db, bool shutdown)
 {
 	int rc = 0;
 	FILE *db_fptr = NULL;
-	uint32_t db_version_w = htonl(MOSQ_DB_VERSION);
+	uint32_t db_version_w = htonl(ECLD_DB_VERSION);
 	uint32_t crc = htonl(0);
 	dbid_t i64temp;
 	uint32_t i32temp;
@@ -338,20 +338,20 @@ int mqtt3_db_backup(struct eecloud_db *db, bool shutdown)
 	char *outfile = NULL;
 	int len;
 
-	if(!db || !db->config || !db->config->persistence_filepath) return MOSQ_ERR_INVAL;
-	_eecloud_log_printf(NULL, MOSQ_LOG_INFO, "Saving in-memory database to %s.", db->config->persistence_filepath);
+	if(!db || !db->config || !db->config->persistence_filepath) return ECLD_ERR_INVAL;
+	_eecloud_log_printf(NULL, ECLD_LOG_INFO, "Saving in-memory database to %s.", db->config->persistence_filepath);
 
 	len = strlen(db->config->persistence_filepath)+5;
 	outfile = _eecloud_malloc(len+1);
 	if(!outfile){
-		_eecloud_log_printf(NULL, MOSQ_LOG_INFO, "Error saving in-memory database, out of memory.");
-		return MOSQ_ERR_NOMEM;
+		_eecloud_log_printf(NULL, ECLD_LOG_INFO, "Error saving in-memory database, out of memory.");
+		return ECLD_ERR_NOMEM;
 	}
 	snprintf(outfile, len, "%s.new", db->config->persistence_filepath);
 	outfile[len] = '\0';
 	db_fptr = _eecloud_fopen(outfile, "wb");
 	if(db_fptr == NULL){
-		_eecloud_log_printf(NULL, MOSQ_LOG_INFO, "Error saving in-memory database, unable to open %s for writing.", outfile);
+		_eecloud_log_printf(NULL, ECLD_LOG_INFO, "Error saving in-memory database, unable to open %s for writing.", outfile);
 		goto error;
 	}
 
@@ -400,7 +400,7 @@ int mqtt3_db_backup(struct eecloud_db *db, bool shutdown)
 error:
 	if(outfile) _eecloud_free(outfile);
 	strerror_r(errno, err, 256);
-	_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: %s.", err);
+	_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: %s.", err);
 	if(db_fptr) fclose(db_fptr);
 	return 1;
 }
@@ -413,8 +413,8 @@ static int _db_client_msg_restore(struct eecloud_db *db, const char *client_id, 
 
 	cmsg = _eecloud_malloc(sizeof(struct eecloud_client_msg));
 	if(!cmsg){
-		_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-		return MOSQ_ERR_NOMEM;
+		_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Out of memory.");
+		return ECLD_ERR_NOMEM;
 	}
 
 	cmsg->next = NULL;
@@ -430,7 +430,7 @@ static int _db_client_msg_restore(struct eecloud_db *db, const char *client_id, 
 	HASH_FIND(hh, db->msg_store_load, &store_id, sizeof(dbid_t), load);
 	if(!load){
 		_eecloud_free(cmsg);
-		_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error restoring persistent database, message store corrupt.");
+		_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error restoring persistent database, message store corrupt.");
 		return 1;
 	}
 	cmsg->store = load->store;
@@ -439,7 +439,7 @@ static int _db_client_msg_restore(struct eecloud_db *db, const char *client_id, 
 	context = _db_find_or_add_context(db, client_id, 0);
 	if(!context){
 		_eecloud_free(cmsg);
-		_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error restoring persistent database, message store corrupt.");
+		_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error restoring persistent database, message store corrupt.");
 		return 1;
 	}
 	if(context->msgs){
@@ -449,7 +449,7 @@ static int _db_client_msg_restore(struct eecloud_db *db, const char *client_id, 
 	}
 	context->last_msg = cmsg;
 
-	return MOSQ_ERR_SUCCESS;
+	return ECLD_ERR_SUCCESS;
 }
 
 static int _db_client_chunk_restore(struct eecloud_db *db, FILE *db_fptr)
@@ -463,15 +463,15 @@ static int _db_client_chunk_restore(struct eecloud_db *db, FILE *db_fptr)
 	read_e(db_fptr, &i16temp, sizeof(uint16_t));
 	slen = ntohs(i16temp);
 	if(!slen){
-		_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Corrupt persistent database.");
+		_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Corrupt persistent database.");
 		fclose(db_fptr);
 		return 1;
 	}
 	client_id = _eecloud_malloc(slen+1);
 	if(!client_id){
 		fclose(db_fptr);
-		_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-		return MOSQ_ERR_NOMEM;
+		_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Out of memory.");
+		return ECLD_ERR_NOMEM;
 	}
 	read_e(db_fptr, client_id, slen);
 	client_id[slen] = '\0';
@@ -496,7 +496,7 @@ static int _db_client_chunk_restore(struct eecloud_db *db, FILE *db_fptr)
 
 	return rc;
 error:
-	_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: %s.", strerror(errno));
+	_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: %s.", strerror(errno));
 	fclose(db_fptr);
 	if(client_id) _eecloud_free(client_id);
 	return 1;
@@ -514,15 +514,15 @@ static int _db_client_msg_chunk_restore(struct eecloud_db *db, FILE *db_fptr)
 	read_e(db_fptr, &i16temp, sizeof(uint16_t));
 	slen = ntohs(i16temp);
 	if(!slen){
-		_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Corrupt persistent database.");
+		_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Corrupt persistent database.");
 		fclose(db_fptr);
 		return 1;
 	}
 	client_id = _eecloud_malloc(slen+1);
 	if(!client_id){
 		fclose(db_fptr);
-		_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-		return MOSQ_ERR_NOMEM;
+		_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Out of memory.");
+		return ECLD_ERR_NOMEM;
 	}
 	read_e(db_fptr, client_id, slen);
 	client_id[slen] = '\0';
@@ -545,7 +545,7 @@ static int _db_client_msg_chunk_restore(struct eecloud_db *db, FILE *db_fptr)
 	return rc;
 error:
 	strerror_r(errno, err, 256);
-	_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: %s.", err);
+	_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: %s.", err);
 	fclose(db_fptr);
 	if(client_id) _eecloud_free(client_id);
 	return 1;
@@ -567,8 +567,8 @@ static int _db_msg_store_chunk_restore(struct eecloud_db *db, FILE *db_fptr)
 	load = _eecloud_malloc(sizeof(struct eecloud_msg_store_load));
 	if(!load){
 		fclose(db_fptr);
-		_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-		return MOSQ_ERR_NOMEM;
+		_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Out of memory.");
+		return ECLD_ERR_NOMEM;
 	}
 
 	read_e(db_fptr, &i64temp, sizeof(dbid_t));
@@ -581,8 +581,8 @@ static int _db_msg_store_chunk_restore(struct eecloud_db *db, FILE *db_fptr)
 		if(!source_id){
 			_eecloud_free(load);
 			fclose(db_fptr);
-			_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-			return MOSQ_ERR_NOMEM;
+			_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Out of memory.");
+			return ECLD_ERR_NOMEM;
 		}
 		read_e(db_fptr, source_id, slen);
 		source_id[slen] = '\0';
@@ -601,14 +601,14 @@ static int _db_msg_store_chunk_restore(struct eecloud_db *db, FILE *db_fptr)
 			_eecloud_free(load);
 			fclose(db_fptr);
 			if(source_id) _eecloud_free(source_id);
-			_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-			return MOSQ_ERR_NOMEM;
+			_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Out of memory.");
+			return ECLD_ERR_NOMEM;
 		}
 		read_e(db_fptr, topic, slen);
 		topic[slen] = '\0';
 	}else{
 		_eecloud_free(load);
-		_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid msg_store chunk when restoring persistent database.");
+		_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Invalid msg_store chunk when restoring persistent database.");
 		fclose(db_fptr);
 		if(source_id) _eecloud_free(source_id);
 		return 1;
@@ -626,8 +626,8 @@ static int _db_msg_store_chunk_restore(struct eecloud_db *db, FILE *db_fptr)
 			fclose(db_fptr);
 			if(source_id) _eecloud_free(source_id);
 			_eecloud_free(topic);
-			_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-			return MOSQ_ERR_NOMEM;
+			_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Out of memory.");
+			return ECLD_ERR_NOMEM;
 		}
 		read_e(db_fptr, payload, payloadlen);
 	}
@@ -646,7 +646,7 @@ static int _db_msg_store_chunk_restore(struct eecloud_db *db, FILE *db_fptr)
 	return rc;
 error:
 	strerror_r(errno, err, 256);
-	_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: %s.", err);
+	_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: %s.", err);
 	fclose(db_fptr);
 	if(source_id) _eecloud_free(source_id);
 	if(topic) _eecloud_free(topic);
@@ -662,7 +662,7 @@ static int _db_retain_chunk_restore(struct eecloud_db *db, FILE *db_fptr)
 
 	if(fread(&i64temp, sizeof(dbid_t), 1, db_fptr) != 1){
 		strerror_r(errno, err, 256);
-		_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: %s.", err);
+		_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: %s.", err);
 		fclose(db_fptr);
 		return 1;
 	}
@@ -671,10 +671,10 @@ static int _db_retain_chunk_restore(struct eecloud_db *db, FILE *db_fptr)
 	if(load){
 		mqtt3_db_messages_queue(db, NULL, load->store->topic, load->store->qos, load->store->retain, &load->store);
 	}else{
-		_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Corrupt database whilst restoring a retained message.");
-		return MOSQ_ERR_INVAL;
+		_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Corrupt database whilst restoring a retained message.");
+		return ECLD_ERR_INVAL;
 	}
-	return MOSQ_ERR_SUCCESS;
+	return ECLD_ERR_SUCCESS;
 }
 
 static int _db_sub_chunk_restore(struct eecloud_db *db, FILE *db_fptr)
@@ -691,8 +691,8 @@ static int _db_sub_chunk_restore(struct eecloud_db *db, FILE *db_fptr)
 	client_id = _eecloud_malloc(slen+1);
 	if(!client_id){
 		fclose(db_fptr);
-		_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-		return MOSQ_ERR_NOMEM;
+		_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Out of memory.");
+		return ECLD_ERR_NOMEM;
 	}
 	read_e(db_fptr, client_id, slen);
 	client_id[slen] = '\0';
@@ -702,9 +702,9 @@ static int _db_sub_chunk_restore(struct eecloud_db *db, FILE *db_fptr)
 	topic = _eecloud_malloc(slen+1);
 	if(!topic){
 		fclose(db_fptr);
-		_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
+		_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Out of memory.");
 		_eecloud_free(client_id);
-		return MOSQ_ERR_NOMEM;
+		return ECLD_ERR_NOMEM;
 	}
 	read_e(db_fptr, topic, slen);
 	topic[slen] = '\0';
@@ -719,7 +719,7 @@ static int _db_sub_chunk_restore(struct eecloud_db *db, FILE *db_fptr)
 	return rc;
 error:
 	strerror_r(errno, err, 256);
-	_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: %s.", err);
+	_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: %s.", err);
 	fclose(db_fptr);
 	return 1;
 }
@@ -745,7 +745,7 @@ int mqtt3_db_restore(struct eecloud_db *db)
 	db->msg_store_load = NULL;
 
 	fptr = _eecloud_fopen(db->config->persistence_filepath, "rb");
-	if(fptr == NULL) return MOSQ_ERR_SUCCESS;
+	if(fptr == NULL) return ECLD_ERR_SUCCESS;
 	read_e(fptr, &header, 15);
 	if(!memcmp(header, magic, 15)){
 		// Restore DB as normal
@@ -755,12 +755,12 @@ int mqtt3_db_restore(struct eecloud_db *db)
 		/* IMPORTANT - this is where compatibility checks are made.
 		 * Is your DB change still compatible with previous versions?
 		 */
-		if(db_version > MOSQ_DB_VERSION && db_version != 0){
+		if(db_version > ECLD_DB_VERSION && db_version != 0){
 			if(db_version == 2){
 				/* Addition of disconnect_t to client chunk in v3. */
 			}else{
 				fclose(fptr);
-				_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unsupported persistent database format version %d (need version %d).", db_version, MOSQ_DB_VERSION);
+				_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Unsupported persistent database format version %d (need version %d).", db_version, ECLD_DB_VERSION);
 				return 1;
 			}
 		}
@@ -774,7 +774,7 @@ int mqtt3_db_restore(struct eecloud_db *db)
 					read_e(fptr, &i8temp, sizeof(uint8_t)); // shutdown
 					read_e(fptr, &i8temp, sizeof(uint8_t)); // sizeof(dbid_t)
 					if(i8temp != sizeof(dbid_t)){
-						_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Incompatible database configuration (dbid size is %d bytes, expected %lu)",
+						_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Incompatible database configuration (dbid size is %d bytes, expected %lu)",
 								i8temp, (unsigned long)sizeof(dbid_t));
 						fclose(fptr);
 						return 1;
@@ -804,14 +804,14 @@ int mqtt3_db_restore(struct eecloud_db *db)
 					break;
 
 				default:
-					_eecloud_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Unsupported chunk \"%d\" in persistent database file. Ignoring.", chunk);
+					_eecloud_log_printf(NULL, ECLD_LOG_WARNING, "Warning: Unsupported chunk \"%d\" in persistent database file. Ignoring.", chunk);
 					fseek(fptr, length, SEEK_CUR);
 					break;
 			}
 		}
 		if(rlen < 0) goto error;
 	}else{
-		_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to restore persistent database. Unrecognised file format.");
+		_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Unable to restore persistent database. Unrecognised file format.");
 		rc = 1;
 	}
 
@@ -824,7 +824,7 @@ int mqtt3_db_restore(struct eecloud_db *db)
 	return rc;
 error:
 	strerror_r(errno, err, 256);
-	_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: %s.", err);
+	_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: %s.", err);
 	if(fptr) fclose(fptr);
 	return 1;
 }

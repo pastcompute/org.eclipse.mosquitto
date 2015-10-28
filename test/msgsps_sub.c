@@ -69,7 +69,7 @@ int main(int argc, char *argv[])
 
 	do{
 		rc = eecloud_loop(ecld, 1, 10);
-	}while(rc == MOSQ_ERR_SUCCESS && run);
+	}while(rc == ECLD_ERR_SUCCESS && run);
 	printf("rc: %d\n", rc);
 
 	dstart = (double)start.tv_sec*1.0e6 + (double)start.tv_usec;

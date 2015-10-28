@@ -2,7 +2,7 @@ include ../config.mk
 
 .PHONY : really clean install
 
-MOSQ_OBJS=eecloud.o \
+ECLD_OBJS=eecloud.o \
 		  logging_ecld.o \
 		  memory_ecld.o \
 		  messages_ecld.o \
@@ -42,10 +42,10 @@ clean :
 	-rm -f *.o libeecloud.so.${SOVERSION} libeecloud.so libeecloud.a
 	$(MAKE) -C cpp clean
 
-libeecloud.so.${SOVERSION} : ${MOSQ_OBJS}
+libeecloud.so.${SOVERSION} : ${ECLD_OBJS}
 	${CROSS_COMPILE}$(CC) -shared $(LIB_LDFLAGS) $^ -o $@ ${LIB_LIBS}
 
-libeecloud.a : ${MOSQ_OBJS}
+libeecloud.a : ${ECLD_OBJS}
 	${CROSS_COMPILE}$(AR) cr $@ $^
 eecloud.o : eecloud.c eecloud.h
 	${CROSS_COMPILE}$(CC) $(LIB_CFLAGS) -c $< -o $@

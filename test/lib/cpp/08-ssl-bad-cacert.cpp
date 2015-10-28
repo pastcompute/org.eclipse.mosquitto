@@ -22,7 +22,7 @@ int main(int argc, char *argv[])
 	ecld = new eecloudpp_test("08-ssl-bad-cacert");
 
 	ecld->tls_opts_set(1, "tlsv1", NULL);
-	if(ecld->tls_set("this/file/doesnt/exist") == MOSQ_ERR_INVAL){
+	if(ecld->tls_set("this/file/doesnt/exist") == ECLD_ERR_INVAL){
 		rc = 0;
 	}
 	ecldpp::lib_cleanup();

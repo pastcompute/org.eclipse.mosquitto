@@ -59,14 +59,14 @@ int _eecloud_packet_alloc(struct _eecloud_packet *packet)
 		remaining_bytes[packet->remaining_count] = byte;
 		packet->remaining_count++;
 	}while(remaining_length > 0 && packet->remaining_count < 5);
-	if(packet->remaining_count == 5) return MOSQ_ERR_PAYLOAD_SIZE;
+	if(packet->remaining_count == 5) return ECLD_ERR_PAYLOAD_SIZE;
 	packet->packet_length = packet->remaining_length + 1 + packet->remaining_count;
 #ifdef WITH_WEBSOCKETS
 	packet->payload = _eecloud_malloc(sizeof(uint8_t)*packet->packet_length + LWS_SEND_BUFFER_PRE_PADDING + LWS_SEND_BUFFER_POST_PADDING);
 #else
 	packet->payload = _eecloud_malloc(sizeof(uint8_t)*packet->packet_length);
 #endif
-	if(!packet->payload) return MOSQ_ERR_NOMEM;
+	if(!packet->payload) return ECLD_ERR_NOMEM;
 
 	packet->payload[0] = packet->command;
 	for(i=0; i<packet->remaining_count; i++){
@@ -74,7 +74,7 @@ int _eecloud_packet_alloc(struct _eecloud_packet *packet)
 	}
 	packet->pos = 1 + packet->remaining_count;
 
-	return MOSQ_ERR_SUCCESS;
+	return ECLD_ERR_SUCCESS;
 }
 
 #ifdef WITH_BROKER
@@ -97,7 +97,7 @@ void _eecloud_check_keepalive(struct eecloud *ecld)
 				&& ecld->sock != INVALID_SOCKET
 				&& now - ecld->last_msg_out >= ecld->bridge->idle_timeout){
 
-		_eecloud_log_printf(NULL, MOSQ_LOG_NOTICE, "Bridge connection %s has exceeded idle timeout, disconnecting.", ecld->id);
+		_eecloud_log_printf(NULL, ECLD_LOG_NOTICE, "Bridge connection %s has exceeded idle timeout, disconnecting.", ecld->id);
 		_eecloud_socket_close(db, ecld);
 		return;
 	}
@@ -128,7 +128,7 @@ void _eecloud_check_keepalive(struct eecloud *ecld)
 			_eecloud_socket_close(ecld);
 			pthread_mutex_lock(&ecld->state_mutex);
 			if(ecld->state == ecld_cs_disconnecting){
-				rc = MOSQ_ERR_SUCCESS;
+				rc = ECLD_ERR_SUCCESS;
 			}else{
 				rc = 1;
 			}
@@ -167,31 +167,31 @@ uint16_t _eecloud_mid_generate(struct eecloud *ecld)
 }
 
 /* Check that a topic used for publishing is valid.
- * Search for + or # in a topic. Return MOSQ_ERR_INVAL if found.
- * Also returns MOSQ_ERR_INVAL if the topic string is too long.
- * Returns MOSQ_ERR_SUCCESS if everything is fine.
+ * Search for + or # in a topic. Return ECLD_ERR_INVAL if found.
+ * Also returns ECLD_ERR_INVAL if the topic string is too long.
+ * Returns ECLD_ERR_SUCCESS if everything is fine.
  */
 int eecloud_pub_topic_check(const char *str)
 {
 	int len = 0;
 	while(str && str[0]){
 		if(str[0] == '+' || str[0] == '#'){
-			return MOSQ_ERR_INVAL;
+			return ECLD_ERR_INVAL;
 		}
 		len++;
 		str = &str[1];
 	}
-	if(len > 65535) return MOSQ_ERR_INVAL;
+	if(len > 65535) return ECLD_ERR_INVAL;
 
-	return MOSQ_ERR_SUCCESS;
+	return ECLD_ERR_SUCCESS;
 }
 
 /* Check that a topic used for subscriptions is valid.
  * Search for + or # in a topic, check they aren't in invalid positions such as
  * foo/#/bar, foo/+bar or foo/bar#.
- * Return MOSQ_ERR_INVAL if invalid position found.
- * Also returns MOSQ_ERR_INVAL if the topic string is too long.
- * Returns MOSQ_ERR_SUCCESS if everything is fine.
+ * Return ECLD_ERR_INVAL if invalid position found.
+ * Also returns ECLD_ERR_INVAL if the topic string is too long.
+ * Returns ECLD_ERR_SUCCESS if everything is fine.
  */
 int eecloud_sub_topic_check(const char *str)
 {
@@ -200,20 +200,20 @@ int eecloud_sub_topic_check(const char *str)
 	while(str && str[0]){
 		if(str[0] == '+'){
 			if((c != '\0' && c != '/') || (str[1] != '\0' && str[1] != '/')){
-				return MOSQ_ERR_INVAL;
+				return ECLD_ERR_INVAL;
 			}
 		}else if(str[0] == '#'){
 			if((c != '\0' && c != '/')  || str[1] != '\0'){
-				return MOSQ_ERR_INVAL;
+				return ECLD_ERR_INVAL;
 			}
 		}
 		len++;
 		c = str[0];
 		str = &str[1];
 	}
-	if(len > 65535) return MOSQ_ERR_INVAL;
+	if(len > 65535) return ECLD_ERR_INVAL;
 
-	return MOSQ_ERR_SUCCESS;
+	return ECLD_ERR_SUCCESS;
 }
 
 /* Does a topic match a subscription? */
@@ -223,7 +223,7 @@ int eecloud_topic_matches_sub(const char *sub, const char *topic, bool *result)
 	int spos, tpos;
 	bool multilevel_wildcard = false;
 
-	if(!sub || !topic || !result) return MOSQ_ERR_INVAL;
+	if(!sub || !topic || !result) return ECLD_ERR_INVAL;
 
 	slen = strlen(sub);
 	tlen = strlen(topic);
@@ -233,7 +233,7 @@ int eecloud_topic_matches_sub(const char *sub, const char *topic, bool *result)
 				|| (topic[0] == '$' && sub[0] != '$')){
 
 			*result = false;
-			return MOSQ_ERR_SUCCESS;
+			return ECLD_ERR_SUCCESS;
 		}
 	}
 
@@ -249,18 +249,18 @@ int eecloud_topic_matches_sub(const char *sub, const char *topic, bool *result)
 						&& sub[spos+2] == '#'){
 					*result = true;
 					multilevel_wildcard = true;
-					return MOSQ_ERR_SUCCESS;
+					return ECLD_ERR_SUCCESS;
 				}
 			}
 			spos++;
 			tpos++;
 			if(spos == slen && tpos == tlen){
 				*result = true;
-				return MOSQ_ERR_SUCCESS;
+				return ECLD_ERR_SUCCESS;
 			}else if(tpos == tlen && spos == slen-1 && sub[spos] == '+'){
 				spos++;
 				*result = true;
-				return MOSQ_ERR_SUCCESS;
+				return ECLD_ERR_SUCCESS;
 			}
 		}else{
 			if(sub[spos] == '+'){
@@ -270,20 +270,20 @@ int eecloud_topic_matches_sub(const char *sub, const char *topic, bool *result)
 				}
 				if(tpos == tlen && spos == slen){
 					*result = true;
-					return MOSQ_ERR_SUCCESS;
+					return ECLD_ERR_SUCCESS;
 				}
 			}else if(sub[spos] == '#'){
 				multilevel_wildcard = true;
 				if(spos+1 != slen){
 					*result = false;
-					return MOSQ_ERR_SUCCESS;
+					return ECLD_ERR_SUCCESS;
 				}else{
 					*result = true;
-					return MOSQ_ERR_SUCCESS;
+					return ECLD_ERR_SUCCESS;
 				}
 			}else{
 				*result = false;
-				return MOSQ_ERR_SUCCESS;
+				return ECLD_ERR_SUCCESS;
 			}
 		}
 	}
@@ -291,7 +291,7 @@ int eecloud_topic_matches_sub(const char *sub, const char *topic, bool *result)
 		*result = false;
 	}
 
-	return MOSQ_ERR_SUCCESS;
+	return ECLD_ERR_SUCCESS;
 }
 
 #ifdef REAL_WITH_TLS_PSK

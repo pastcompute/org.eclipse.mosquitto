@@ -2,7 +2,7 @@ include_directories(${eecloud_SOURCE_DIR} ${eecloud_SOURCE_DIR}/src
 		${eecloud_SOURCE_DIR}/lib ${OPENSSL_INCLUDE_DIR}
 		${STDBOOL_H_PATH} ${STDINT_H_PATH})
 
-set (MOSQ_SRCS
+set (ECLD_SRCS
 	conf.c
 	context.c
 	database.c
@@ -32,7 +32,7 @@ set (MOSQ_SRCS
 option(INC_BRIDGE_SUPPORT
 	"Include bridge support for connecting to other brokers?" ON)
 if (${INC_BRIDGE_SUPPORT} STREQUAL ON)
-	set (MOSQ_SRCS ${MOSQ_SRCS} bridge.c)
+	set (ECLD_SRCS ${ECLD_SRCS} bridge.c)
 	add_definitions("-DWITH_BRIDGE")
 endif (${INC_BRIDGE_SUPPORT} STREQUAL ON)
 
@@ -41,7 +41,7 @@ option(USE_LIBWRAP
 	"Include tcp-wrappers support?" OFF)
 
 if (${USE_LIBWRAP} STREQUAL ON)
-	set (MOSQ_LIBS ${MOSQ_LIBS} wrap)
+	set (ECLD_LIBS ${ECLD_LIBS} wrap)
 	add_definitions("-DWITH_WRAP")
 endif (${USE_LIBWRAP} STREQUAL ON)
 
@@ -73,29 +73,29 @@ if (${WITH_WEBSOCKETS} STREQUAL ON)
 endif (${WITH_WEBSOCKETS} STREQUAL ON)
 
 if (WIN32 OR CYGWIN)
-	set (MOSQ_SRCS ${MOSQ_SRCS} service.c)
+	set (ECLD_SRCS ${ECLD_SRCS} service.c)
 endif (WIN32 OR CYGWIN)
 
 add_definitions (-DWITH_BROKER)
 
-add_executable(eecloud ${MOSQ_SRCS})
+add_executable(eecloud ${ECLD_SRCS})
 
-set (MOSQ_LIBS ${MOSQ_LIBS} ${OPENSSL_LIBRARIES})
+set (ECLD_LIBS ${ECLD_LIBS} ${OPENSSL_LIBRARIES})
 
 if (UNIX)
 	if (APPLE)
-		set (MOSQ_LIBS ${MOSQ_LIBS} dl m)
+		set (ECLD_LIBS ${ECLD_LIBS} dl m)
 	else (APPLE)
-		set (MOSQ_LIBS ${MOSQ_LIBS} rt dl m)
+		set (ECLD_LIBS ${ECLD_LIBS} rt dl m)
 	endif (APPLE)
 endif (UNIX)
 
 if (WIN32)
-	set (MOSQ_LIBS ${MOSQ_LIBS} ws2_32)
+	set (ECLD_LIBS ${ECLD_LIBS} ws2_32)
 endif (WIN32)
 
 if (${WITH_WEBSOCKETS} STREQUAL ON)
-	set (MOSQ_LIBS ${MOSQ_LIBS} websockets)
+	set (ECLD_LIBS ${ECLD_LIBS} websockets)
 endif (${WITH_WEBSOCKETS} STREQUAL ON)
 
 # Simple detect libuuid
@@ -103,11 +103,11 @@ if(NOT APPLE)
 	FIND_PATH(UUID_HEADER uuid/uuid.h)
 	if (UUID_HEADER)
 		add_definitions(-DWITH_UUID)
-		set (MOSQ_LIBS ${MOSQ_LIBS} uuid)
+		set (ECLD_LIBS ${ECLD_LIBS} uuid)
 	endif (UUID_HEADER)
 endif(NOT APPLE)
 
-target_link_libraries(eecloud ${MOSQ_LIBS})
+target_link_libraries(eecloud ${ECLD_LIBS})
 
 if (UNIX)
 	if (APPLE)

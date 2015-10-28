@@ -14,8 +14,8 @@ Contributors:
    Roger Light - initial implementation and documentation.
 */
 
-#ifndef _MOSQUITTO_INTERNAL_H_
-#define _MOSQUITTO_INTERNAL_H_
+#ifndef _EECLOUD_INTERNAL_H_
+#define _EECLOUD_INTERNAL_H_
 
 #include <config.h>
 

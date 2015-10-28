@@ -44,9 +44,9 @@ Contributors:
 int eecloud_socks5_set(struct eecloud *ecld, const char *host, int port, const char *username, const char *password)
 {
 #ifdef WITH_SOCKS
-	if(!ecld) return MOSQ_ERR_INVAL;
-	if(!host || strlen(host) > 256) return MOSQ_ERR_INVAL;
-	if(port < 1 || port > 65535) return MOSQ_ERR_INVAL;
+	if(!ecld) return ECLD_ERR_INVAL;
+	if(!host || strlen(host) > 256) return ECLD_ERR_INVAL;
+	if(port < 1 || port > 65535) return ECLD_ERR_INVAL;
 
 	if(ecld->socks5_host){
 		_eecloud_free(ecld->socks5_host);
@@ -54,7 +54,7 @@ int eecloud_socks5_set(struct eecloud *ecld, const char *host, int port, const c
 
 	ecld->socks5_host = _eecloud_strdup(host);
 	if(!ecld->socks5_host){
-		return MOSQ_ERR_NOMEM;
+		return ECLD_ERR_NOMEM;
 	}
 
 	ecld->socks5_port = port;
@@ -69,21 +69,21 @@ int eecloud_socks5_set(struct eecloud *ecld, const char *host, int port, const c
 	if(username){
 		ecld->socks5_username = _eecloud_strdup(username);
 		if(!ecld->socks5_username){
-			return MOSQ_ERR_NOMEM;
+			return ECLD_ERR_NOMEM;
 		}
 
 		if(password){
 			ecld->socks5_password = _eecloud_strdup(password);
 			if(!ecld->socks5_password){
 				_eecloud_free(ecld->socks5_username);
-				return MOSQ_ERR_NOMEM;
+				return ECLD_ERR_NOMEM;
 			}
 		}
 	}
 
-	return MOSQ_ERR_SUCCESS;
+	return ECLD_ERR_SUCCESS;
 #else
-	return MOSQ_ERR_NOT_SUPPORTED;
+	return ECLD_ERR_NOT_SUPPORTED;
 #endif
 }
 
@@ -96,7 +96,7 @@ int eecloud__socks5_send(struct eecloud *ecld)
 
 	if(ecld->state == ecld_cs_socks5_new){
 		packet = _eecloud_calloc(1, sizeof(struct _eecloud_packet));
-		if(!packet) return MOSQ_ERR_NOMEM;
+		if(!packet) return ECLD_ERR_NOMEM;
 
 		if(ecld->socks5_username){
 			packet->packet_length = 4;
@@ -126,13 +126,13 @@ int eecloud__socks5_send(struct eecloud *ecld)
 		if(!ecld->in_packet.payload){
 			_eecloud_free(packet->payload);
 			_eecloud_free(packet);
-			return MOSQ_ERR_NOMEM;
+			return ECLD_ERR_NOMEM;
 		}
 
 		return _eecloud_packet_queue(ecld, packet);
 	}else if(ecld->state == ecld_cs_socks5_auth_ok){
 		packet = _eecloud_calloc(1, sizeof(struct _eecloud_packet));
-		if(!packet) return MOSQ_ERR_NOMEM;
+		if(!packet) return ECLD_ERR_NOMEM;
 
 		packet->packet_length = 7+strlen(ecld->host);
 		packet->payload = _eecloud_malloc(sizeof(uint8_t)*packet->packet_length);
@@ -145,8 +145,8 @@ int eecloud__socks5_send(struct eecloud *ecld)
 		packet->payload[3] = SOCKS_ATYPE_DOMAINNAME;
 		packet->payload[4] = slen;
 		memcpy(&(packet->payload[5]), ecld->host, slen);
-		packet->payload[5+slen] = MOSQ_MSB(ecld->port);
-		packet->payload[6+slen] = MOSQ_LSB(ecld->port);
+		packet->payload[5+slen] = ECLD_MSB(ecld->port);
+		packet->payload[6+slen] = ECLD_LSB(ecld->port);
 
 		pthread_mutex_lock(&ecld->state_mutex);
 		ecld->state = ecld_cs_socks5_request;
@@ -159,13 +159,13 @@ int eecloud__socks5_send(struct eecloud *ecld)
 		if(!ecld->in_packet.payload){
 			_eecloud_free(packet->payload);
 			_eecloud_free(packet);
-			return MOSQ_ERR_NOMEM;
+			return ECLD_ERR_NOMEM;
 		}
 
 		return _eecloud_packet_queue(ecld, packet);
 	}else if(ecld->state == ecld_cs_socks5_send_userpass){
 		packet = _eecloud_calloc(1, sizeof(struct _eecloud_packet));
-		if(!packet) return MOSQ_ERR_NOMEM;
+		if(!packet) return ECLD_ERR_NOMEM;
 
 		ulen = strlen(ecld->socks5_username);
 		plen = strlen(ecld->socks5_password);
@@ -190,12 +190,12 @@ int eecloud__socks5_send(struct eecloud *ecld)
 		if(!ecld->in_packet.payload){
 			_eecloud_free(packet->payload);
 			_eecloud_free(packet);
-			return MOSQ_ERR_NOMEM;
+			return ECLD_ERR_NOMEM;
 		}
 
 		return _eecloud_packet_queue(ecld, packet);
 	}
-	return MOSQ_ERR_SUCCESS;
+	return ECLD_ERR_SUCCESS;
 }
 
 int eecloud__socks5_read(struct eecloud *ecld)
@@ -215,23 +215,23 @@ int eecloud__socks5_read(struct eecloud *ecld)
 				errno = WSAGetLastError();
 #endif
 				if(errno == EAGAIN || errno == COMPAT_EWOULDBLOCK){
-					return MOSQ_ERR_SUCCESS;
+					return ECLD_ERR_SUCCESS;
 				}else{
 					_eecloud_packet_cleanup(&ecld->in_packet);
 					switch(errno){
 						case 0:
-							return MOSQ_ERR_PROXY;
+							return ECLD_ERR_PROXY;
 						case COMPAT_ECONNRESET:
-							return MOSQ_ERR_CONN_LOST;
+							return ECLD_ERR_CONN_LOST;
 						default:
-							return MOSQ_ERR_ERRNO;
+							return ECLD_ERR_ERRNO;
 					}
 				}
 			}
 		}
 		if(ecld->in_packet.payload[0] != 5){
 			_eecloud_packet_cleanup(&ecld->in_packet);
-			return MOSQ_ERR_PROXY;
+			return ECLD_ERR_PROXY;
 		}
 		switch(ecld->in_packet.payload[1]){
 			case SOCKS_AUTH_NONE:
@@ -244,7 +244,7 @@ int eecloud__socks5_read(struct eecloud *ecld)
 				return eecloud__socks5_send(ecld);
 			default:
 				_eecloud_packet_cleanup(&ecld->in_packet);
-				return MOSQ_ERR_AUTH;
+				return ECLD_ERR_AUTH;
 		}
 	}else if(ecld->state == ecld_cs_socks5_userpass_reply){
 		while(ecld->in_packet.to_process > 0){
@@ -257,23 +257,23 @@ int eecloud__socks5_read(struct eecloud *ecld)
 				errno = WSAGetLastError();
 #endif
 				if(errno == EAGAIN || errno == COMPAT_EWOULDBLOCK){
-					return MOSQ_ERR_SUCCESS;
+					return ECLD_ERR_SUCCESS;
 				}else{
 					_eecloud_packet_cleanup(&ecld->in_packet);
 					switch(errno){
 						case 0:
-							return MOSQ_ERR_PROXY;
+							return ECLD_ERR_PROXY;
 						case COMPAT_ECONNRESET:
-							return MOSQ_ERR_CONN_LOST;
+							return ECLD_ERR_CONN_LOST;
 						default:
-							return MOSQ_ERR_ERRNO;
+							return ECLD_ERR_ERRNO;
 					}
 				}
 			}
 		}
 		if(ecld->in_packet.payload[0] != 1){
 			_eecloud_packet_cleanup(&ecld->in_packet);
-			return MOSQ_ERR_PROXY;
+			return ECLD_ERR_PROXY;
 		}
 		if(ecld->in_packet.payload[1] == 0){
 			_eecloud_packet_cleanup(&ecld->in_packet);
@@ -284,23 +284,23 @@ int eecloud__socks5_read(struct eecloud *ecld)
 			_eecloud_packet_cleanup(&ecld->in_packet);
 			switch(i){
 				case SOCKS_REPLY_CONNECTION_NOT_ALLOWED:
-					return MOSQ_ERR_AUTH;
+					return ECLD_ERR_AUTH;
 
 				case SOCKS_REPLY_NETWORK_UNREACHABLE:
 				case SOCKS_REPLY_HOST_UNREACHABLE:
 				case SOCKS_REPLY_CONNECTION_REFUSED:
-					return MOSQ_ERR_NO_CONN;
+					return ECLD_ERR_NO_CONN;
 
 				case SOCKS_REPLY_GENERAL_FAILURE:
 				case SOCKS_REPLY_TTL_EXPIRED:
 				case SOCKS_REPLY_COMMAND_NOT_SUPPORTED:
 				case SOCKS_REPLY_ADDRESS_TYPE_NOT_SUPPORTED:
-					return MOSQ_ERR_PROXY;
+					return ECLD_ERR_PROXY;
 
 				default:
-					return MOSQ_ERR_INVAL;
+					return ECLD_ERR_INVAL;
 			}
-			return MOSQ_ERR_PROXY;
+			return ECLD_ERR_PROXY;
 		}
 	}else if(ecld->state == ecld_cs_socks5_request){
 		while(ecld->in_packet.to_process > 0){
@@ -313,16 +313,16 @@ int eecloud__socks5_read(struct eecloud *ecld)
 				errno = WSAGetLastError();
 #endif
 				if(errno == EAGAIN || errno == COMPAT_EWOULDBLOCK){
-					return MOSQ_ERR_SUCCESS;
+					return ECLD_ERR_SUCCESS;
 				}else{
 					_eecloud_packet_cleanup(&ecld->in_packet);
 					switch(errno){
 						case 0:
-							return MOSQ_ERR_PROXY;
+							return ECLD_ERR_PROXY;
 						case COMPAT_ECONNRESET:
-							return MOSQ_ERR_CONN_LOST;
+							return ECLD_ERR_CONN_LOST;
 						default:
-							return MOSQ_ERR_ERRNO;
+							return ECLD_ERR_ERRNO;
 					}
 				}
 			}
@@ -343,29 +343,29 @@ int eecloud__socks5_read(struct eecloud *ecld)
 				}
 			}else{
 				_eecloud_packet_cleanup(&ecld->in_packet);
-				return MOSQ_ERR_PROTOCOL;
+				return ECLD_ERR_PROTOCOL;
 			}
 			payload = _eecloud_realloc(ecld->in_packet.payload, ecld->in_packet.packet_length);
 			if(payload){
 				ecld->in_packet.payload = payload;
 			}else{
 				_eecloud_packet_cleanup(&ecld->in_packet);
-				return MOSQ_ERR_NOMEM;
+				return ECLD_ERR_NOMEM;
 			}
 			payload = _eecloud_realloc(ecld->in_packet.payload, ecld->in_packet.packet_length);
 			if(payload){
 				ecld->in_packet.payload = payload;
 			}else{
 				_eecloud_packet_cleanup(&ecld->in_packet);
-				return MOSQ_ERR_NOMEM;
+				return ECLD_ERR_NOMEM;
 			}
-			return MOSQ_ERR_SUCCESS;
+			return ECLD_ERR_SUCCESS;
 		}
 
 		/* Entire packet is now read. */
 		if(ecld->in_packet.payload[0] != 5){
 			_eecloud_packet_cleanup(&ecld->in_packet);
-			return MOSQ_ERR_PROXY;
+			return ECLD_ERR_PROXY;
 		}
 		if(ecld->in_packet.payload[1] == 0){
 			/* Auth passed */
@@ -378,26 +378,26 @@ int eecloud__socks5_read(struct eecloud *ecld)
 			ecld->state = ecld_cs_socks5_new;
 			switch(i){
 				case SOCKS_REPLY_CONNECTION_NOT_ALLOWED:
-					return MOSQ_ERR_AUTH;
+					return ECLD_ERR_AUTH;
 
 				case SOCKS_REPLY_NETWORK_UNREACHABLE:
 				case SOCKS_REPLY_HOST_UNREACHABLE:
 				case SOCKS_REPLY_CONNECTION_REFUSED:
-					return MOSQ_ERR_NO_CONN;
+					return ECLD_ERR_NO_CONN;
 
 				case SOCKS_REPLY_GENERAL_FAILURE:
 				case SOCKS_REPLY_TTL_EXPIRED:
 				case SOCKS_REPLY_COMMAND_NOT_SUPPORTED:
 				case SOCKS_REPLY_ADDRESS_TYPE_NOT_SUPPORTED:
-					return MOSQ_ERR_PROXY;
+					return ECLD_ERR_PROXY;
 
 				default:
-					return MOSQ_ERR_INVAL;
+					return ECLD_ERR_INVAL;
 			}
 		}
 	}else{
 		return _eecloud_packet_read(ecld);
 	}
-	return MOSQ_ERR_SUCCESS;
+	return ECLD_ERR_SUCCESS;
 }
 #endif

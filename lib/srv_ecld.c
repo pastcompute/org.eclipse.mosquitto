@@ -39,7 +39,7 @@ static void srv_callback(void *arg, int status, int timeouts, unsigned char *abu
 			eecloud_connect(ecld, reply->host, reply->port, ecld->keepalive);
 		}
 	}else{
-		_eecloud_log_printf(ecld, MOSQ_LOG_ERR, "Error: SRV lookup failed (%d).", status);
+		_eecloud_log_printf(ecld, ECLD_LOG_ERR, "Error: SRV lookup failed (%d).", status);
 		/* FIXME - calling on_disconnect here isn't correct. */
 		pthread_mutex_lock(&ecld->callback_mutex);
 		if(ecld->on_disconnect){
@@ -57,11 +57,11 @@ int eecloud_connect_srv(struct eecloud *ecld, const char *host, int keepalive, c
 #ifdef WITH_SRV
 	char *h;
 	int rc;
-	if(!ecld) return MOSQ_ERR_INVAL;
+	if(!ecld) return ECLD_ERR_INVAL;
 
 	rc = ares_init(&ecld->achan);
 	if(rc != ARES_SUCCESS){
-		return MOSQ_ERR_UNKNOWN;
+		return ECLD_ERR_UNKNOWN;
 	}
 
 	if(!host){
@@ -70,12 +70,12 @@ int eecloud_connect_srv(struct eecloud *ecld, const char *host, int keepalive, c
 #ifdef WITH_TLS
 		if(ecld->tls_cafile || ecld->tls_capath || ecld->tls_psk){
 			h = _eecloud_malloc(strlen(host) + strlen("_secure-mqtt._tcp.") + 1);
-			if(!h) return MOSQ_ERR_NOMEM;
+			if(!h) return ECLD_ERR_NOMEM;
 			sprintf(h, "_secure-mqtt._tcp.%s", host);
 		}else{
 #endif
 			h = _eecloud_malloc(strlen(host) + strlen("_mqtt._tcp.") + 1);
-			if(!h) return MOSQ_ERR_NOMEM;
+			if(!h) return ECLD_ERR_NOMEM;
 			sprintf(h, "_mqtt._tcp.%s", host);
 #ifdef WITH_TLS
 		}
@@ -90,10 +90,10 @@ int eecloud_connect_srv(struct eecloud *ecld, const char *host, int keepalive, c
 
 	ecld->keepalive = keepalive;
 
-	return MOSQ_ERR_SUCCESS;
+	return ECLD_ERR_SUCCESS;
 
 #else
-	return MOSQ_ERR_NOT_SUPPORTED;
+	return ECLD_ERR_NOT_SUPPORTED;
 #endif
 }
 

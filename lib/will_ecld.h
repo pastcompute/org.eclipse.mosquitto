@@ -14,8 +14,8 @@ Contributors:
    Roger Light - initial implementation and documentation.
 */
 
-#ifndef _WILL_MOSQ_H_
-#define _WILL_MOSQ_H_
+#ifndef _WILL_ECLD_H_
+#define _WILL_ECLD_H_
 
 #include <eecloud.h>
 #include <eecloud_internal.h>

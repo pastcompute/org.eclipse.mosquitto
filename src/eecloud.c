@@ -92,12 +92,12 @@ int drop_privileges(struct mqtt3_config *config, bool temporary)
 		if(config->user && strcmp(config->user, "root")){
 			pwd = getpwnam(config->user);
 			if(!pwd){
-				_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid user '%s'.", config->user);
+				_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Invalid user '%s'.", config->user);
 				return 1;
 			}
 			if(initgroups(config->user, pwd->pw_gid) == -1){
 				strerror_r(errno, err, 256);
-				_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error setting groups whilst dropping privileges: %s.", err);
+				_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error setting groups whilst dropping privileges: %s.", err);
 				return 1;
 			}
 			if(temporary){
@@ -107,7 +107,7 @@ int drop_privileges(struct mqtt3_config *config, bool temporary)
 			}
 			if(rc == -1){
 				strerror_r(errno, err, 256);
-				_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error setting gid whilst dropping privileges: %s.", err);
+				_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error setting gid whilst dropping privileges: %s.", err);
 				return 1;
 			}
 			if(temporary){
@@ -117,16 +117,16 @@ int drop_privileges(struct mqtt3_config *config, bool temporary)
 			}
 			if(rc == -1){
 				strerror_r(errno, err, 256);
-				_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error setting uid whilst dropping privileges: %s.", err);
+				_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error setting uid whilst dropping privileges: %s.", err);
 				return 1;
 			}
 		}
 		if(geteuid() == 0 || getegid() == 0){
-			_eecloud_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Eecloud should not be run as root/administrator.");
+			_eecloud_log_printf(NULL, ECLD_LOG_WARNING, "Warning: Eecloud should not be run as root/administrator.");
 		}
 	}
 #endif
-	return MOSQ_ERR_SUCCESS;
+	return ECLD_ERR_SUCCESS;
 }
 
 int restore_privileges(void)
@@ -139,18 +139,18 @@ int restore_privileges(void)
 		rc = setegid(0);
 		if(rc == -1){
 			strerror_r(errno, err, 256);
-			_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error setting gid whilst restoring privileges: %s.", err);
+			_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error setting gid whilst restoring privileges: %s.", err);
 			return 1;
 		}
 		rc = seteuid(0);
 		if(rc == -1){
 			strerror_r(errno, err, 256);
-			_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error setting uid whilst restoring privileges: %s.", err);
+			_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error setting uid whilst restoring privileges: %s.", err);
 			return 1;
 		}
 	}
 #endif
-	return MOSQ_ERR_SUCCESS;
+	return ECLD_ERR_SUCCESS;
 }
 
 #ifdef SIGHUP
@@ -232,7 +232,7 @@ int main(int argc, char *argv[])
 
 	mqtt3_config_init(&config);
 	rc = mqtt3_config_parse_args(&config, argc, argv);
-	if(rc != MOSQ_ERR_SUCCESS) return rc;
+	if(rc != ECLD_ERR_SUCCESS) return rc;
 	int_db.config = &config;
 
 	if(config.daemon){
@@ -242,13 +242,13 @@ int main(int argc, char *argv[])
 				break;
 			case -1:
 				strerror_r(errno, err, 256);
-			_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error in fork: %s", err);
+			_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error in fork: %s", err);
 				return 1;
 			default:
-				return MOSQ_ERR_SUCCESS;
+				return ECLD_ERR_SUCCESS;
 		}
 #else
-		_eecloud_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Can't start in daemon mode in Windows.");
+		_eecloud_log_printf(NULL, ECLD_LOG_WARNING, "Warning: Can't start in daemon mode in Windows.");
 #endif
 	}
 
@@ -258,25 +258,25 @@ int main(int argc, char *argv[])
 			fprintf(pid, "%d", getpid());
 			fclose(pid);
 		}else{
-			_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to write pid file.");
+			_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Unable to write pid file.");
 			return 1;
 		}
 	}
 
 	rc = mqtt3_db_open(&config, &int_db);
-	if(rc != MOSQ_ERR_SUCCESS){
-		_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Couldn't open database.");
+	if(rc != ECLD_ERR_SUCCESS){
+		_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Couldn't open database.");
 		return rc;
 	}
 
 	/* Initialise logging only after initialising the database in case we're
 	 * logging to topics */
 	mqtt3_log_init(&config);
-	_eecloud_log_printf(NULL, MOSQ_LOG_INFO, "eecloud version %s (build date %s) starting", VERSION, TIMESTAMP);
+	_eecloud_log_printf(NULL, ECLD_LOG_INFO, "eecloud version %s (build date %s) starting", VERSION, TIMESTAMP);
 	if(config.config_file){
-		_eecloud_log_printf(NULL, MOSQ_LOG_INFO, "Config loaded from %s.", config.config_file);
+		_eecloud_log_printf(NULL, ECLD_LOG_INFO, "Config loaded from %s.", config.config_file);
 	}else{
-		_eecloud_log_printf(NULL, MOSQ_LOG_INFO, "Using default config.");
+		_eecloud_log_printf(NULL, ECLD_LOG_INFO, "Using default config.");
 	}
 
 	rc = eecloud_security_module_init(&int_db);
@@ -332,7 +332,7 @@ int main(int argc, char *argv[])
 #ifdef WITH_WEBSOCKETS
 			config.listeners[i].ws_context = ecld_websockets_init(&config.listeners[i], config.websockets_log_level);
 			if(!config.listeners[i].ws_context){
-				_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to create websockets listener on port %d.", config.listeners[i].port);
+				_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Unable to create websockets listener on port %d.", config.listeners[i].port);
 				return 1;
 			}
 #endif
@@ -340,7 +340,7 @@ int main(int argc, char *argv[])
 	}
 
 	rc = drop_privileges(&config, false);
-	if(rc != MOSQ_ERR_SUCCESS) return rc;
+	if(rc != ECLD_ERR_SUCCESS) return rc;
 
 	signal(SIGINT, handle_sigint);
 	signal(SIGTERM, handle_sigint);
@@ -356,7 +356,7 @@ int main(int argc, char *argv[])
 #ifdef WITH_BRIDGE
 	for(i=0; i<config.bridge_count; i++){
 		if(mqtt3_bridge_new(&int_db, &(config.bridges[i]))){
-			_eecloud_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Unable to connect to bridge %s.", 
+			_eecloud_log_printf(NULL, ECLD_LOG_WARNING, "Warning: Unable to connect to bridge %s.", 
 					config.bridges[i].name);
 		}
 	}
@@ -365,7 +365,7 @@ int main(int argc, char *argv[])
 	run = 1;
 	rc = eecloud_main_loop(&int_db, listensock, listensock_count, listener_max);
 
-	_eecloud_log_printf(NULL, MOSQ_LOG_INFO, "eecloud version %s terminating", VERSION);
+	_eecloud_log_printf(NULL, ECLD_LOG_INFO, "eecloud version %s terminating", VERSION);
 	mqtt3_log_close(&config);
 
 #ifdef WITH_PERSISTENCE
@@ -453,7 +453,7 @@ int __stdcall WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdL
 		argv = _eecloud_realloc(argv, sizeof(char *)*argc);
 		if(!argv){
 			fprintf(stderr, "Error: Out of memory.\n");
-			return MOSQ_ERR_NOMEM;
+			return ECLD_ERR_NOMEM;
 		}
 		argv[argc-1] = token;
 		token = strtok_r(NULL, " ", &saveptr);

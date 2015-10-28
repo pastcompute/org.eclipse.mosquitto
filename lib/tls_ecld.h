@@ -14,8 +14,8 @@ Contributors:
    Roger Light - initial implementation and documentation.
 */
 
-#ifndef _TLS_MOSQ_H_
-#define _TLS_MOSQ_H_
+#ifndef _TLS_ECLD_H_
+#define _TLS_ECLD_H_
 
 #ifdef WITH_TLS
 

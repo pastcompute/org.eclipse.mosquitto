@@ -433,7 +433,7 @@ static int callback_http(struct libwebsocket_context *context,
 			}
 			free(filename_canonical);
 
-			_eecloud_log_printf(NULL, MOSQ_LOG_DEBUG, "http serving file \"%s\".", filename);
+			_eecloud_log_printf(NULL, ECLD_LOG_DEBUG, "http serving file \"%s\".", filename);
 			u->fptr = fopen(filename, "rb");
 			_eecloud_free(filename);
 			if(!u->fptr){
@@ -518,7 +518,7 @@ static void log_wrap(int level, const char *line)
 {
 	char *l = (char *)line;
 	l[strlen(line)-1] = '\0'; // Remove \n
-	_eecloud_log_printf(NULL, MOSQ_LOG_WEBSOCKETS, "%s", l);
+	_eecloud_log_printf(NULL, ECLD_LOG_WEBSOCKETS, "%s", l);
 }
 
 struct libwebsocket_context *ecld_websockets_init(struct _mqtt3_listener *listener, int log_level)
@@ -534,7 +534,7 @@ struct libwebsocket_context *ecld_websockets_init(struct _mqtt3_listener *listen
 
 	p = _eecloud_calloc(protocol_count+1, sizeof(struct libwebsocket_protocols));
 	if(!p){
-		_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Out of memory.");
+		_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Out of memory.");
 		return NULL;
 	}
 	for(i=0; protocols[i].name; i++){
@@ -588,7 +588,7 @@ struct libwebsocket_context *ecld_websockets_init(struct _mqtt3_listener *listen
 
 	lws_set_log_level(log_level, log_wrap);
 
-	_eecloud_log_printf(NULL, MOSQ_LOG_INFO, "Opening websockets listen socket on port %d.", listener->port);
+	_eecloud_log_printf(NULL, ECLD_LOG_INFO, "Opening websockets listen socket on port %d.", listener->port);
 	return libwebsocket_create_context(&info);
 }
 

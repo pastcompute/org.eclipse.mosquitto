@@ -77,7 +77,7 @@ static void temp__expire_websockets_clients(struct eecloud_db *db)
 						}else{
 							id = "<unknown>";
 						}
-						_eecloud_log_printf(NULL, MOSQ_LOG_NOTICE, "Client %s has exceeded timeout, disconnecting.", id);
+						_eecloud_log_printf(NULL, ECLD_LOG_NOTICE, "Client %s has exceeded timeout, disconnecting.", id);
 					}
 					/* Client has exceeded keepalive*1.5 */
 					do_disconnect(db, context);
@@ -143,8 +143,8 @@ int eecloud_main_loop(struct eecloud_db *db, ecld_sock_t *listensock, int listen
 			pollfd_count = listensock_count + context_count;
 			pollfds = _eecloud_realloc(pollfds, sizeof(struct pollfd)*pollfd_count);
 			if(!pollfds){
-				_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-				return MOSQ_ERR_NOMEM;
+				_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Out of memory.");
+				return ECLD_ERR_NOMEM;
 			}
 		}
 
@@ -178,7 +178,7 @@ int eecloud_main_loop(struct eecloud_db *db, ecld_sock_t *listensock, int listen
 							&& context->bridge->cur_address != 0
 							&& now > context->bridge->primary_retry){
 
-						if(_eecloud_try_connect(context, context->bridge->addresses[0].address, context->bridge->addresses[0].port, &bridge_sock, NULL, false) == MOSQ_ERR_SUCCESS){
+						if(_eecloud_try_connect(context, context->bridge->addresses[0].address, context->bridge->addresses[0].port, &bridge_sock, NULL, false) == ECLD_ERR_SUCCESS){
 							COMPAT_CLOSE(bridge_sock);
 							_eecloud_socket_close(db, context);
 							context->bridge->cur_address = context->bridge->address_count-1;
@@ -192,7 +192,7 @@ int eecloud_main_loop(struct eecloud_db *db, ecld_sock_t *listensock, int listen
 						|| context->bridge
 						|| now - context->last_msg_in < (time_t)(context->keepalive)*3/2){
 
-					if(mqtt3_db_message_write(db, context) == MOSQ_ERR_SUCCESS){
+					if(mqtt3_db_message_write(db, context) == ECLD_ERR_SUCCESS){
 						pollfds[pollfd_index].fd = context->sock;
 						pollfds[pollfd_index].events = POLLIN;
 						pollfds[pollfd_index].revents = 0;
@@ -211,7 +211,7 @@ int eecloud_main_loop(struct eecloud_db *db, ecld_sock_t *listensock, int listen
 						}else{
 							id = "<unknown>";
 						}
-						_eecloud_log_printf(NULL, MOSQ_LOG_NOTICE, "Client %s has exceeded timeout, disconnecting.", id);
+						_eecloud_log_printf(NULL, ECLD_LOG_NOTICE, "Client %s has exceeded timeout, disconnecting.", id);
 					}
 					/* Client has exceeded keepalive*1.5 */
 					do_disconnect(db, context);
@@ -256,7 +256,7 @@ int eecloud_main_loop(struct eecloud_db *db, ecld_sock_t *listensock, int listen
 					if(context->bridge->start_type == bst_automatic && now > context->bridge->restart_t){
 						context->bridge->restart_t = 0;
 						rc = mqtt3_bridge_connect(db, context);
-						if(rc == MOSQ_ERR_SUCCESS){
+						if(rc == ECLD_ERR_SUCCESS){
 							pollfds[pollfd_index].fd = context->sock;
 							pollfds[pollfd_index].events = POLLIN;
 							pollfds[pollfd_index].revents = 0;
@@ -294,7 +294,7 @@ int eecloud_main_loop(struct eecloud_db *db, ecld_sock_t *listensock, int listen
 						}else{
 							id = "<unknown>";
 						}
-						_eecloud_log_printf(NULL, MOSQ_LOG_NOTICE, "Expiring persistent client %s due to timeout.", id);
+						_eecloud_log_printf(NULL, ECLD_LOG_NOTICE, "Expiring persistent client %s due to timeout.", id);
 #ifdef WITH_SYS_TREE
 						g_clients_expired++;
 #endif
@@ -351,7 +351,7 @@ int eecloud_main_loop(struct eecloud_db *db, ecld_sock_t *listensock, int listen
 		}
 #endif
 		if(flag_reload){
-			_eecloud_log_printf(NULL, MOSQ_LOG_INFO, "Reloading config.");
+			_eecloud_log_printf(NULL, ECLD_LOG_INFO, "Reloading config.");
 			mqtt3_config_read(db->config, true);
 			eecloud_security_cleanup(db, true);
 			eecloud_security_init(db, true);
@@ -381,7 +381,7 @@ int eecloud_main_loop(struct eecloud_db *db, ecld_sock_t *listensock, int listen
 	}
 
 	if(pollfds) _eecloud_free(pollfds);
-	return MOSQ_ERR_SUCCESS;
+	return ECLD_ERR_SUCCESS;
 }
 
 void do_disconnect(struct eecloud_db *db, struct eecloud *context)
@@ -410,9 +410,9 @@ void do_disconnect(struct eecloud_db *db, struct eecloud *context)
 				id = "<unknown>";
 			}
 			if(context->state != ecld_cs_disconnecting){
-				_eecloud_log_printf(NULL, MOSQ_LOG_NOTICE, "Socket error on client %s, disconnecting.", id);
+				_eecloud_log_printf(NULL, ECLD_LOG_NOTICE, "Socket error on client %s, disconnecting.", id);
 			}else{
-				_eecloud_log_printf(NULL, MOSQ_LOG_NOTICE, "Client %s disconnected.", id);
+				_eecloud_log_printf(NULL, ECLD_LOG_NOTICE, "Client %s disconnected.", id);
 			}
 		}
 		mqtt3_context_disconnect(db, context);

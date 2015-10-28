@@ -13,8 +13,8 @@ and the Eclipse Distribution License is available at
 Contributors:
    Roger Light - initial implementation and documentation.
 */
-#ifndef _MESSAGES_MOSQ_H_
-#define _MESSAGES_MOSQ_H_
+#ifndef _MESSAGES_ECLD_H_
+#define _MESSAGES_ECLD_H_
 
 #include <eecloud_internal.h>
 #include <eecloud.h>

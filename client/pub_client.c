@@ -55,7 +55,7 @@ static bool quiet = false;
 
 void my_connect_callback(struct eecloud *ecld, void *obj, int result)
 {
-	int rc = MOSQ_ERR_SUCCESS;
+	int rc = ECLD_ERR_SUCCESS;
 
 	if(!result){
 		switch(mode){
@@ -74,19 +74,19 @@ void my_connect_callback(struct eecloud *ecld, void *obj, int result)
 		if(rc){
 			if(!quiet){
 				switch(rc){
-					case MOSQ_ERR_INVAL:
+					case ECLD_ERR_INVAL:
 						fprintf(stderr, "Error: Invalid input. Does your topic contain '+' or '#'?\n");
 						break;
-					case MOSQ_ERR_NOMEM:
+					case ECLD_ERR_NOMEM:
 						fprintf(stderr, "Error: Out of memory when trying to publish message.\n");
 						break;
-					case MOSQ_ERR_NO_CONN:
+					case ECLD_ERR_NO_CONN:
 						fprintf(stderr, "Error: Client not connected when trying to publish.\n");
 						break;
-					case MOSQ_ERR_PROTOCOL:
+					case ECLD_ERR_PROTOCOL:
 						fprintf(stderr, "Error: Protocol error when communicating with broker.\n");
 						break;
-					case MOSQ_ERR_PAYLOAD_SIZE:
+					case ECLD_ERR_PAYLOAD_SIZE:
 						fprintf(stderr, "Error: Message payload is too large.\n");
 						break;
 				}
@@ -392,11 +392,11 @@ int main(int argc, char *argv[])
 				usleep(100000);
 #endif
 			}
-			rc = MOSQ_ERR_SUCCESS;
+			rc = ECLD_ERR_SUCCESS;
 		}else{
 			rc = eecloud_loop(ecld, -1, 1);
 		}
-	}while(rc == MOSQ_ERR_SUCCESS && connected);
+	}while(rc == ECLD_ERR_SUCCESS && connected);
 
 	if(mode == MSGMODE_STDIN_LINE){
 		eecloud_loop_stop(ecld, false);

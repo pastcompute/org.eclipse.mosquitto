@@ -13,8 +13,8 @@ and the Eclipse Distribution License is available at
 Contributors:
    Roger Light - initial implementation and documentation.
 */
-#ifndef _UTIL_MOSQ_H_
-#define _UTIL_MOSQ_H_
+#ifndef _UTIL_ECLD_H_
+#define _UTIL_ECLD_H_
 
 #include <stdio.h>
 

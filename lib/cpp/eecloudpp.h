@@ -14,8 +14,8 @@ Contributors:
    Roger Light - initial implementation and documentation.
 */
 
-#ifndef _MOSQUITTOPP_H_
-#define _MOSQUITTOPP_H_
+#ifndef _EECLOUDPP_H_
+#define _EECLOUDPP_H_
 
 #ifdef _WIN32
 #	ifdef eecloudpp_EXPORTS

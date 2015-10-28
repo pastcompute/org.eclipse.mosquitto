@@ -188,7 +188,7 @@ void mqtt3_context_cleanup(struct eecloud_db *db, struct eecloud *context, bool 
 void mqtt3_context_disconnect(struct eecloud_db *db, struct eecloud *ctxt)
 {
 	if(ctxt->state != ecld_cs_disconnecting && ctxt->will){
-		if(eecloud_acl_check(db, ctxt, ctxt->will->topic, MOSQ_ACL_WRITE) == MOSQ_ERR_SUCCESS){
+		if(eecloud_acl_check(db, ctxt, ctxt->will->topic, ECLD_ACL_WRITE) == ECLD_ERR_SUCCESS){
 			/* Unexpected disconnect, queue the client will. */
 			mqtt3_db_messages_easy_queue(db, ctxt, ctxt->will->topic, ctxt->will->qos, ctxt->will->payloadlen, ctxt->will->payload, ctxt->will->retain);
 		}

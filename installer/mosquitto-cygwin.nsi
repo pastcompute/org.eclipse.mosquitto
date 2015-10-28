@@ -82,7 +82,7 @@ Section "Files" SecInstall
 	WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\EecloudCygwin" "NoModify" "1"
 	WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\EecloudCygwin" "NoRepair" "1"
 
-	WriteRegExpandStr ${env_hklm} MOSQUITTO_DIR $INSTDIR
+	WriteRegExpandStr ${env_hklm} EECLOUD_DIR $INSTDIR
 	SendMessage ${HWND_BROADCAST} ${WM_WININICHANGE} 0 "STR:Environment" /TIMEOUT=5000
 SectionEnd
 
@@ -125,7 +125,7 @@ Section "Uninstall"
 	RMDir "$INSTDIR"
 	DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\EecloudCygwin"
 
-	DeleteRegValue ${env_hklm} MOSQUITTO_DIR
+	DeleteRegValue ${env_hklm} EECLOUD_DIR
 	SendMessage ${HWND_BROADCAST} ${WM_WININICHANGE} 0 "STR:Environment" /TIMEOUT=5000
 SectionEnd
 

@@ -37,7 +37,7 @@ int _eecloud_log_printf(struct eecloud *ecld, int priority, const char *fmt, ...
 		s = _eecloud_malloc(len*sizeof(char));
 		if(!s){
 			pthread_mutex_unlock(&ecld->log_callback_mutex);
-			return MOSQ_ERR_NOMEM;
+			return ECLD_ERR_NOMEM;
 		}
 
 		va_start(va, fmt);
@@ -51,6 +51,6 @@ int _eecloud_log_printf(struct eecloud *ecld, int priority, const char *fmt, ...
 	}
 	pthread_mutex_unlock(&ecld->log_callback_mutex);
 
-	return MOSQ_ERR_SUCCESS;
+	return ECLD_ERR_SUCCESS;
 }
 

@@ -34,7 +34,7 @@ int main(int argc, char *argv[])
 	ecld->connect("localhost", 1888, 60);
 
 	rc = ecld->loop_forever();
-	if(rc == MOSQ_ERR_ERRNO && errno == EPROTO){
+	if(rc == ECLD_ERR_ERRNO && errno == EPROTO){
 		return 0;
 	}else{
 		return 1;

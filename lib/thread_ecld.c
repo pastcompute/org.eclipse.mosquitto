@@ -28,13 +28,13 @@ void *_eecloud_thread_main(void *obj);
 int eecloud_loop_start(struct eecloud *ecld)
 {
 #ifdef WITH_THREADING
-	if(!ecld || ecld->threaded) return MOSQ_ERR_INVAL;
+	if(!ecld || ecld->threaded) return ECLD_ERR_INVAL;
 
 	ecld->threaded = true;
 	pthread_create(&ecld->thread_id, NULL, _eecloud_thread_main, ecld);
-	return MOSQ_ERR_SUCCESS;
+	return ECLD_ERR_SUCCESS;
 #else
-	return MOSQ_ERR_NOT_SUPPORTED;
+	return ECLD_ERR_NOT_SUPPORTED;
 #endif
 }
 
@@ -45,7 +45,7 @@ int eecloud_loop_stop(struct eecloud *ecld, bool force)
 	char sockpair_data = 0;
 #  endif
 
-	if(!ecld || !ecld->threaded) return MOSQ_ERR_INVAL;
+	if(!ecld || !ecld->threaded) return ECLD_ERR_INVAL;
 
 
 	/* Write a single byte to sockpairW (connected to sockpairR) to break out
@@ -66,9 +66,9 @@ int eecloud_loop_stop(struct eecloud *ecld, bool force)
 	ecld->thread_id = pthread_self();
 	ecld->threaded = false;
 
-	return MOSQ_ERR_SUCCESS;
+	return ECLD_ERR_SUCCESS;
 #else
-	return MOSQ_ERR_NOT_SUPPORTED;
+	return ECLD_ERR_NOT_SUPPORTED;
 #endif
 }
 
@@ -101,9 +101,9 @@ void *_eecloud_thread_main(void *obj)
 
 int eecloud_threaded_set(struct eecloud *ecld, bool threaded)
 {
-	if(!ecld) return MOSQ_ERR_INVAL;
+	if(!ecld) return ECLD_ERR_INVAL;
 
 	ecld->threaded = threaded;
 
-	return MOSQ_ERR_SUCCESS;
+	return ECLD_ERR_SUCCESS;
 }

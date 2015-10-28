@@ -65,10 +65,10 @@ static void on_log_wrapper(struct eecloud *ecld, void *userdata, int level, cons
 
 int lib_version(int *major, int *minor, int *revision)
 {
-	if(major) *major = LIBMOSQUITTO_MAJOR;
-	if(minor) *minor = LIBMOSQUITTO_MINOR;
-	if(revision) *revision = LIBMOSQUITTO_REVISION;
-	return LIBMOSQUITTO_VERSION_NUMBER;
+	if(major) *major = LIBEECLOUD_MAJOR;
+	if(minor) *minor = LIBEECLOUD_MINOR;
+	if(revision) *revision = LIBEECLOUD_REVISION;
+	return LIBEECLOUD_VERSION_NUMBER;
 }
 
 int lib_init()
@@ -127,7 +127,7 @@ int eecloudpp::reinitialise(const char *id, bool clean_session)
 {
 	int rc;
 	rc = eecloud_reinitialise(m_ecld, id, clean_session, this);
-	if(rc == MOSQ_ERR_SUCCESS){
+	if(rc == ECLD_ERR_SUCCESS){
 		eecloud_connect_callback_set(m_ecld, on_connect_wrapper);
 		eecloud_disconnect_callback_set(m_ecld, on_disconnect_wrapper);
 		eecloud_publish_callback_set(m_ecld, on_publish_wrapper);
@@ -284,7 +284,7 @@ int eecloudpp::socks5_set(const char *host, int port, const char *username, cons
 #ifdef WITH_SOCKS
 	return eecloud_socks5_set(m_ecld, host, port, username, password);
 #else
-	return MOSQ_ERR_NOT_SUPPORTED;
+	return ECLD_ERR_NOT_SUPPORTED;
 #endif
 }
 

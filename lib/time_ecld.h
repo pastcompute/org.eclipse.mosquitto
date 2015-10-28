@@ -14,8 +14,8 @@ Contributors:
    Roger Light - initial implementation and documentation.
 */
 
-#ifndef _TIME_MOSQ_H_
-#define _TIME_MOSQ_H_
+#ifndef _TIME_ECLD_H_
+#define _TIME_ECLD_H_
 
 time_t eecloud_time(void);
 

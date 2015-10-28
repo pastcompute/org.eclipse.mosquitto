@@ -9,7 +9,7 @@ def start_broker(filename, cmd=None, port=1888):
     delay = 0.1
     if cmd is None:
         cmd = ['../../src/eecloud', '-v', '-c', filename.replace('.py', '.conf')]
-    if os.environ.get('MOSQ_USE_VALGRIND') is not None:
+    if os.environ.get('ECLD_USE_VALGRIND') is not None:
         cmd = ['valgrind', '-q', '--log-file='+filename+'.vglog'] + cmd
         delay = 1
 
@@ -32,7 +32,7 @@ def start_broker(filename, cmd=None, port=1888):
 def start_client(filename, cmd, env):
     if cmd is None:
         raise ValueError
-    if os.environ.get('MOSQ_USE_VALGRIND') is not None:
+    if os.environ.get('ECLD_USE_VALGRIND') is not None:
         cmd = ['valgrind', '-q', '--log-file='+filename+'.vglog'] + cmd
 
     return subprocess.Popen(cmd, env=env)

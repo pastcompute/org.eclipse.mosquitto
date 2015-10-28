@@ -56,8 +56,8 @@ int _eecloud_packet_handle(struct eecloud *ecld)
 			return _eecloud_handle_unsuback(ecld);
 		default:
 			/* If we don't recognise the command, return an error straight away. */
-			_eecloud_log_printf(ecld, MOSQ_LOG_ERR, "Error: Unrecognised command %d\n", (ecld->in_packet.command)&0xF0);
-			return MOSQ_ERR_PROTOCOL;
+			_eecloud_log_printf(ecld, ECLD_LOG_ERR, "Error: Unrecognised command %d\n", (ecld->in_packet.command)&0xF0);
+			return ECLD_ERR_PROTOCOL;
 	}
 }
 
@@ -71,7 +71,7 @@ int _eecloud_handle_publish(struct eecloud *ecld)
 	assert(ecld);
 
 	message = _eecloud_calloc(1, sizeof(struct eecloud_message_all));
-	if(!message) return MOSQ_ERR_NOMEM;
+	if(!message) return ECLD_ERR_NOMEM;
 
 	header = ecld->in_packet.command;
 
@@ -86,7 +86,7 @@ int _eecloud_handle_publish(struct eecloud *ecld)
 	}
 	if(!strlen(message->msg.topic)){
 		_eecloud_message_cleanup(&message);
-		return MOSQ_ERR_PROTOCOL;
+		return ECLD_ERR_PROTOCOL;
 	}
 
 	if(message->msg.qos > 0){
@@ -103,7 +103,7 @@ int _eecloud_handle_publish(struct eecloud *ecld)
 		message->msg.payload = _eecloud_calloc(message->msg.payloadlen+1, sizeof(uint8_t));
 		if(!message->msg.payload){
 			_eecloud_message_cleanup(&message);
-			return MOSQ_ERR_NOMEM;
+			return ECLD_ERR_NOMEM;
 		}
 		rc = _eecloud_read_bytes(&ecld->in_packet, message->msg.payload, message->msg.payloadlen);
 		if(rc){
@@ -111,7 +111,7 @@ int _eecloud_handle_publish(struct eecloud *ecld)
 			return rc;
 		}
 	}
-	_eecloud_log_printf(ecld, MOSQ_LOG_DEBUG,
+	_eecloud_log_printf(ecld, ECLD_LOG_DEBUG,
 			"Client %s received PUBLISH (d%d, q%d, r%d, m%d, '%s', ... (%ld bytes))",
 			ecld->id, message->dup, message->msg.qos, message->msg.retain,
 			message->msg.mid, message->msg.topic,
@@ -128,7 +128,7 @@ int _eecloud_handle_publish(struct eecloud *ecld)
 			}
 			pthread_mutex_unlock(&ecld->callback_mutex);
 			_eecloud_message_cleanup(&message);
-			return MOSQ_ERR_SUCCESS;
+			return ECLD_ERR_SUCCESS;
 		case 1:
 			rc = _eecloud_send_puback(ecld, message->msg.mid);
 			pthread_mutex_lock(&ecld->callback_mutex);
@@ -149,7 +149,7 @@ int _eecloud_handle_publish(struct eecloud *ecld)
 			return rc;
 		default:
 			_eecloud_message_cleanup(&message);
-			return MOSQ_ERR_PROTOCOL;
+			return ECLD_ERR_PROTOCOL;
 	}
 }
 

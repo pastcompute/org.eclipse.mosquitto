@@ -23,13 +23,13 @@ Contributors:
 
 int _eecloud_will_set(struct eecloud *ecld, const char *topic, int payloadlen, const void *payload, int qos, bool retain)
 {
-	int rc = MOSQ_ERR_SUCCESS;
+	int rc = ECLD_ERR_SUCCESS;
 
-	if(!ecld || !topic) return MOSQ_ERR_INVAL;
-	if(payloadlen < 0 || payloadlen > MQTT_MAX_PAYLOAD) return MOSQ_ERR_PAYLOAD_SIZE;
-	if(payloadlen > 0 && !payload) return MOSQ_ERR_INVAL;
+	if(!ecld || !topic) return ECLD_ERR_INVAL;
+	if(payloadlen < 0 || payloadlen > MQTT_MAX_PAYLOAD) return ECLD_ERR_PAYLOAD_SIZE;
+	if(payloadlen > 0 && !payload) return ECLD_ERR_INVAL;
 
-	if(eecloud_pub_topic_check(topic)) return MOSQ_ERR_INVAL;
+	if(eecloud_pub_topic_check(topic)) return ECLD_ERR_INVAL;
 
 	if(ecld->will){
 		if(ecld->will->topic){
@@ -45,21 +45,21 @@ int _eecloud_will_set(struct eecloud *ecld, const char *topic, int payloadlen, c
 	}
 
 	ecld->will = _eecloud_calloc(1, sizeof(struct eecloud_message));
-	if(!ecld->will) return MOSQ_ERR_NOMEM;
+	if(!ecld->will) return ECLD_ERR_NOMEM;
 	ecld->will->topic = _eecloud_strdup(topic);
 	if(!ecld->will->topic){
-		rc = MOSQ_ERR_NOMEM;
+		rc = ECLD_ERR_NOMEM;
 		goto cleanup;
 	}
 	ecld->will->payloadlen = payloadlen;
 	if(ecld->will->payloadlen > 0){
 		if(!payload){
-			rc = MOSQ_ERR_INVAL;
+			rc = ECLD_ERR_INVAL;
 			goto cleanup;
 		}
 		ecld->will->payload = _eecloud_malloc(sizeof(char)*ecld->will->payloadlen);
 		if(!ecld->will->payload){
-			rc = MOSQ_ERR_NOMEM;
+			rc = ECLD_ERR_NOMEM;
 			goto cleanup;
 		}
 
@@ -68,7 +68,7 @@ int _eecloud_will_set(struct eecloud *ecld, const char *topic, int payloadlen, c
 	ecld->will->qos = qos;
 	ecld->will->retain = retain;
 
-	return MOSQ_ERR_SUCCESS;
+	return ECLD_ERR_SUCCESS;
 
 cleanup:
 	if(ecld->will){
@@ -83,7 +83,7 @@ cleanup:
 
 int _eecloud_will_clear(struct eecloud *ecld)
 {
-	if(!ecld->will) return MOSQ_ERR_SUCCESS;
+	if(!ecld->will) return ECLD_ERR_SUCCESS;
 
 	if(ecld->will->topic){
 		_eecloud_free(ecld->will->topic);
@@ -96,6 +96,6 @@ int _eecloud_will_clear(struct eecloud *ecld)
 	_eecloud_free(ecld->will);
 	ecld->will = NULL;
 
-	return MOSQ_ERR_SUCCESS;
+	return ECLD_ERR_SUCCESS;
 }
 

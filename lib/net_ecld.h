@@ -13,8 +13,8 @@ and the Eclipse Distribution License is available at
 Contributors:
    Roger Light - initial implementation and documentation.
 */
-#ifndef _NET_MOSQ_H_
-#define _NET_MOSQ_H_
+#ifndef _NET_ECLD_H_
+#define _NET_ECLD_H_
 
 #ifndef WIN32
 #include <unistd.h>
@@ -46,8 +46,8 @@ struct eecloud_db;
 #endif
 
 /* Macros for accessing the MSB and LSB of a uint16_t */
-#define MOSQ_MSB(A) (uint8_t)((A & 0xFF00) >> 8)
-#define MOSQ_LSB(A) (uint8_t)(A & 0x00FF)
+#define ECLD_MSB(A) (uint8_t)((A & 0xFF00) >> 8)
+#define ECLD_LSB(A) (uint8_t)(A & 0x00FF)
 
 void _eecloud_net_init(void);
 void _eecloud_net_cleanup(void);

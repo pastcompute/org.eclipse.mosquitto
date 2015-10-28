@@ -28,14 +28,14 @@ int _eecloud_send_connack(struct eecloud *context, int ack, int result)
 
 	if(context){
 		if(context->id){
-			_eecloud_log_printf(NULL, MOSQ_LOG_DEBUG, "Sending CONNACK to %s (%d, %d)", context->id, ack, result);
+			_eecloud_log_printf(NULL, ECLD_LOG_DEBUG, "Sending CONNACK to %s (%d, %d)", context->id, ack, result);
 		}else{
-			_eecloud_log_printf(NULL, MOSQ_LOG_DEBUG, "Sending CONNACK to %s (%d, %d)", context->address, ack, result);
+			_eecloud_log_printf(NULL, ECLD_LOG_DEBUG, "Sending CONNACK to %s (%d, %d)", context->address, ack, result);
 		}
 	}
 
 	packet = _eecloud_calloc(1, sizeof(struct _eecloud_packet));
-	if(!packet) return MOSQ_ERR_NOMEM;
+	if(!packet) return ECLD_ERR_NOMEM;
 
 	packet->command = CONNACK;
 	packet->remaining_length = 2;
@@ -55,10 +55,10 @@ int _eecloud_send_suback(struct eecloud *context, uint16_t mid, uint32_t payload
 	struct _eecloud_packet *packet = NULL;
 	int rc;
 
-	_eecloud_log_printf(NULL, MOSQ_LOG_DEBUG, "Sending SUBACK to %s", context->id);
+	_eecloud_log_printf(NULL, ECLD_LOG_DEBUG, "Sending SUBACK to %s", context->id);
 
 	packet = _eecloud_calloc(1, sizeof(struct _eecloud_packet));
-	if(!packet) return MOSQ_ERR_NOMEM;
+	if(!packet) return ECLD_ERR_NOMEM;
 
 	packet->command = SUBACK;
 	packet->remaining_length = 2+payloadlen;

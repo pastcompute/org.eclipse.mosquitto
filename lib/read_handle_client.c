@@ -29,7 +29,7 @@ int _eecloud_handle_connack(struct eecloud *ecld)
 	int rc;
 
 	assert(ecld);
-	_eecloud_log_printf(ecld, MOSQ_LOG_DEBUG, "Client %s received CONNACK", ecld->id);
+	_eecloud_log_printf(ecld, ECLD_LOG_DEBUG, "Client %s received CONNACK", ecld->id);
 	rc = _eecloud_read_byte(&ecld->in_packet, &byte); // Reserved byte, not used
 	if(rc) return rc;
 	rc = _eecloud_read_byte(&ecld->in_packet, &result);
@@ -46,15 +46,15 @@ int _eecloud_handle_connack(struct eecloud *ecld)
 			if(ecld->state != ecld_cs_disconnecting){
 				ecld->state = ecld_cs_connected;
 			}
-			return MOSQ_ERR_SUCCESS;
+			return ECLD_ERR_SUCCESS;
 		case 1:
 		case 2:
 		case 3:
 		case 4:
 		case 5:
-			return MOSQ_ERR_CONN_REFUSED;
+			return ECLD_ERR_CONN_REFUSED;
 		default:
-			return MOSQ_ERR_PROTOCOL;
+			return ECLD_ERR_PROTOCOL;
 	}
 }
 

@@ -33,7 +33,7 @@ extern uint64_t g_pub_bytes_received;
 
 int mqtt3_packet_handle(struct eecloud_db *db, struct eecloud *context)
 {
-	if(!context) return MOSQ_ERR_INVAL;
+	if(!context) return ECLD_ERR_INVAL;
 
 	switch((context->in_packet.command)&0xF0){
 		case PINGREQ:
@@ -68,7 +68,7 @@ int mqtt3_packet_handle(struct eecloud_db *db, struct eecloud *context)
 #endif
 		default:
 			/* If we don't recognise the command, return an error straight away. */
-			return MOSQ_ERR_PROTOCOL;
+			return ECLD_ERR_PROTOCOL;
 	}
 }
 
@@ -95,7 +95,7 @@ int mqtt3_handle_publish(struct eecloud_db *db, struct eecloud *context)
 	dup = (header & 0x08)>>3;
 	qos = (header & 0x06)>>1;
 	if(qos == 3){
-		_eecloud_log_printf(NULL, MOSQ_LOG_INFO,
+		_eecloud_log_printf(NULL, ECLD_LOG_INFO,
 				"Invalid QoS in PUBLISH from %s, disconnecting.", context->id);
 		return 1;
 	}
@@ -128,7 +128,7 @@ int mqtt3_handle_publish(struct eecloud_db *db, struct eecloud *context)
 							topic_temp = _eecloud_strdup(topic+strlen(cur_topic->remote_prefix));
 							if(!topic_temp){
 								_eecloud_free(topic);
-								return MOSQ_ERR_NOMEM;
+								return ECLD_ERR_NOMEM;
 							}
 							_eecloud_free(topic);
 							topic = topic_temp;
@@ -141,7 +141,7 @@ int mqtt3_handle_publish(struct eecloud_db *db, struct eecloud *context)
 						topic_temp = _eecloud_malloc(len+1);
 						if(!topic_temp){
 							_eecloud_free(topic);
-							return MOSQ_ERR_NOMEM;
+							return ECLD_ERR_NOMEM;
 						}
 						snprintf(topic_temp, len, "%s%s", cur_topic->local_prefix, topic);
 						topic_temp[len] = '\0';
@@ -155,7 +155,7 @@ int mqtt3_handle_publish(struct eecloud_db *db, struct eecloud *context)
 		}
 	}
 #endif
-	if(eecloud_pub_topic_check(topic) != MOSQ_ERR_SUCCESS){
+	if(eecloud_pub_topic_check(topic) != ECLD_ERR_SUCCESS){
 		/* Invalid publish topic, just swallow it. */
 		_eecloud_free(topic);
 		return 1;
@@ -177,7 +177,7 @@ int mqtt3_handle_publish(struct eecloud_db *db, struct eecloud *context)
 		topic_mount = _eecloud_malloc(len+1);
 		if(!topic_mount){
 			_eecloud_free(topic);
-			return MOSQ_ERR_NOMEM;
+			return ECLD_ERR_NOMEM;
 		}
 		snprintf(topic_mount, len, "%s%s", context->listener->mount_point, topic);
 		topic_mount[len] = '\0';
@@ -188,7 +188,7 @@ int mqtt3_handle_publish(struct eecloud_db *db, struct eecloud *context)
 
 	if(payloadlen){
 		if(db->config->message_size_limit && payloadlen > db->config->message_size_limit){
-			_eecloud_log_printf(NULL, MOSQ_LOG_DEBUG, "Dropped too large PUBLISH from %s (d%d, q%d, r%d, m%d, '%s', ... (%ld bytes))", context->id, dup, qos, retain, mid, topic, (long)payloadlen);
+			_eecloud_log_printf(NULL, ECLD_LOG_DEBUG, "Dropped too large PUBLISH from %s (d%d, q%d, r%d, m%d, '%s', ... (%ld bytes))", context->id, dup, qos, retain, mid, topic, (long)payloadlen);
 			goto process_bad_message;
 		}
 		payload = _eecloud_calloc(payloadlen+1, 1);
@@ -204,17 +204,17 @@ int mqtt3_handle_publish(struct eecloud_db *db, struct eecloud *context)
 	}
 
 	/* Check for topic access */
-	rc = eecloud_acl_check(db, context, topic, MOSQ_ACL_WRITE);
-	if(rc == MOSQ_ERR_ACL_DENIED){
-		_eecloud_log_printf(NULL, MOSQ_LOG_DEBUG, "Denied PUBLISH from %s (d%d, q%d, r%d, m%d, '%s', ... (%ld bytes))", context->id, dup, qos, retain, mid, topic, (long)payloadlen);
+	rc = eecloud_acl_check(db, context, topic, ECLD_ACL_WRITE);
+	if(rc == ECLD_ERR_ACL_DENIED){
+		_eecloud_log_printf(NULL, ECLD_LOG_DEBUG, "Denied PUBLISH from %s (d%d, q%d, r%d, m%d, '%s', ... (%ld bytes))", context->id, dup, qos, retain, mid, topic, (long)payloadlen);
 		goto process_bad_message;
-	}else if(rc != MOSQ_ERR_SUCCESS){
+	}else if(rc != ECLD_ERR_SUCCESS){
 		_eecloud_free(topic);
 		if(payload) _eecloud_free(payload);
 		return rc;
 	}
 
-	_eecloud_log_printf(NULL, MOSQ_LOG_DEBUG, "Received PUBLISH from %s (d%d, q%d, r%d, m%d, '%s', ... (%ld bytes))", context->id, dup, qos, retain, mid, topic, (long)payloadlen);
+	_eecloud_log_printf(NULL, ECLD_LOG_DEBUG, "Received PUBLISH from %s (d%d, q%d, r%d, m%d, '%s', ... (%ld bytes))", context->id, dup, qos, retain, mid, topic, (long)payloadlen);
 	if(qos > 0){
 		mqtt3_db_message_store_find(context, mid, &stored);
 	}
@@ -260,7 +260,7 @@ process_bad_message:
 	if(payload) _eecloud_free(payload);
 	switch(qos){
 		case 0:
-			return MOSQ_ERR_SUCCESS;
+			return ECLD_ERR_SUCCESS;
 		case 1:
 			return _eecloud_send_puback(context, mid);
 		case 2:

@@ -190,7 +190,7 @@ int _eecloud_packet_queue(struct eecloud *ecld, struct _eecloud_packet *packet)
 	if(ecld->in_callback == false && ecld->threaded == false){
 		return _eecloud_packet_write(ecld);
 	}else{
-		return MOSQ_ERR_SUCCESS;
+		return ECLD_ERR_SUCCESS;
 	}
 #endif
 }
@@ -274,7 +274,7 @@ int _eecloud_try_connect(struct eecloud *ecld, const char *host, uint16_t port, 
 	struct addrinfo *ainfo, *rp;
 	struct addrinfo *ainfo_bind, *rp_bind;
 	int s;
-	int rc = MOSQ_ERR_SUCCESS;
+	int rc = ECLD_ERR_SUCCESS;
 #ifdef WIN32
 	uint32_t val = 1;
 #endif
@@ -295,7 +295,7 @@ int _eecloud_try_connect(struct eecloud *ecld, const char *host, uint16_t port, 
 	s = getaddrinfo(host, NULL, &hints, &ainfo);
 	if(s){
 		errno = s;
-		return MOSQ_ERR_EAI;
+		return ECLD_ERR_EAI;
 	}
 
 	if(bind_address){
@@ -303,7 +303,7 @@ int _eecloud_try_connect(struct eecloud *ecld, const char *host, uint16_t port, 
 		if(s){
 			freeaddrinfo(ainfo);
 			errno = s;
-			return MOSQ_ERR_EAI;
+			return ECLD_ERR_EAI;
 		}
 	}
 
@@ -346,7 +346,7 @@ int _eecloud_try_connect(struct eecloud *ecld, const char *host, uint16_t port, 
 #endif
 		if(rc == 0 || errno == EINPROGRESS || errno == COMPAT_EWOULDBLOCK){
 			if(rc < 0 && (errno == EINPROGRESS || errno == COMPAT_EWOULDBLOCK)){
-				rc = MOSQ_ERR_CONN_PENDING;
+				rc = ECLD_ERR_CONN_PENDING;
 			}
 
 			if(blocking){
@@ -367,7 +367,7 @@ int _eecloud_try_connect(struct eecloud *ecld, const char *host, uint16_t port, 
 		freeaddrinfo(ainfo_bind);
 	}
 	if(!rp){
-		return MOSQ_ERR_ERRNO;
+		return ECLD_ERR_ERRNO;
 	}
 	return rc;
 }
@@ -389,12 +389,12 @@ int eecloud__socket_connect_tls(struct eecloud *ecld)
 		}else{
 			COMPAT_CLOSE(ecld->sock);
 			ecld->sock = INVALID_SOCKET;
-			return MOSQ_ERR_TLS;
+			return ECLD_ERR_TLS;
 		}
 	}else{
 		ecld->want_connect = false;
 	}
-	return MOSQ_ERR_SUCCESS;
+	return ECLD_ERR_SUCCESS;
 }
 #endif
 
@@ -411,7 +411,7 @@ int _eecloud_socket_connect(struct eecloud *ecld, const char *host, uint16_t por
 	BIO *bio;
 #endif
 
-	if(!ecld || !host || !port) return MOSQ_ERR_INVAL;
+	if(!ecld || !host || !port) return ECLD_ERR_INVAL;
 
 	rc = _eecloud_try_connect(ecld, host, port, &sock, bind_address, blocking);
 	if(rc > 0) return rc;
@@ -426,23 +426,23 @@ int _eecloud_socket_connect(struct eecloud *ecld, const char *host, uint16_t por
 		}else if(!strcmp(ecld->tls_version, "tlsv1")){
 			ecld->ssl_ctx = SSL_CTX_new(TLSv1_client_method());
 		}else{
-			_eecloud_log_printf(ecld, MOSQ_LOG_ERR, "Error: Protocol %s not supported.", ecld->tls_version);
+			_eecloud_log_printf(ecld, ECLD_LOG_ERR, "Error: Protocol %s not supported.", ecld->tls_version);
 			COMPAT_CLOSE(sock);
-			return MOSQ_ERR_INVAL;
+			return ECLD_ERR_INVAL;
 		}
 #else
 		if(!ecld->tls_version || !strcmp(ecld->tls_version, "tlsv1")){
 			ecld->ssl_ctx = SSL_CTX_new(TLSv1_client_method());
 		}else{
-			_eecloud_log_printf(ecld, MOSQ_LOG_ERR, "Error: Protocol %s not supported.", ecld->tls_version);
+			_eecloud_log_printf(ecld, ECLD_LOG_ERR, "Error: Protocol %s not supported.", ecld->tls_version);
 			COMPAT_CLOSE(sock);
-			return MOSQ_ERR_INVAL;
+			return ECLD_ERR_INVAL;
 		}
 #endif
 		if(!ecld->ssl_ctx){
-			_eecloud_log_printf(ecld, MOSQ_LOG_ERR, "Error: Unable to create TLS context.");
+			_eecloud_log_printf(ecld, ECLD_LOG_ERR, "Error: Unable to create TLS context.");
 			COMPAT_CLOSE(sock);
-			return MOSQ_ERR_TLS;
+			return ECLD_ERR_TLS;
 		}
 
 #if OPENSSL_VERSION_NUMBER >= 0x10000000
@@ -457,9 +457,9 @@ int _eecloud_socket_connect(struct eecloud *ecld, const char *host, uint16_t por
 		if(ecld->tls_ciphers){
 			ret = SSL_CTX_set_cipher_list(ecld->ssl_ctx, ecld->tls_ciphers);
 			if(ret == 0){
-				_eecloud_log_printf(ecld, MOSQ_LOG_ERR, "Error: Unable to set TLS ciphers. Check cipher list \"%s\".", ecld->tls_ciphers);
+				_eecloud_log_printf(ecld, ECLD_LOG_ERR, "Error: Unable to set TLS ciphers. Check cipher list \"%s\".", ecld->tls_ciphers);
 				COMPAT_CLOSE(sock);
-				return MOSQ_ERR_TLS;
+				return ECLD_ERR_TLS;
 			}
 		}
 		if(ecld->tls_cafile || ecld->tls_capath){
@@ -467,23 +467,23 @@ int _eecloud_socket_connect(struct eecloud *ecld, const char *host, uint16_t por
 			if(ret == 0){
 #ifdef WITH_BROKER
 				if(ecld->tls_cafile && ecld->tls_capath){
-					_eecloud_log_printf(ecld, MOSQ_LOG_ERR, "Error: Unable to load CA certificates, check bridge_cafile \"%s\" and bridge_capath \"%s\".", ecld->tls_cafile, ecld->tls_capath);
+					_eecloud_log_printf(ecld, ECLD_LOG_ERR, "Error: Unable to load CA certificates, check bridge_cafile \"%s\" and bridge_capath \"%s\".", ecld->tls_cafile, ecld->tls_capath);
 				}else if(ecld->tls_cafile){
-					_eecloud_log_printf(ecld, MOSQ_LOG_ERR, "Error: Unable to load CA certificates, check bridge_cafile \"%s\".", ecld->tls_cafile);
+					_eecloud_log_printf(ecld, ECLD_LOG_ERR, "Error: Unable to load CA certificates, check bridge_cafile \"%s\".", ecld->tls_cafile);
 				}else{
-					_eecloud_log_printf(ecld, MOSQ_LOG_ERR, "Error: Unable to load CA certificates, check bridge_capath \"%s\".", ecld->tls_capath);
+					_eecloud_log_printf(ecld, ECLD_LOG_ERR, "Error: Unable to load CA certificates, check bridge_capath \"%s\".", ecld->tls_capath);
 				}
 #else
 				if(ecld->tls_cafile && ecld->tls_capath){
-					_eecloud_log_printf(ecld, MOSQ_LOG_ERR, "Error: Unable to load CA certificates, check cafile \"%s\" and capath \"%s\".", ecld->tls_cafile, ecld->tls_capath);
+					_eecloud_log_printf(ecld, ECLD_LOG_ERR, "Error: Unable to load CA certificates, check cafile \"%s\" and capath \"%s\".", ecld->tls_cafile, ecld->tls_capath);
 				}else if(ecld->tls_cafile){
-					_eecloud_log_printf(ecld, MOSQ_LOG_ERR, "Error: Unable to load CA certificates, check cafile \"%s\".", ecld->tls_cafile);
+					_eecloud_log_printf(ecld, ECLD_LOG_ERR, "Error: Unable to load CA certificates, check cafile \"%s\".", ecld->tls_cafile);
 				}else{
-					_eecloud_log_printf(ecld, MOSQ_LOG_ERR, "Error: Unable to load CA certificates, check capath \"%s\".", ecld->tls_capath);
+					_eecloud_log_printf(ecld, ECLD_LOG_ERR, "Error: Unable to load CA certificates, check capath \"%s\".", ecld->tls_capath);
 				}
 #endif
 				COMPAT_CLOSE(sock);
-				return MOSQ_ERR_TLS;
+				return ECLD_ERR_TLS;
 			}
 			if(ecld->tls_cert_reqs == 0){
 				SSL_CTX_set_verify(ecld->ssl_ctx, SSL_VERIFY_NONE, NULL);
@@ -500,30 +500,30 @@ int _eecloud_socket_connect(struct eecloud *ecld, const char *host, uint16_t por
 				ret = SSL_CTX_use_certificate_chain_file(ecld->ssl_ctx, ecld->tls_certfile);
 				if(ret != 1){
 #ifdef WITH_BROKER
-					_eecloud_log_printf(ecld, MOSQ_LOG_ERR, "Error: Unable to load client certificate, check bridge_certfile \"%s\".", ecld->tls_certfile);
+					_eecloud_log_printf(ecld, ECLD_LOG_ERR, "Error: Unable to load client certificate, check bridge_certfile \"%s\".", ecld->tls_certfile);
 #else
-					_eecloud_log_printf(ecld, MOSQ_LOG_ERR, "Error: Unable to load client certificate \"%s\".", ecld->tls_certfile);
+					_eecloud_log_printf(ecld, ECLD_LOG_ERR, "Error: Unable to load client certificate \"%s\".", ecld->tls_certfile);
 #endif
 					COMPAT_CLOSE(sock);
-					return MOSQ_ERR_TLS;
+					return ECLD_ERR_TLS;
 				}
 			}
 			if(ecld->tls_keyfile){
 				ret = SSL_CTX_use_PrivateKey_file(ecld->ssl_ctx, ecld->tls_keyfile, SSL_FILETYPE_PEM);
 				if(ret != 1){
 #ifdef WITH_BROKER
-					_eecloud_log_printf(ecld, MOSQ_LOG_ERR, "Error: Unable to load client key file, check bridge_keyfile \"%s\".", ecld->tls_keyfile);
+					_eecloud_log_printf(ecld, ECLD_LOG_ERR, "Error: Unable to load client key file, check bridge_keyfile \"%s\".", ecld->tls_keyfile);
 #else
-					_eecloud_log_printf(ecld, MOSQ_LOG_ERR, "Error: Unable to load client key file \"%s\".", ecld->tls_keyfile);
+					_eecloud_log_printf(ecld, ECLD_LOG_ERR, "Error: Unable to load client key file \"%s\".", ecld->tls_keyfile);
 #endif
 					COMPAT_CLOSE(sock);
-					return MOSQ_ERR_TLS;
+					return ECLD_ERR_TLS;
 				}
 				ret = SSL_CTX_check_private_key(ecld->ssl_ctx);
 				if(ret != 1){
-					_eecloud_log_printf(ecld, MOSQ_LOG_ERR, "Error: Client certificate/key are inconsistent.");
+					_eecloud_log_printf(ecld, ECLD_LOG_ERR, "Error: Client certificate/key are inconsistent.");
 					COMPAT_CLOSE(sock);
-					return MOSQ_ERR_TLS;
+					return ECLD_ERR_TLS;
 				}
 			}
 #ifdef REAL_WITH_TLS_PSK
@@ -535,19 +535,19 @@ int _eecloud_socket_connect(struct eecloud *ecld, const char *host, uint16_t por
 		ecld->ssl = SSL_new(ecld->ssl_ctx);
 		if(!ecld->ssl){
 			COMPAT_CLOSE(sock);
-			return MOSQ_ERR_TLS;
+			return ECLD_ERR_TLS;
 		}
 		SSL_set_ex_data(ecld->ssl, tls_ex_index_ecld, ecld);
 		bio = BIO_new_socket(sock, BIO_NOCLOSE);
 		if(!bio){
 			COMPAT_CLOSE(sock);
-			return MOSQ_ERR_TLS;
+			return ECLD_ERR_TLS;
 		}
 		SSL_set_bio(ecld->ssl, bio, bio);
 
 		ecld->sock = sock;
 		if(eecloud__socket_connect_tls(ecld)){
-			return MOSQ_ERR_TLS;
+			return ECLD_ERR_TLS;
 		}
 
 	}
@@ -561,12 +561,12 @@ int _eecloud_socket_connect(struct eecloud *ecld, const char *host, uint16_t por
 int _eecloud_read_byte(struct _eecloud_packet *packet, uint8_t *byte)
 {
 	assert(packet);
-	if(packet->pos+1 > packet->remaining_length) return MOSQ_ERR_PROTOCOL;
+	if(packet->pos+1 > packet->remaining_length) return ECLD_ERR_PROTOCOL;
 
 	*byte = packet->payload[packet->pos];
 	packet->pos++;
 
-	return MOSQ_ERR_SUCCESS;
+	return ECLD_ERR_SUCCESS;
 }
 
 void _eecloud_write_byte(struct _eecloud_packet *packet, uint8_t byte)
@@ -581,12 +581,12 @@ void _eecloud_write_byte(struct _eecloud_packet *packet, uint8_t byte)
 int _eecloud_read_bytes(struct _eecloud_packet *packet, void *bytes, uint32_t count)
 {
 	assert(packet);
-	if(packet->pos+count > packet->remaining_length) return MOSQ_ERR_PROTOCOL;
+	if(packet->pos+count > packet->remaining_length) return ECLD_ERR_PROTOCOL;
 
 	memcpy(bytes, &(packet->payload[packet->pos]), count);
 	packet->pos += count;
 
-	return MOSQ_ERR_SUCCESS;
+	return ECLD_ERR_SUCCESS;
 }
 
 void _eecloud_write_bytes(struct _eecloud_packet *packet, const void *bytes, uint32_t count)
@@ -607,7 +607,7 @@ int _eecloud_read_string(struct _eecloud_packet *packet, char **str)
 	rc = _eecloud_read_uint16(packet, &len);
 	if(rc) return rc;
 
-	if(packet->pos+len > packet->remaining_length) return MOSQ_ERR_PROTOCOL;
+	if(packet->pos+len > packet->remaining_length) return ECLD_ERR_PROTOCOL;
 
 	*str = _eecloud_malloc(len+1);
 	if(*str){
@@ -615,10 +615,10 @@ int _eecloud_read_string(struct _eecloud_packet *packet, char **str)
 		(*str)[len] = '\0';
 		packet->pos += len;
 	}else{
-		return MOSQ_ERR_NOMEM;
+		return ECLD_ERR_NOMEM;
 	}
 
-	return MOSQ_ERR_SUCCESS;
+	return ECLD_ERR_SUCCESS;
 }
 
 void _eecloud_write_string(struct _eecloud_packet *packet, const char *str, uint16_t length)
@@ -633,7 +633,7 @@ int _eecloud_read_uint16(struct _eecloud_packet *packet, uint16_t *word)
 	uint8_t msb, lsb;
 
 	assert(packet);
-	if(packet->pos+2 > packet->remaining_length) return MOSQ_ERR_PROTOCOL;
+	if(packet->pos+2 > packet->remaining_length) return ECLD_ERR_PROTOCOL;
 
 	msb = packet->payload[packet->pos];
 	packet->pos++;
@@ -642,13 +642,13 @@ int _eecloud_read_uint16(struct _eecloud_packet *packet, uint16_t *word)
 
 	*word = (msb<<8) + lsb;
 
-	return MOSQ_ERR_SUCCESS;
+	return ECLD_ERR_SUCCESS;
 }
 
 void _eecloud_write_uint16(struct _eecloud_packet *packet, uint16_t word)
 {
-	_eecloud_write_byte(packet, MOSQ_MSB(word));
-	_eecloud_write_byte(packet, MOSQ_LSB(word));
+	_eecloud_write_byte(packet, ECLD_MSB(word));
+	_eecloud_write_byte(packet, ECLD_LSB(word));
 }
 
 ssize_t _eecloud_net_read(struct eecloud *ecld, void *buf, size_t count)
@@ -676,7 +676,7 @@ ssize_t _eecloud_net_read(struct eecloud *ecld, void *buf, size_t count)
 			}else{
 				e = ERR_get_error();
 				while(e){
-					_eecloud_log_printf(ecld, MOSQ_LOG_ERR, "OpenSSL Error: %s", ERR_error_string(e, ebuf));
+					_eecloud_log_printf(ecld, ECLD_LOG_ERR, "OpenSSL Error: %s", ERR_error_string(e, ebuf));
 					e = ERR_get_error();
 				}
 				errno = EPROTO;
@@ -725,7 +725,7 @@ ssize_t _eecloud_net_write(struct eecloud *ecld, void *buf, size_t count)
 			}else{
 				e = ERR_get_error();
 				while(e){
-					_eecloud_log_printf(ecld, MOSQ_LOG_ERR, "OpenSSL Error: %s", ERR_error_string(e, ebuf));
+					_eecloud_log_printf(ecld, ECLD_LOG_ERR, "OpenSSL Error: %s", ERR_error_string(e, ebuf));
 					e = ERR_get_error();
 				}
 				errno = EPROTO;
@@ -752,8 +752,8 @@ int _eecloud_packet_write(struct eecloud *ecld)
 	ssize_t write_length;
 	struct _eecloud_packet *packet;
 
-	if(!ecld) return MOSQ_ERR_INVAL;
-	if(ecld->sock == INVALID_SOCKET) return MOSQ_ERR_NO_CONN;
+	if(!ecld) return ECLD_ERR_INVAL;
+	if(ecld->sock == INVALID_SOCKET) return ECLD_ERR_NO_CONN;
 
 	pthread_mutex_lock(&ecld->current_out_packet_mutex);
 	pthread_mutex_lock(&ecld->out_packet_mutex);
@@ -768,7 +768,7 @@ int _eecloud_packet_write(struct eecloud *ecld)
 
 	if(ecld->state == ecld_cs_connect_pending){
 		pthread_mutex_unlock(&ecld->current_out_packet_mutex);
-		return MOSQ_ERR_SUCCESS;
+		return ECLD_ERR_SUCCESS;
 	}
 
 	while(ecld->current_out_packet){
@@ -788,14 +788,14 @@ int _eecloud_packet_write(struct eecloud *ecld)
 #endif
 				if(errno == EAGAIN || errno == COMPAT_EWOULDBLOCK){
 					pthread_mutex_unlock(&ecld->current_out_packet_mutex);
-					return MOSQ_ERR_SUCCESS;
+					return ECLD_ERR_SUCCESS;
 				}else{
 					pthread_mutex_unlock(&ecld->current_out_packet_mutex);
 					switch(errno){
 						case COMPAT_ECONNRESET:
-							return MOSQ_ERR_CONN_LOST;
+							return ECLD_ERR_CONN_LOST;
 						default:
-							return MOSQ_ERR_ERRNO;
+							return ECLD_ERR_ERRNO;
 					}
 				}
 			}
@@ -852,7 +852,7 @@ int _eecloud_packet_write(struct eecloud *ecld)
 			}
 			pthread_mutex_unlock(&ecld->callback_mutex);
 			pthread_mutex_unlock(&ecld->current_out_packet_mutex);
-			return MOSQ_ERR_SUCCESS;
+			return ECLD_ERR_SUCCESS;
 		}
 #endif
 
@@ -875,7 +875,7 @@ int _eecloud_packet_write(struct eecloud *ecld)
 		pthread_mutex_unlock(&ecld->msgtime_mutex);
 	}
 	pthread_mutex_unlock(&ecld->current_out_packet_mutex);
-	return MOSQ_ERR_SUCCESS;
+	return ECLD_ERR_SUCCESS;
 }
 
 #ifdef WITH_BROKER
@@ -888,10 +888,10 @@ int _eecloud_packet_read(struct eecloud *ecld)
 	ssize_t read_length;
 	int rc = 0;
 
-	if(!ecld) return MOSQ_ERR_INVAL;
-	if(ecld->sock == INVALID_SOCKET) return MOSQ_ERR_NO_CONN;
+	if(!ecld) return ECLD_ERR_INVAL;
+	if(ecld->sock == INVALID_SOCKET) return ECLD_ERR_NO_CONN;
 	if(ecld->state == ecld_cs_connect_pending){
-		return MOSQ_ERR_SUCCESS;
+		return ECLD_ERR_SUCCESS;
 	}
 
 	/* This gets called if pselect() indicates that there is network data
@@ -917,21 +917,21 @@ int _eecloud_packet_read(struct eecloud *ecld)
 			g_bytes_received++;
 #  endif
 			/* Clients must send CONNECT as their first command. */
-			if(!(ecld->bridge) && ecld->state == ecld_cs_new && (byte&0xF0) != CONNECT) return MOSQ_ERR_PROTOCOL;
+			if(!(ecld->bridge) && ecld->state == ecld_cs_new && (byte&0xF0) != CONNECT) return ECLD_ERR_PROTOCOL;
 #endif
 		}else{
-			if(read_length == 0) return MOSQ_ERR_CONN_LOST; /* EOF */
+			if(read_length == 0) return ECLD_ERR_CONN_LOST; /* EOF */
 #ifdef WIN32
 			errno = WSAGetLastError();
 #endif
 			if(errno == EAGAIN || errno == COMPAT_EWOULDBLOCK){
-				return MOSQ_ERR_SUCCESS;
+				return ECLD_ERR_SUCCESS;
 			}else{
 				switch(errno){
 					case COMPAT_ECONNRESET:
-						return MOSQ_ERR_CONN_LOST;
+						return ECLD_ERR_CONN_LOST;
 					default:
-						return MOSQ_ERR_ERRNO;
+						return ECLD_ERR_ERRNO;
 				}
 			}
 		}
@@ -953,7 +953,7 @@ int _eecloud_packet_read(struct eecloud *ecld)
 				/* Max 4 bytes length for remaining length as defined by protocol.
 				 * Anything more likely means a broken/malicious client.
 				 */
-				if(ecld->in_packet.remaining_count < -4) return MOSQ_ERR_PROTOCOL;
+				if(ecld->in_packet.remaining_count < -4) return ECLD_ERR_PROTOCOL;
 
 #if defined(WITH_BROKER) && defined(WITH_SYS_TREE)
 				g_bytes_received++;
@@ -961,18 +961,18 @@ int _eecloud_packet_read(struct eecloud *ecld)
 				ecld->in_packet.remaining_length += (byte & 127) * ecld->in_packet.remaining_mult;
 				ecld->in_packet.remaining_mult *= 128;
 			}else{
-				if(read_length == 0) return MOSQ_ERR_CONN_LOST; /* EOF */
+				if(read_length == 0) return ECLD_ERR_CONN_LOST; /* EOF */
 #ifdef WIN32
 				errno = WSAGetLastError();
 #endif
 				if(errno == EAGAIN || errno == COMPAT_EWOULDBLOCK){
-					return MOSQ_ERR_SUCCESS;
+					return ECLD_ERR_SUCCESS;
 				}else{
 					switch(errno){
 						case COMPAT_ECONNRESET:
-							return MOSQ_ERR_CONN_LOST;
+							return ECLD_ERR_CONN_LOST;
 						default:
-							return MOSQ_ERR_ERRNO;
+							return ECLD_ERR_ERRNO;
 					}
 				}
 			}
@@ -983,7 +983,7 @@ int _eecloud_packet_read(struct eecloud *ecld)
 
 		if(ecld->in_packet.remaining_length > 0){
 			ecld->in_packet.payload = _eecloud_malloc(ecld->in_packet.remaining_length*sizeof(uint8_t));
-			if(!ecld->in_packet.payload) return MOSQ_ERR_NOMEM;
+			if(!ecld->in_packet.payload) return ECLD_ERR_NOMEM;
 			ecld->in_packet.to_process = ecld->in_packet.remaining_length;
 		}
 	}
@@ -1010,13 +1010,13 @@ int _eecloud_packet_read(struct eecloud *ecld)
 					ecld->last_msg_in = eecloud_time();
 					pthread_mutex_unlock(&ecld->msgtime_mutex);
 				}
-				return MOSQ_ERR_SUCCESS;
+				return ECLD_ERR_SUCCESS;
 			}else{
 				switch(errno){
 					case COMPAT_ECONNRESET:
-						return MOSQ_ERR_CONN_LOST;
+						return ECLD_ERR_CONN_LOST;
 					default:
-						return MOSQ_ERR_ERRNO;
+						return ECLD_ERR_ERRNO;
 				}
 			}
 		}
@@ -1101,7 +1101,7 @@ int _eecloud_socketpair(ecld_sock_t *pairR, ecld_sock_t *pairW)
 			sa6->sin6_port = 0;
 			ss_len = sizeof(struct sockaddr_in6);
 		}else{
-			return MOSQ_ERR_INVAL;
+			return ECLD_ERR_INVAL;
 		}
 
 		listensock = socket(family[i], SOCK_STREAM, IPPROTO_TCP);
@@ -1179,28 +1179,28 @@ int _eecloud_socketpair(ecld_sock_t *pairR, ecld_sock_t *pairW)
 
 		*pairR = spR;
 		*pairW = spW;
-		return MOSQ_ERR_SUCCESS;
+		return ECLD_ERR_SUCCESS;
 	}
-	return MOSQ_ERR_UNKNOWN;
+	return ECLD_ERR_UNKNOWN;
 #else
 	int sv[2];
 
 	if(socketpair(AF_UNIX, SOCK_STREAM, 0, sv) == -1){
-		return MOSQ_ERR_ERRNO;
+		return ECLD_ERR_ERRNO;
 	}
 	if(_eecloud_socket_nonblock(sv[0])){
 		COMPAT_CLOSE(sv[0]);
 		COMPAT_CLOSE(sv[1]);
-		return MOSQ_ERR_ERRNO;
+		return ECLD_ERR_ERRNO;
 	}
 	if(_eecloud_socket_nonblock(sv[1])){
 		COMPAT_CLOSE(sv[0]);
 		COMPAT_CLOSE(sv[1]);
-		return MOSQ_ERR_ERRNO;
+		return ECLD_ERR_ERRNO;
 	}
 	*pairR = sv[0];
 	*pairW = sv[1];
-	return MOSQ_ERR_SUCCESS;
+	return ECLD_ERR_SUCCESS;
 #endif
 }
 #endif

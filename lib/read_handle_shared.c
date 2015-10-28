@@ -35,9 +35,9 @@ int _eecloud_handle_pingreq(struct eecloud *ecld)
 {
 	assert(ecld);
 #ifdef WITH_BROKER
-	_eecloud_log_printf(NULL, MOSQ_LOG_DEBUG, "Received PINGREQ from %s", ecld->id);
+	_eecloud_log_printf(NULL, ECLD_LOG_DEBUG, "Received PINGREQ from %s", ecld->id);
 #else
-	_eecloud_log_printf(ecld, MOSQ_LOG_DEBUG, "Client %s received PINGREQ", ecld->id);
+	_eecloud_log_printf(ecld, ECLD_LOG_DEBUG, "Client %s received PINGREQ", ecld->id);
 #endif
 	return _eecloud_send_pingresp(ecld);
 }
@@ -47,11 +47,11 @@ int _eecloud_handle_pingresp(struct eecloud *ecld)
 	assert(ecld);
 	ecld->ping_t = 0; /* No longer waiting for a PINGRESP. */
 #ifdef WITH_BROKER
-	_eecloud_log_printf(NULL, MOSQ_LOG_DEBUG, "Received PINGRESP from %s", ecld->id);
+	_eecloud_log_printf(NULL, ECLD_LOG_DEBUG, "Received PINGRESP from %s", ecld->id);
 #else
-	_eecloud_log_printf(ecld, MOSQ_LOG_DEBUG, "Client %s received PINGRESP", ecld->id);
+	_eecloud_log_printf(ecld, ECLD_LOG_DEBUG, "Client %s received PINGRESP", ecld->id);
 #endif
-	return MOSQ_ERR_SUCCESS;
+	return ECLD_ERR_SUCCESS;
 }
 
 #ifdef WITH_BROKER
@@ -67,14 +67,14 @@ int _eecloud_handle_pubackcomp(struct eecloud *ecld, const char *type)
 	rc = _eecloud_read_uint16(&ecld->in_packet, &mid);
 	if(rc) return rc;
 #ifdef WITH_BROKER
-	_eecloud_log_printf(NULL, MOSQ_LOG_DEBUG, "Received %s from %s (Mid: %d)", type, ecld->id, mid);
+	_eecloud_log_printf(NULL, ECLD_LOG_DEBUG, "Received %s from %s (Mid: %d)", type, ecld->id, mid);
 
 	if(mid){
 		rc = mqtt3_db_message_delete(db, ecld, mid, ecld_md_out);
 		if(rc) return rc;
 	}
 #else
-	_eecloud_log_printf(ecld, MOSQ_LOG_DEBUG, "Client %s received %s (Mid: %d)", ecld->id, type, mid);
+	_eecloud_log_printf(ecld, ECLD_LOG_DEBUG, "Client %s received %s (Mid: %d)", ecld->id, type, mid);
 
 	if(!_eecloud_message_delete(ecld, mid, ecld_md_out)){
 		/* Only inform the client the message has been sent once. */
@@ -88,7 +88,7 @@ int _eecloud_handle_pubackcomp(struct eecloud *ecld, const char *type)
 	}
 #endif
 
-	return MOSQ_ERR_SUCCESS;
+	return ECLD_ERR_SUCCESS;
 }
 
 int _eecloud_handle_pubrec(struct eecloud *ecld)
@@ -100,11 +100,11 @@ int _eecloud_handle_pubrec(struct eecloud *ecld)
 	rc = _eecloud_read_uint16(&ecld->in_packet, &mid);
 	if(rc) return rc;
 #ifdef WITH_BROKER
-	_eecloud_log_printf(NULL, MOSQ_LOG_DEBUG, "Received PUBREC from %s (Mid: %d)", ecld->id, mid);
+	_eecloud_log_printf(NULL, ECLD_LOG_DEBUG, "Received PUBREC from %s (Mid: %d)", ecld->id, mid);
 
 	rc = mqtt3_db_message_update(ecld, mid, ecld_md_out, ecld_ms_wait_for_pubcomp);
 #else
-	_eecloud_log_printf(ecld, MOSQ_LOG_DEBUG, "Client %s received PUBREC (Mid: %d)", ecld->id, mid);
+	_eecloud_log_printf(ecld, ECLD_LOG_DEBUG, "Client %s received PUBREC (Mid: %d)", ecld->id, mid);
 
 	rc = _eecloud_message_out_update(ecld, mid, ecld_ms_wait_for_pubcomp);
 #endif
@@ -112,7 +112,7 @@ int _eecloud_handle_pubrec(struct eecloud *ecld)
 	rc = _eecloud_send_pubrel(ecld, mid);
 	if(rc) return rc;
 
-	return MOSQ_ERR_SUCCESS;
+	return ECLD_ERR_SUCCESS;
 }
 
 int _eecloud_handle_pubrel(struct eecloud_db *db, struct eecloud *ecld)
@@ -126,20 +126,20 @@ int _eecloud_handle_pubrel(struct eecloud_db *db, struct eecloud *ecld)
 	assert(ecld);
 	if(ecld->protocol == ecld_p_mqtt311){
 		if((ecld->in_packet.command&0x0F) != 0x02){
-			return MOSQ_ERR_PROTOCOL;
+			return ECLD_ERR_PROTOCOL;
 		}
 	}
 	rc = _eecloud_read_uint16(&ecld->in_packet, &mid);
 	if(rc) return rc;
 #ifdef WITH_BROKER
-	_eecloud_log_printf(NULL, MOSQ_LOG_DEBUG, "Received PUBREL from %s (Mid: %d)", ecld->id, mid);
+	_eecloud_log_printf(NULL, ECLD_LOG_DEBUG, "Received PUBREL from %s (Mid: %d)", ecld->id, mid);
 
 	if(mqtt3_db_message_release(db, ecld, mid, ecld_md_in)){
 		/* Message not found. Still send a PUBCOMP anyway because this could be
 		 * due to a repeated PUBREL after a client has reconnected. */
 	}
 #else
-	_eecloud_log_printf(ecld, MOSQ_LOG_DEBUG, "Client %s received PUBREL (Mid: %d)", ecld->id, mid);
+	_eecloud_log_printf(ecld, ECLD_LOG_DEBUG, "Client %s received PUBREL (Mid: %d)", ecld->id, mid);
 
 	if(!_eecloud_message_remove(ecld, mid, ecld_md_in, &message)){
 		/* Only pass the message on if we have removed it from the queue - this
@@ -157,7 +157,7 @@ int _eecloud_handle_pubrel(struct eecloud_db *db, struct eecloud *ecld)
 	rc = _eecloud_send_pubcomp(ecld, mid);
 	if(rc) return rc;
 
-	return MOSQ_ERR_SUCCESS;
+	return ECLD_ERR_SUCCESS;
 }
 
 int _eecloud_handle_suback(struct eecloud *ecld)
@@ -171,16 +171,16 @@ int _eecloud_handle_suback(struct eecloud *ecld)
 
 	assert(ecld);
 #ifdef WITH_BROKER
-	_eecloud_log_printf(NULL, MOSQ_LOG_DEBUG, "Received SUBACK from %s", ecld->id);
+	_eecloud_log_printf(NULL, ECLD_LOG_DEBUG, "Received SUBACK from %s", ecld->id);
 #else
-	_eecloud_log_printf(ecld, MOSQ_LOG_DEBUG, "Client %s received SUBACK", ecld->id);
+	_eecloud_log_printf(ecld, ECLD_LOG_DEBUG, "Client %s received SUBACK", ecld->id);
 #endif
 	rc = _eecloud_read_uint16(&ecld->in_packet, &mid);
 	if(rc) return rc;
 
 	qos_count = ecld->in_packet.remaining_length - ecld->in_packet.pos;
 	granted_qos = _eecloud_malloc(qos_count*sizeof(int));
-	if(!granted_qos) return MOSQ_ERR_NOMEM;
+	if(!granted_qos) return ECLD_ERR_NOMEM;
 	while(ecld->in_packet.pos < ecld->in_packet.remaining_length){
 		rc = _eecloud_read_byte(&ecld->in_packet, &qos);
 		if(rc){
@@ -201,7 +201,7 @@ int _eecloud_handle_suback(struct eecloud *ecld)
 #endif
 	_eecloud_free(granted_qos);
 
-	return MOSQ_ERR_SUCCESS;
+	return ECLD_ERR_SUCCESS;
 }
 
 int _eecloud_handle_unsuback(struct eecloud *ecld)
@@ -211,9 +211,9 @@ int _eecloud_handle_unsuback(struct eecloud *ecld)
 
 	assert(ecld);
 #ifdef WITH_BROKER
-	_eecloud_log_printf(NULL, MOSQ_LOG_DEBUG, "Received UNSUBACK from %s", ecld->id);
+	_eecloud_log_printf(NULL, ECLD_LOG_DEBUG, "Received UNSUBACK from %s", ecld->id);
 #else
-	_eecloud_log_printf(ecld, MOSQ_LOG_DEBUG, "Client %s received UNSUBACK", ecld->id);
+	_eecloud_log_printf(ecld, ECLD_LOG_DEBUG, "Client %s received UNSUBACK", ecld->id);
 #endif
 	rc = _eecloud_read_uint16(&ecld->in_packet, &mid);
 	if(rc) return rc;
@@ -227,6 +227,6 @@ int _eecloud_handle_unsuback(struct eecloud *ecld)
 	pthread_mutex_unlock(&ecld->callback_mutex);
 #endif
 
-	return MOSQ_ERR_SUCCESS;
+	return ECLD_ERR_SUCCESS;
 }
 

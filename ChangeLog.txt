@@ -752,9 +752,9 @@ Client library:
   parameter.
 - Functions now use int instead of uint*_t where possible.
 - eecloud_new() now sets errno to indicate failure type.
-- Return MOSQ_ERR_INVAL on zero length topic.
+- Return ECLD_ERR_INVAL on zero length topic.
 - Fix automatic client id generation on Windows.
-- eecloud_loop_misq() can now return MOSQ_ERR_NO_CONN.
+- eecloud_loop_misq() can now return ECLD_ERR_NO_CONN.
 - Compile static library as well as dynamic library with default makefiles.
 - Rename C++ namespace from eecloudpp to ecldpp to remove ambiguity.
 - C++ lib_init(), lib_version() and lib_cleanup() are now in the ecldpp
@@ -787,7 +787,7 @@ Other:
   installed by default.
 - Enforce topic length checks in client library.
 - Implement "once" and "lazy" bridge start types.
-- Add new return type MOSQ_ERR_ERRNO to indicate that the errno variable should
+- Add new return type ECLD_ERR_ERRNO to indicate that the errno variable should
   be checked for the real error code.
 - Add support for connection_messages config option.
 - eecloud_sub will now refuse to run if the -c option (disable clean session)
@@ -953,7 +953,7 @@ Other:
   has disconnected unexpectedly.
 - Always close persistent DB file after restoring.
 - Return error code when exiting the clients.
-- eecloud_publish() now returns MOSQ_ERR_INVAL if the topic contains + or #
+- eecloud_publish() now returns ECLD_ERR_INVAL if the topic contains + or #
 - eecloud now silently rejects published messages with + or # in the topic.
 - max_connections is now a per-listener setting instead of global.
 - Connection count is now reduced when clients disconnect (bug #797983).
@@ -984,7 +984,7 @@ Other:
   authentication requirements in the broker.
 - Implement topic Access Control Lists. 
 - eecloud_will_set() and eecloud_publish() now return
-  MOSQ_ERR_PAYLOAD_SIZE if the payload is too large (>268,435,455 bytes).
+  ECLD_ERR_PAYLOAD_SIZE if the payload is too large (>268,435,455 bytes).
 - Bridge support can now be disabled at compile time.
 - Group together network writes for outgoing packets - don't send single byte
   writes!

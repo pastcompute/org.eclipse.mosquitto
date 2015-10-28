@@ -106,7 +106,7 @@ int mqtt3_handle_connect(struct eecloud_db *db, struct eecloud *context)
 
 	/* Don't accept multiple CONNECT commands. */
 	if(context->state != ecld_cs_new){
-		rc = MOSQ_ERR_PROTOCOL;
+		rc = ECLD_ERR_PROTOCOL;
 		goto handle_connect_error;
 	}
 
@@ -128,40 +128,40 @@ int mqtt3_handle_connect(struct eecloud_db *db, struct eecloud *context)
 	if(!strcmp(protocol_name, PROTOCOL_NAME_v31)){
 		if((protocol_version&0x7F) != PROTOCOL_VERSION_v31){
 			if(db->config->connection_messages == true){
-				_eecloud_log_printf(NULL, MOSQ_LOG_INFO, "Invalid protocol version %d in CONNECT from %s.",
+				_eecloud_log_printf(NULL, ECLD_LOG_INFO, "Invalid protocol version %d in CONNECT from %s.",
 						protocol_version, context->address);
 			}
 			_eecloud_send_connack(context, 0, CONNACK_REFUSED_PROTOCOL_VERSION);
 			_eecloud_free(protocol_name);
-			rc = MOSQ_ERR_PROTOCOL;
+			rc = ECLD_ERR_PROTOCOL;
 			goto handle_connect_error;
 		}
 		context->protocol = ecld_p_mqtt31;
 	}else if(!strcmp(protocol_name, PROTOCOL_NAME_v311)){
 		if((protocol_version&0x7F) != PROTOCOL_VERSION_v311){
 			if(db->config->connection_messages == true){
-				_eecloud_log_printf(NULL, MOSQ_LOG_INFO, "Invalid protocol version %d in CONNECT from %s.",
+				_eecloud_log_printf(NULL, ECLD_LOG_INFO, "Invalid protocol version %d in CONNECT from %s.",
 						protocol_version, context->address);
 			}
 			_eecloud_send_connack(context, 0, CONNACK_REFUSED_PROTOCOL_VERSION);
 			_eecloud_free(protocol_name);
-			rc = MOSQ_ERR_PROTOCOL;
+			rc = ECLD_ERR_PROTOCOL;
 			goto handle_connect_error;
 		}
 		if((context->in_packet.command&0x0F) != 0x00){
 			/* Reserved flags not set to 0, must disconnect. */ 
 			_eecloud_free(protocol_name);
-			rc = MOSQ_ERR_PROTOCOL;
+			rc = ECLD_ERR_PROTOCOL;
 			goto handle_connect_error;
 		}
 		context->protocol = ecld_p_mqtt311;
 	}else{
 		if(db->config->connection_messages == true){
-			_eecloud_log_printf(NULL, MOSQ_LOG_INFO, "Invalid protocol \"%s\" in CONNECT from %s.",
+			_eecloud_log_printf(NULL, ECLD_LOG_INFO, "Invalid protocol \"%s\" in CONNECT from %s.",
 					protocol_name, context->address);
 		}
 		_eecloud_free(protocol_name);
-		rc = MOSQ_ERR_PROTOCOL;
+		rc = ECLD_ERR_PROTOCOL;
 		goto handle_connect_error;
 	}
 	_eecloud_free(protocol_name);
@@ -174,9 +174,9 @@ int mqtt3_handle_connect(struct eecloud_db *db, struct eecloud *context)
 	will = connect_flags & 0x04;
 	will_qos = (connect_flags & 0x18) >> 3;
 	if(will_qos == 3){
-		_eecloud_log_printf(NULL, MOSQ_LOG_INFO, "Invalid Will QoS in CONNECT from %s.",
+		_eecloud_log_printf(NULL, ECLD_LOG_INFO, "Invalid Will QoS in CONNECT from %s.",
 				context->address);
-		rc = MOSQ_ERR_PROTOCOL;
+		rc = ECLD_ERR_PROTOCOL;
 		goto handle_connect_error;
 	}
 	will_retain = connect_flags & 0x20;
@@ -197,7 +197,7 @@ int mqtt3_handle_connect(struct eecloud_db *db, struct eecloud *context)
 	if(slen == 0){
 		if(context->protocol == ecld_p_mqtt31){
 			_eecloud_send_connack(context, 0, CONNACK_REFUSED_IDENTIFIER_REJECTED);
-			rc = MOSQ_ERR_PROTOCOL;
+			rc = ECLD_ERR_PROTOCOL;
 			goto handle_connect_error;
 		}else{ /* mqtt311 */
 			_eecloud_free(client_id);
@@ -205,12 +205,12 @@ int mqtt3_handle_connect(struct eecloud_db *db, struct eecloud *context)
 
 			if(clean_session == 0 || db->config->allow_zero_length_clientid == false){
 				_eecloud_send_connack(context, 0, CONNACK_REFUSED_IDENTIFIER_REJECTED);
-				rc = MOSQ_ERR_PROTOCOL;
+				rc = ECLD_ERR_PROTOCOL;
 				goto handle_connect_error;
 			}else{
 				client_id = client_id_gen(db);
 				if(!client_id){
-					rc = MOSQ_ERR_NOMEM;
+					rc = ECLD_ERR_NOMEM;
 					goto handle_connect_error;
 				}
 			}
@@ -229,7 +229,7 @@ int mqtt3_handle_connect(struct eecloud_db *db, struct eecloud *context)
 	if(will){
 		will_struct = _eecloud_calloc(1, sizeof(struct eecloud_message));
 		if(!will_struct){
-			rc = MOSQ_ERR_NOMEM;
+			rc = ECLD_ERR_NOMEM;
 			goto handle_connect_error;
 		}
 		if(_eecloud_read_string(&context->in_packet, &will_topic)){
@@ -265,7 +265,7 @@ int mqtt3_handle_connect(struct eecloud_db *db, struct eecloud *context)
 	}else{
 		if(context->protocol == ecld_p_mqtt311){
 			if(will_qos != 0 || will_retain != 0){
-				rc = MOSQ_ERR_PROTOCOL;
+				rc = ECLD_ERR_PROTOCOL;
 				goto handle_connect_error;
 			}
 		}
@@ -273,31 +273,31 @@ int mqtt3_handle_connect(struct eecloud_db *db, struct eecloud *context)
 
 	if(username_flag){
 		rc = _eecloud_read_string(&context->in_packet, &username);
-		if(rc == MOSQ_ERR_SUCCESS){
+		if(rc == ECLD_ERR_SUCCESS){
 			if(password_flag){
 				rc = _eecloud_read_string(&context->in_packet, &password);
-				if(rc == MOSQ_ERR_NOMEM){
-					rc = MOSQ_ERR_NOMEM;
+				if(rc == ECLD_ERR_NOMEM){
+					rc = ECLD_ERR_NOMEM;
 					goto handle_connect_error;
-				}else if(rc == MOSQ_ERR_PROTOCOL){
+				}else if(rc == ECLD_ERR_PROTOCOL){
 					if(context->protocol == ecld_p_mqtt31){
 						/* Password flag given, but no password. Ignore. */
 						password_flag = 0;
 					}else if(context->protocol == ecld_p_mqtt311){
-						rc = MOSQ_ERR_PROTOCOL;
+						rc = ECLD_ERR_PROTOCOL;
 						goto handle_connect_error;
 					}
 				}
 			}
-		}else if(rc == MOSQ_ERR_NOMEM){
-			rc = MOSQ_ERR_NOMEM;
+		}else if(rc == ECLD_ERR_NOMEM){
+			rc = ECLD_ERR_NOMEM;
 			goto handle_connect_error;
 		}else{
 			if(context->protocol == ecld_p_mqtt31){
 				/* Username flag given, but no username. Ignore. */
 				username_flag = 0;
 			}else if(context->protocol == ecld_p_mqtt311){
-				rc = MOSQ_ERR_PROTOCOL;
+				rc = ECLD_ERR_PROTOCOL;
 				goto handle_connect_error;
 			}
 		}
@@ -305,7 +305,7 @@ int mqtt3_handle_connect(struct eecloud_db *db, struct eecloud *context)
 		if(context->protocol == ecld_p_mqtt311){
 			if(password_flag){
 				/* username_flag == 0 && password_flag == 1 is forbidden */
-				rc = MOSQ_ERR_PROTOCOL;
+				rc = ECLD_ERR_PROTOCOL;
 				goto handle_connect_error;
 			}
 		}
@@ -363,9 +363,9 @@ int mqtt3_handle_connect(struct eecloud_db *db, struct eecloud *context)
 		if(username_flag){
 			rc = eecloud_unpwd_check(db, username, password);
 			switch(rc){
-				case MOSQ_ERR_SUCCESS:
+				case ECLD_ERR_SUCCESS:
 					break;
-				case MOSQ_ERR_AUTH:
+				case ECLD_ERR_AUTH:
 					_eecloud_send_connack(context, 0, CONNACK_REFUSED_NOT_AUTHORIZED);
 					mqtt3_context_disconnect(db, context);
 					rc = 1;
@@ -397,7 +397,7 @@ int mqtt3_handle_connect(struct eecloud_db *db, struct eecloud *context)
 			_eecloud_free(client_id);
 			client_id = _eecloud_strdup(context->username);
 			if(!client_id){
-				rc = MOSQ_ERR_NOMEM;
+				rc = ECLD_ERR_NOMEM;
 				goto handle_connect_error;
 			}
 		}else{
@@ -418,7 +418,7 @@ int mqtt3_handle_connect(struct eecloud_db *db, struct eecloud *context)
 			/* Client is already connected, disconnect old version. This is
 			 * done in mqtt3_context_cleanup() below. */
 			if(db->config->connection_messages == true){
-				_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Client %s already connected, closing old connection.", client_id);
+				_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Client %s already connected, closing old connection.", client_id);
 			}
 		}
 
@@ -497,15 +497,15 @@ int mqtt3_handle_connect(struct eecloud_db *db, struct eecloud *context)
 	if(db->config->connection_messages == true){
 		if(context->is_bridge){
 			if(context->username){
-				_eecloud_log_printf(NULL, MOSQ_LOG_NOTICE, "New bridge connected from %s as %s (c%d, k%d, u'%s').", context->address, client_id, clean_session, context->keepalive, context->username);
+				_eecloud_log_printf(NULL, ECLD_LOG_NOTICE, "New bridge connected from %s as %s (c%d, k%d, u'%s').", context->address, client_id, clean_session, context->keepalive, context->username);
 			}else{
-				_eecloud_log_printf(NULL, MOSQ_LOG_NOTICE, "New bridge connected from %s as %s (c%d, k%d).", context->address, client_id, clean_session, context->keepalive);
+				_eecloud_log_printf(NULL, ECLD_LOG_NOTICE, "New bridge connected from %s as %s (c%d, k%d).", context->address, client_id, clean_session, context->keepalive);
 			}
 		}else{
 			if(context->username){
-				_eecloud_log_printf(NULL, MOSQ_LOG_NOTICE, "New client connected from %s as %s (c%d, k%d, u'%s').", context->address, client_id, clean_session, context->keepalive, context->username);
+				_eecloud_log_printf(NULL, ECLD_LOG_NOTICE, "New client connected from %s as %s (c%d, k%d, u'%s').", context->address, client_id, clean_session, context->keepalive, context->username);
 			}else{
-				_eecloud_log_printf(NULL, MOSQ_LOG_NOTICE, "New client connected from %s as %s (c%d, k%d).", context->address, client_id, clean_session, context->keepalive);
+				_eecloud_log_printf(NULL, ECLD_LOG_NOTICE, "New client connected from %s as %s (c%d, k%d).", context->address, client_id, clean_session, context->keepalive);
 			}
 		}
 	}
@@ -525,7 +525,7 @@ int mqtt3_handle_connect(struct eecloud_db *db, struct eecloud *context)
 	msg_prev = NULL;
 	while(msg_tail){
 		if(msg_tail->direction == ecld_md_out){
-			if(eecloud_acl_check(db, context, msg_tail->store->topic, MOSQ_ACL_READ) != MOSQ_ERR_SUCCESS){
+			if(eecloud_acl_check(db, context, msg_tail->store->topic, ECLD_ACL_READ) != ECLD_ERR_SUCCESS){
 				eecloud__db_msg_store_deref(db, &msg_tail->store);
 				if(msg_prev){
 					msg_prev->next = msg_tail->next;
@@ -573,21 +573,21 @@ handle_connect_error:
 int mqtt3_handle_disconnect(struct eecloud_db *db, struct eecloud *context)
 {
 	if(!context){
-		return MOSQ_ERR_INVAL;
+		return ECLD_ERR_INVAL;
 	}
 	if(context->in_packet.remaining_length != 0){
-		return MOSQ_ERR_PROTOCOL;
+		return ECLD_ERR_PROTOCOL;
 	}
-	_eecloud_log_printf(NULL, MOSQ_LOG_DEBUG, "Received DISCONNECT from %s", context->id);
+	_eecloud_log_printf(NULL, ECLD_LOG_DEBUG, "Received DISCONNECT from %s", context->id);
 	if(context->protocol == ecld_p_mqtt311){
 		if((context->in_packet.command&0x0F) != 0x00){
 			do_disconnect(db, context);
-			return MOSQ_ERR_PROTOCOL;
+			return ECLD_ERR_PROTOCOL;
 		}
 	}
 	context->state = ecld_cs_disconnecting;
 	do_disconnect(db, context);
-	return MOSQ_ERR_SUCCESS;
+	return ECLD_ERR_SUCCESS;
 }
 
 
@@ -603,13 +603,13 @@ int mqtt3_handle_subscribe(struct eecloud_db *db, struct eecloud *context)
 	int len;
 	char *sub_mount;
 
-	if(!context) return MOSQ_ERR_INVAL;
-	_eecloud_log_printf(NULL, MOSQ_LOG_DEBUG, "Received SUBSCRIBE from %s", context->id);
+	if(!context) return ECLD_ERR_INVAL;
+	_eecloud_log_printf(NULL, ECLD_LOG_DEBUG, "Received SUBSCRIBE from %s", context->id);
 	/* FIXME - plenty of potential for memory leaks here */
 
 	if(context->protocol == ecld_p_mqtt311){
 		if((context->in_packet.command&0x0F) != 0x02){
-			return MOSQ_ERR_PROTOCOL;
+			return ECLD_ERR_PROTOCOL;
 		}
 	}
 	if(_eecloud_read_uint16(&context->in_packet, &mid)) return 1;
@@ -623,14 +623,14 @@ int mqtt3_handle_subscribe(struct eecloud_db *db, struct eecloud *context)
 
 		if(sub){
 			if(!strlen(sub)){
-				_eecloud_log_printf(NULL, MOSQ_LOG_INFO, "Empty subscription string from %s, disconnecting.",
+				_eecloud_log_printf(NULL, ECLD_LOG_INFO, "Empty subscription string from %s, disconnecting.",
 					context->address);
 				_eecloud_free(sub);
 				if(payload) _eecloud_free(payload);
 				return 1;
 			}
 			if(eecloud_sub_topic_check(sub)){
-				_eecloud_log_printf(NULL, MOSQ_LOG_INFO, "Invalid subscription string from %s, disconnecting.",
+				_eecloud_log_printf(NULL, ECLD_LOG_INFO, "Invalid subscription string from %s, disconnecting.",
 					context->address);
 				_eecloud_free(sub);
 				if(payload) _eecloud_free(payload);
@@ -643,7 +643,7 @@ int mqtt3_handle_subscribe(struct eecloud_db *db, struct eecloud *context)
 				return 1;
 			}
 			if(qos > 2){
-				_eecloud_log_printf(NULL, MOSQ_LOG_INFO, "Invalid QoS in subscription command from %s, disconnecting.",
+				_eecloud_log_printf(NULL, ECLD_LOG_INFO, "Invalid QoS in subscription command from %s, disconnecting.",
 					context->address);
 				_eecloud_free(sub);
 				if(payload) _eecloud_free(payload);
@@ -655,7 +655,7 @@ int mqtt3_handle_subscribe(struct eecloud_db *db, struct eecloud *context)
 				if(!sub_mount){
 					_eecloud_free(sub);
 					if(payload) _eecloud_free(payload);
-					return MOSQ_ERR_NOMEM;
+					return ECLD_ERR_NOMEM;
 				}
 				snprintf(sub_mount, len, "%s%s", context->listener->mount_point, sub);
 				sub_mount[len] = '\0';
@@ -664,7 +664,7 @@ int mqtt3_handle_subscribe(struct eecloud_db *db, struct eecloud *context)
 				sub = sub_mount;
 
 			}
-			_eecloud_log_printf(NULL, MOSQ_LOG_DEBUG, "\t%s (QoS %d)", sub, qos);
+			_eecloud_log_printf(NULL, ECLD_LOG_DEBUG, "\t%s (QoS %d)", sub, qos);
 
 #if 0
 			/* FIXME
@@ -676,15 +676,15 @@ int mqtt3_handle_subscribe(struct eecloud_db *db, struct eecloud *context)
 			 * It's a very difficult problem when an ACL looks like foo/+/bar
 			 * and a subscription request to foo/# is made.
 			 *
-			 * This should be changed to using MOSQ_ACL_SUBSCRIPTION in the
+			 * This should be changed to using ECLD_ACL_SUBSCRIPTION in the
 			 * future anyway.
 			 */
 			if(context->protocol == ecld_p_mqtt311){
-				rc = eecloud_acl_check(db, context, sub, MOSQ_ACL_READ);
+				rc = eecloud_acl_check(db, context, sub, ECLD_ACL_READ);
 				switch(rc){
-					case MOSQ_ERR_SUCCESS:
+					case ECLD_ERR_SUCCESS:
 						break;
-					case MOSQ_ERR_ACL_DENIED:
+					case ECLD_ERR_ACL_DENIED:
 						qos = 0x80;
 						break;
 					default:
@@ -696,12 +696,12 @@ int mqtt3_handle_subscribe(struct eecloud_db *db, struct eecloud *context)
 
 			if(qos != 0x80){
 				rc2 = mqtt3_sub_add(db, context, sub, qos, &db->subs);
-				if(rc2 == MOSQ_ERR_SUCCESS){
+				if(rc2 == ECLD_ERR_SUCCESS){
 					if(mqtt3_retain_queue(db, context, sub, qos)) rc = 1;
 				}else if(rc2 != -1){
 					rc = rc2;
 				}
-				_eecloud_log_printf(NULL, MOSQ_LOG_SUBSCRIBE, "%s %d %s", context->id, qos, sub);
+				_eecloud_log_printf(NULL, ECLD_LOG_SUBSCRIBE, "%s %d %s", context->id, qos, sub);
 			}
 			_eecloud_free(sub);
 
@@ -713,7 +713,7 @@ int mqtt3_handle_subscribe(struct eecloud_db *db, struct eecloud *context)
 			}else{
 				if(payload) _eecloud_free(payload);
 
-				return MOSQ_ERR_NOMEM;
+				return ECLD_ERR_NOMEM;
 			}
 		}
 	}
@@ -721,7 +721,7 @@ int mqtt3_handle_subscribe(struct eecloud_db *db, struct eecloud *context)
 	if(context->protocol == ecld_p_mqtt311){
 		if(payloadlen == 0){
 			/* No subscriptions specified, protocol error. */
-			return MOSQ_ERR_PROTOCOL;
+			return ECLD_ERR_PROTOCOL;
 		}
 	}
 	if(_eecloud_send_suback(context, mid, payloadlen, payload)) rc = 1;
@@ -739,12 +739,12 @@ int mqtt3_handle_unsubscribe(struct eecloud_db *db, struct eecloud *context)
 	uint16_t mid;
 	char *sub;
 
-	if(!context) return MOSQ_ERR_INVAL;
-	_eecloud_log_printf(NULL, MOSQ_LOG_DEBUG, "Received UNSUBSCRIBE from %s", context->id);
+	if(!context) return ECLD_ERR_INVAL;
+	_eecloud_log_printf(NULL, ECLD_LOG_DEBUG, "Received UNSUBSCRIBE from %s", context->id);
 
 	if(context->protocol == ecld_p_mqtt311){
 		if((context->in_packet.command&0x0F) != 0x02){
-			return MOSQ_ERR_PROTOCOL;
+			return ECLD_ERR_PROTOCOL;
 		}
 	}
 	if(_eecloud_read_uint16(&context->in_packet, &mid)) return 1;
@@ -757,21 +757,21 @@ int mqtt3_handle_unsubscribe(struct eecloud_db *db, struct eecloud *context)
 
 		if(sub){
 			if(!strlen(sub)){
-				_eecloud_log_printf(NULL, MOSQ_LOG_INFO, "Empty unsubscription string from %s, disconnecting.",
+				_eecloud_log_printf(NULL, ECLD_LOG_INFO, "Empty unsubscription string from %s, disconnecting.",
 					context->id);
 				_eecloud_free(sub);
 				return 1;
 			}
 			if(eecloud_sub_topic_check(sub)){
-				_eecloud_log_printf(NULL, MOSQ_LOG_INFO, "Invalid unsubscription string from %s, disconnecting.",
+				_eecloud_log_printf(NULL, ECLD_LOG_INFO, "Invalid unsubscription string from %s, disconnecting.",
 					context->id);
 				_eecloud_free(sub);
 				return 1;
 			}
 
-			_eecloud_log_printf(NULL, MOSQ_LOG_DEBUG, "\t%s", sub);
+			_eecloud_log_printf(NULL, ECLD_LOG_DEBUG, "\t%s", sub);
 			mqtt3_sub_remove(db, context, sub, &db->subs);
-			_eecloud_log_printf(NULL, MOSQ_LOG_UNSUBSCRIBE, "%s %s", context->id, sub);
+			_eecloud_log_printf(NULL, ECLD_LOG_UNSUBSCRIBE, "%s %s", context->id, sub);
 			_eecloud_free(sub);
 		}
 	}

@@ -66,11 +66,11 @@ int _eecloud_send_connect(struct eecloud *ecld, uint16_t keepalive, bool clean_s
 		version = MQTT_PROTOCOL_V311;
 		headerlen = 10;
 	}else{
-		return MOSQ_ERR_INVAL;
+		return ECLD_ERR_INVAL;
 	}
 
 	packet = _eecloud_calloc(1, sizeof(struct _eecloud_packet));
-	if(!packet) return MOSQ_ERR_NOMEM;
+	if(!packet) return ECLD_ERR_NOMEM;
 
 	payloadlen = 2+strlen(clientid);
 	if(ecld->will){
@@ -136,10 +136,10 @@ int _eecloud_send_connect(struct eecloud *ecld, uint16_t keepalive, bool clean_s
 	ecld->keepalive = keepalive;
 #ifdef WITH_BROKER
 # ifdef WITH_BRIDGE
-	_eecloud_log_printf(ecld, MOSQ_LOG_DEBUG, "Bridge %s sending CONNECT", clientid);
+	_eecloud_log_printf(ecld, ECLD_LOG_DEBUG, "Bridge %s sending CONNECT", clientid);
 # endif
 #else
-	_eecloud_log_printf(ecld, MOSQ_LOG_DEBUG, "Client %s sending CONNECT", clientid);
+	_eecloud_log_printf(ecld, ECLD_LOG_DEBUG, "Client %s sending CONNECT", clientid);
 #endif
 	return _eecloud_packet_queue(ecld, packet);
 }
@@ -149,10 +149,10 @@ int _eecloud_send_disconnect(struct eecloud *ecld)
 	assert(ecld);
 #ifdef WITH_BROKER
 # ifdef WITH_BRIDGE
-	_eecloud_log_printf(ecld, MOSQ_LOG_DEBUG, "Bridge %s sending DISCONNECT", ecld->id);
+	_eecloud_log_printf(ecld, ECLD_LOG_DEBUG, "Bridge %s sending DISCONNECT", ecld->id);
 # endif
 #else
-	_eecloud_log_printf(ecld, MOSQ_LOG_DEBUG, "Client %s sending DISCONNECT", ecld->id);
+	_eecloud_log_printf(ecld, ECLD_LOG_DEBUG, "Client %s sending DISCONNECT", ecld->id);
 #endif
 	return _eecloud_send_simple_command(ecld, DISCONNECT);
 }
@@ -169,7 +169,7 @@ int _eecloud_send_subscribe(struct eecloud *ecld, int *mid, const char *topic, u
 	assert(topic);
 
 	packet = _eecloud_calloc(1, sizeof(struct _eecloud_packet));
-	if(!packet) return MOSQ_ERR_NOMEM;
+	if(!packet) return ECLD_ERR_NOMEM;
 
 	packetlen = 2 + 2+strlen(topic) + 1;
 
@@ -192,10 +192,10 @@ int _eecloud_send_subscribe(struct eecloud *ecld, int *mid, const char *topic, u
 
 #ifdef WITH_BROKER
 # ifdef WITH_BRIDGE
-	_eecloud_log_printf(ecld, MOSQ_LOG_DEBUG, "Bridge %s sending SUBSCRIBE (Mid: %d, Topic: %s, QoS: %d)", ecld->id, local_mid, topic, topic_qos);
+	_eecloud_log_printf(ecld, ECLD_LOG_DEBUG, "Bridge %s sending SUBSCRIBE (Mid: %d, Topic: %s, QoS: %d)", ecld->id, local_mid, topic, topic_qos);
 # endif
 #else
-	_eecloud_log_printf(ecld, MOSQ_LOG_DEBUG, "Client %s sending SUBSCRIBE (Mid: %d, Topic: %s, QoS: %d)", ecld->id, local_mid, topic, topic_qos);
+	_eecloud_log_printf(ecld, ECLD_LOG_DEBUG, "Client %s sending SUBSCRIBE (Mid: %d, Topic: %s, QoS: %d)", ecld->id, local_mid, topic, topic_qos);
 #endif
 
 	return _eecloud_packet_queue(ecld, packet);
@@ -214,7 +214,7 @@ int _eecloud_send_unsubscribe(struct eecloud *ecld, int *mid, const char *topic)
 	assert(topic);
 
 	packet = _eecloud_calloc(1, sizeof(struct _eecloud_packet));
-	if(!packet) return MOSQ_ERR_NOMEM;
+	if(!packet) return ECLD_ERR_NOMEM;
 
 	packetlen = 2 + 2+strlen(topic);
 
@@ -236,10 +236,10 @@ int _eecloud_send_unsubscribe(struct eecloud *ecld, int *mid, const char *topic)
 
 #ifdef WITH_BROKER
 # ifdef WITH_BRIDGE
-	_eecloud_log_printf(ecld, MOSQ_LOG_DEBUG, "Bridge %s sending UNSUBSCRIBE (Mid: %d, Topic: %s)", ecld->id, local_mid, topic);
+	_eecloud_log_printf(ecld, ECLD_LOG_DEBUG, "Bridge %s sending UNSUBSCRIBE (Mid: %d, Topic: %s)", ecld->id, local_mid, topic);
 # endif
 #else
-	_eecloud_log_printf(ecld, MOSQ_LOG_DEBUG, "Client %s sending UNSUBSCRIBE (Mid: %d, Topic: %s)", ecld->id, local_mid, topic);
+	_eecloud_log_printf(ecld, ECLD_LOG_DEBUG, "Client %s sending UNSUBSCRIBE (Mid: %d, Topic: %s)", ecld->id, local_mid, topic);
 #endif
 	return _eecloud_packet_queue(ecld, packet);
 }

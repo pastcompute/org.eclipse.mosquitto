@@ -13,7 +13,7 @@ int main(int argc, char *argv[])
 
 	ecld = eecloud_new("08-ssl-bad-cacert", true, NULL);
 	eecloud_tls_opts_set(ecld, 1, "tlsv1", NULL);
-	if(eecloud_tls_set(ecld, "this/file/doesnt/exist", NULL, NULL, NULL, NULL) == MOSQ_ERR_INVAL){
+	if(eecloud_tls_set(ecld, "this/file/doesnt/exist", NULL, NULL, NULL, NULL) == ECLD_ERR_INVAL){
 		rc = 0;
 	}
 	eecloud_lib_cleanup();

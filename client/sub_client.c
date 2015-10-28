@@ -266,7 +266,7 @@ int main(int argc, char *argv[])
 	eecloud_destroy(ecld);
 	eecloud_lib_cleanup();
 
-	if(cfg.msg_count>0 && rc == MOSQ_ERR_NO_CONN){
+	if(cfg.msg_count>0 && rc == ECLD_ERR_NO_CONN){
 		rc = 0;
 	}
 	if(rc){

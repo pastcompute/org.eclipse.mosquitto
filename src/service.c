@@ -56,7 +56,7 @@ void __stdcall service_main(DWORD dwArgc, LPTSTR *lpszArgv)
 
 	service_handle = RegisterServiceCtrlHandler("eecloud", service_handler);
 	if(service_handle){
-		rc = GetEnvironmentVariable("MOSQUITTO_DIR", conf_path, MAX_PATH);
+		rc = GetEnvironmentVariable("EECLOUD_DIR", conf_path, MAX_PATH);
 		if(!rc || rc == MAX_PATH){
 			service_status.dwCurrentState = SERVICE_STOPPED;
 			SetServiceStatus(service_handle, &service_status);

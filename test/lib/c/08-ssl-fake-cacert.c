@@ -26,7 +26,7 @@ int main(int argc, char *argv[])
 	rc = eecloud_connect(ecld, "localhost", 1888, 60);
 
 	rc = eecloud_loop_forever(ecld, -1, 1);
-	if(rc == MOSQ_ERR_ERRNO && errno == EPROTO){
+	if(rc == ECLD_ERR_ERRNO && errno == EPROTO){
 		return 0;
 	}else{
 		return 1;

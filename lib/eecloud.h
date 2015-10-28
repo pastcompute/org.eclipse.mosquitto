@@ -14,8 +14,8 @@ Contributors:
    Roger Light - initial implementation and documentation.
 */
 
-#ifndef _MOSQUITTO_H_
-#define _MOSQUITTO_H_
+#ifndef _EECLOUD_H_
+#define _EECLOUD_H_
 
 #ifdef __cplusplus
 extern "C" {
@@ -43,53 +43,53 @@ extern "C" {
 #	endif
 #endif
 
-#define LIBMOSQUITTO_MAJOR 1
-#define LIBMOSQUITTO_MINOR 4
-#define LIBMOSQUITTO_REVISION 2
-/* LIBMOSQUITTO_VERSION_NUMBER looks like 1002001 for e.g. version 1.2.1. */
-#define LIBMOSQUITTO_VERSION_NUMBER (LIBMOSQUITTO_MAJOR*1000000+LIBMOSQUITTO_MINOR*1000+LIBMOSQUITTO_REVISION)
+#define LIBEECLOUD_MAJOR 1
+#define LIBEECLOUD_MINOR 4
+#define LIBEECLOUD_REVISION 2
+/* LIBEECLOUD_VERSION_NUMBER looks like 1002001 for e.g. version 1.2.1. */
+#define LIBEECLOUD_VERSION_NUMBER (LIBEECLOUD_MAJOR*1000000+LIBEECLOUD_MINOR*1000+LIBEECLOUD_REVISION)
 
 /* Log types */
-#define MOSQ_LOG_NONE 0x00
-#define MOSQ_LOG_INFO 0x01
-#define MOSQ_LOG_NOTICE 0x02
-#define MOSQ_LOG_WARNING 0x04
-#define MOSQ_LOG_ERR 0x08
-#define MOSQ_LOG_DEBUG 0x10
-#define MOSQ_LOG_SUBSCRIBE 0x20
-#define MOSQ_LOG_UNSUBSCRIBE 0x40
-#define MOSQ_LOG_WEBSOCKETS 0x80
-#define MOSQ_LOG_ALL 0xFFFF
+#define ECLD_LOG_NONE 0x00
+#define ECLD_LOG_INFO 0x01
+#define ECLD_LOG_NOTICE 0x02
+#define ECLD_LOG_WARNING 0x04
+#define ECLD_LOG_ERR 0x08
+#define ECLD_LOG_DEBUG 0x10
+#define ECLD_LOG_SUBSCRIBE 0x20
+#define ECLD_LOG_UNSUBSCRIBE 0x40
+#define ECLD_LOG_WEBSOCKETS 0x80
+#define ECLD_LOG_ALL 0xFFFF
 
 /* Error values */
 enum ecld_err_t {
-	MOSQ_ERR_CONN_PENDING = -1,
-	MOSQ_ERR_SUCCESS = 0,
-	MOSQ_ERR_NOMEM = 1,
-	MOSQ_ERR_PROTOCOL = 2,
-	MOSQ_ERR_INVAL = 3,
-	MOSQ_ERR_NO_CONN = 4,
-	MOSQ_ERR_CONN_REFUSED = 5,
-	MOSQ_ERR_NOT_FOUND = 6,
-	MOSQ_ERR_CONN_LOST = 7,
-	MOSQ_ERR_TLS = 8,
-	MOSQ_ERR_PAYLOAD_SIZE = 9,
-	MOSQ_ERR_NOT_SUPPORTED = 10,
-	MOSQ_ERR_AUTH = 11,
-	MOSQ_ERR_ACL_DENIED = 12,
-	MOSQ_ERR_UNKNOWN = 13,
-	MOSQ_ERR_ERRNO = 14,
-	MOSQ_ERR_EAI = 15,
-	MOSQ_ERR_PROXY = 16
+	ECLD_ERR_CONN_PENDING = -1,
+	ECLD_ERR_SUCCESS = 0,
+	ECLD_ERR_NOMEM = 1,
+	ECLD_ERR_PROTOCOL = 2,
+	ECLD_ERR_INVAL = 3,
+	ECLD_ERR_NO_CONN = 4,
+	ECLD_ERR_CONN_REFUSED = 5,
+	ECLD_ERR_NOT_FOUND = 6,
+	ECLD_ERR_CONN_LOST = 7,
+	ECLD_ERR_TLS = 8,
+	ECLD_ERR_PAYLOAD_SIZE = 9,
+	ECLD_ERR_NOT_SUPPORTED = 10,
+	ECLD_ERR_AUTH = 11,
+	ECLD_ERR_ACL_DENIED = 12,
+	ECLD_ERR_UNKNOWN = 13,
+	ECLD_ERR_ERRNO = 14,
+	ECLD_ERR_EAI = 15,
+	ECLD_ERR_PROXY = 16
 };
 
 /* Error values */
 enum ecld_opt_t {
-	MOSQ_OPT_PROTOCOL_VERSION = 1,
+	ECLD_OPT_PROTOCOL_VERSION = 1,
 };
 
 /* MQTT specification restricts client ids to a maximum of 23 characters */
-#define MOSQ_MQTT_ID_MAX_LENGTH 23
+#define ECLD_MQTT_ID_MAX_LENGTH 23
 
 #define MQTT_PROTOCOL_V31 3
 #define MQTT_PROTOCOL_V311 4
@@ -119,7 +119,7 @@ struct eecloud;
  * Important note
  * 
  * The following functions that deal with network operations will return
- * MOSQ_ERR_SUCCESS on success, but this does not mean that the operation has
+ * ECLD_ERR_SUCCESS on success, but this does not mean that the operation has
  * taken place. An attempt will be made to write the network data, but if the
  * socket is not available for writing at that time then the packet will not be
  * sent. To ensure the packet is sent, call eecloud_loop() (which must also
@@ -140,8 +140,8 @@ struct eecloud;
  *
  * Can be used to obtain version information for the eecloud library.
  * This allows the application to compare the library version against the
- * version it was compiled against by using the LIBMOSQUITTO_MAJOR,
- * LIBMOSQUITTO_MINOR and LIBMOSQUITTO_REVISION defines.
+ * version it was compiled against by using the LIBEECLOUD_MAJOR,
+ * LIBEECLOUD_MINOR and LIBEECLOUD_REVISION defines.
  *
  * Parameters:
  *  major -    an integer pointer. If not NULL, the major version of the
@@ -152,7 +152,7 @@ struct eecloud;
  *             be returned in this variable.
  *
  * Returns:
- *	LIBMOSQUITTO_VERSION_NUMBER, which is a unique number based on the major,
+ *	LIBEECLOUD_VERSION_NUMBER, which is a unique number based on the major,
  *		minor and revision values.
  * See Also:
  * 	<eecloud_lib_cleanup>, <eecloud_lib_init>
@@ -167,7 +167,7 @@ libecld_EXPORT int eecloud_lib_version(int *major, int *minor, int *revision);
  * This function is *not* thread safe.
  *
  * Returns:
- * 	MOSQ_ERR_SUCCESS - always
+ * 	ECLD_ERR_SUCCESS - always
  *
  * See Also:
  * 	<eecloud_lib_cleanup>, <eecloud_lib_version>
@@ -180,7 +180,7 @@ libecld_EXPORT int eecloud_lib_init(void);
  * Call to free resources associated with the library.
  *
  * Returns:
- * 	MOSQ_ERR_SUCCESS - always
+ * 	ECLD_ERR_SUCCESS - always
  *
  * See Also:
  * 	<eecloud_lib_init>, <eecloud_lib_version>
@@ -251,9 +251,9 @@ libecld_EXPORT void eecloud_destroy(struct eecloud *ecld);
  *                  callbacks that are specified.
  *
  * Returns:
- * 	MOSQ_ERR_SUCCESS - on success.
- * 	MOSQ_ERR_INVAL -   if the input parameters were invalid.
- * 	MOSQ_ERR_NOMEM -   if an out of memory condition occurred.
+ * 	ECLD_ERR_SUCCESS - on success.
+ * 	ECLD_ERR_INVAL -   if the input parameters were invalid.
+ * 	ECLD_ERR_NOMEM -   if an out of memory condition occurred.
  *
  * See Also:
  * 	<eecloud_new>, <eecloud_destroy>
@@ -278,10 +278,10 @@ libecld_EXPORT int eecloud_reinitialise(struct eecloud *ecld, const char *id, bo
  * 	retain -     set to true to make the will a retained message.
  *
  * Returns:
- * 	MOSQ_ERR_SUCCESS -      on success.
- * 	MOSQ_ERR_INVAL -        if the input parameters were invalid.
- * 	MOSQ_ERR_NOMEM -        if an out of memory condition occurred.
- * 	MOSQ_ERR_PAYLOAD_SIZE - if payloadlen is too large.
+ * 	ECLD_ERR_SUCCESS -      on success.
+ * 	ECLD_ERR_INVAL -        if the input parameters were invalid.
+ * 	ECLD_ERR_NOMEM -        if an out of memory condition occurred.
+ * 	ECLD_ERR_PAYLOAD_SIZE - if payloadlen is too large.
  */
 libecld_EXPORT int eecloud_will_set(struct eecloud *ecld, const char *topic, int payloadlen, const void *payload, int qos, bool retain);
 
@@ -295,8 +295,8 @@ libecld_EXPORT int eecloud_will_set(struct eecloud *ecld, const char *topic, int
  * 	ecld - a valid eecloud instance.
  *
  * Returns:
- * 	MOSQ_ERR_SUCCESS - on success.
- * 	MOSQ_ERR_INVAL -   if the input parameters were invalid.
+ * 	ECLD_ERR_SUCCESS - on success.
+ * 	ECLD_ERR_INVAL -   if the input parameters were invalid.
  */
 libecld_EXPORT int eecloud_will_clear(struct eecloud *ecld);
 
@@ -319,9 +319,9 @@ libecld_EXPORT int eecloud_will_clear(struct eecloud *ecld);
  * 	           valid in order to send just a username.
  *
  * Returns:
- * 	MOSQ_ERR_SUCCESS - on success.
- * 	MOSQ_ERR_INVAL -   if the input parameters were invalid.
- * 	MOSQ_ERR_NOMEM -   if an out of memory condition occurred.
+ * 	ECLD_ERR_SUCCESS - on success.
+ * 	ECLD_ERR_INVAL -   if the input parameters were invalid.
+ * 	ECLD_ERR_NOMEM -   if an out of memory condition occurred.
  */
 libecld_EXPORT int eecloud_username_pw_set(struct eecloud *ecld, const char *username, const char *password);
 
@@ -339,9 +339,9 @@ libecld_EXPORT int eecloud_username_pw_set(struct eecloud *ecld, const char *use
  *              in that time.
  *
  * Returns:
- * 	MOSQ_ERR_SUCCESS - on success.
- * 	MOSQ_ERR_INVAL -   if the input parameters were invalid.
- * 	MOSQ_ERR_ERRNO -   if a system call returned an error. The variable errno
+ * 	ECLD_ERR_SUCCESS - on success.
+ * 	ECLD_ERR_INVAL -   if the input parameters were invalid.
+ * 	ECLD_ERR_ERRNO -   if a system call returned an error. The variable errno
  *                     contains the error code, even on Windows.
  *                     Use strerror_r() where available or FormatMessage() on
  *                     Windows.
@@ -369,9 +369,9 @@ libecld_EXPORT int eecloud_connect(struct eecloud *ecld, const char *host, int p
  *                 bind to.
  *
  * Returns:
- * 	MOSQ_ERR_SUCCESS - on success.
- * 	MOSQ_ERR_INVAL -   if the input parameters were invalid.
- * 	MOSQ_ERR_ERRNO -   if a system call returned an error. The variable errno
+ * 	ECLD_ERR_SUCCESS - on success.
+ * 	ECLD_ERR_INVAL -   if the input parameters were invalid.
+ * 	ECLD_ERR_ERRNO -   if a system call returned an error. The variable errno
  *                     contains the error code, even on Windows.
  *                     Use strerror_r() where available or FormatMessage() on
  *                     Windows.
@@ -400,9 +400,9 @@ libecld_EXPORT int eecloud_connect_bind(struct eecloud *ecld, const char *host, 
  *              in that time.
  *
  * Returns:
- * 	MOSQ_ERR_SUCCESS - on success.
- * 	MOSQ_ERR_INVAL -   if the input parameters were invalid.
- * 	MOSQ_ERR_ERRNO -   if a system call returned an error. The variable errno
+ * 	ECLD_ERR_SUCCESS - on success.
+ * 	ECLD_ERR_INVAL -   if the input parameters were invalid.
+ * 	ECLD_ERR_ERRNO -   if a system call returned an error. The variable errno
  *                     contains the error code, even on Windows.
  *                     Use strerror_r() where available or FormatMessage() on
  *                     Windows.
@@ -437,9 +437,9 @@ libecld_EXPORT int eecloud_connect_async(struct eecloud *ecld, const char *host,
  *                 bind to.
  *
  * Returns:
- * 	MOSQ_ERR_SUCCESS - on success.
- * 	MOSQ_ERR_INVAL -   if the input parameters were invalid.
- * 	MOSQ_ERR_ERRNO -   if a system call returned an error. The variable errno
+ * 	ECLD_ERR_SUCCESS - on success.
+ * 	ECLD_ERR_INVAL -   if the input parameters were invalid.
+ * 	ECLD_ERR_ERRNO -   if a system call returned an error. The variable errno
  *                     contains the error code, even on Windows.
  *                     Use strerror_r() where available or FormatMessage() on
  *                     Windows.
@@ -473,9 +473,9 @@ libecld_EXPORT int eecloud_connect_bind_async(struct eecloud *ecld, const char *
  *                 bind to.
  *
  * Returns:
- * 	MOSQ_ERR_SUCCESS - on success.
- * 	MOSQ_ERR_INVAL -   if the input parameters were invalid.
- * 	MOSQ_ERR_ERRNO -   if a system call returned an error. The variable errno
+ * 	ECLD_ERR_SUCCESS - on success.
+ * 	ECLD_ERR_INVAL -   if the input parameters were invalid.
+ * 	ECLD_ERR_ERRNO -   if a system call returned an error. The variable errno
  *                     contains the error code, even on Windows.
  *                     Use strerror_r() where available or FormatMessage() on
  *                     Windows.
@@ -499,14 +499,14 @@ libecld_EXPORT int eecloud_connect_srv(struct eecloud *ecld, const char *host, i
  * 	ecld - a valid eecloud instance.
  *
  * Returns:
- * 	MOSQ_ERR_SUCCESS - on success.
- * 	MOSQ_ERR_INVAL -   if the input parameters were invalid.
- * 	MOSQ_ERR_NOMEM -   if an out of memory condition occurred.
+ * 	ECLD_ERR_SUCCESS - on success.
+ * 	ECLD_ERR_INVAL -   if the input parameters were invalid.
+ * 	ECLD_ERR_NOMEM -   if an out of memory condition occurred.
  *
  * Returns:
- * 	MOSQ_ERR_SUCCESS - on success.
- * 	MOSQ_ERR_INVAL -   if the input parameters were invalid.
- * 	MOSQ_ERR_ERRNO -   if a system call returned an error. The variable errno
+ * 	ECLD_ERR_SUCCESS - on success.
+ * 	ECLD_ERR_INVAL -   if the input parameters were invalid.
+ * 	ECLD_ERR_ERRNO -   if a system call returned an error. The variable errno
  *                     contains the error code, even on Windows.
  *                     Use strerror_r() where available or FormatMessage() on
  *                     Windows.
@@ -530,14 +530,14 @@ libecld_EXPORT int eecloud_reconnect(struct eecloud *ecld);
  * 	ecld - a valid eecloud instance.
  *
  * Returns:
- * 	MOSQ_ERR_SUCCESS - on success.
- * 	MOSQ_ERR_INVAL -   if the input parameters were invalid.
- * 	MOSQ_ERR_NOMEM -   if an out of memory condition occurred.
+ * 	ECLD_ERR_SUCCESS - on success.
+ * 	ECLD_ERR_INVAL -   if the input parameters were invalid.
+ * 	ECLD_ERR_NOMEM -   if an out of memory condition occurred.
  *
  * Returns:
- * 	MOSQ_ERR_SUCCESS - on success.
- * 	MOSQ_ERR_INVAL -   if the input parameters were invalid.
- * 	MOSQ_ERR_ERRNO -   if a system call returned an error. The variable errno
+ * 	ECLD_ERR_SUCCESS - on success.
+ * 	ECLD_ERR_INVAL -   if the input parameters were invalid.
+ * 	ECLD_ERR_ERRNO -   if a system call returned an error. The variable errno
  *                     contains the error code, even on Windows.
  *                     Use strerror_r() where available or FormatMessage() on
  *                     Windows.
@@ -556,9 +556,9 @@ libecld_EXPORT int eecloud_reconnect_async(struct eecloud *ecld);
  *	ecld - a valid eecloud instance.
  *
  * Returns:
- *	MOSQ_ERR_SUCCESS - on success.
- * 	MOSQ_ERR_INVAL -   if the input parameters were invalid.
- * 	MOSQ_ERR_NO_CONN -  if the client isn't connected to a broker.
+ *	ECLD_ERR_SUCCESS - on success.
+ * 	ECLD_ERR_INVAL -   if the input parameters were invalid.
+ * 	ECLD_ERR_NO_CONN -  if the client isn't connected to a broker.
  */
 libecld_EXPORT int eecloud_disconnect(struct eecloud *ecld);
 
@@ -585,13 +585,13 @@ libecld_EXPORT int eecloud_disconnect(struct eecloud *ecld);
  * 	retain -     set to true to make the message retained.
  *
  * Returns:
- * 	MOSQ_ERR_SUCCESS -      on success.
- * 	MOSQ_ERR_INVAL -        if the input parameters were invalid.
- * 	MOSQ_ERR_NOMEM -        if an out of memory condition occurred.
- * 	MOSQ_ERR_NO_CONN -      if the client isn't connected to a broker.
- *	MOSQ_ERR_PROTOCOL -     if there is a protocol error communicating with the
+ * 	ECLD_ERR_SUCCESS -      on success.
+ * 	ECLD_ERR_INVAL -        if the input parameters were invalid.
+ * 	ECLD_ERR_NOMEM -        if an out of memory condition occurred.
+ * 	ECLD_ERR_NO_CONN -      if the client isn't connected to a broker.
+ *	ECLD_ERR_PROTOCOL -     if there is a protocol error communicating with the
  *                          broker.
- * 	MOSQ_ERR_PAYLOAD_SIZE - if payloadlen is too large.
+ * 	ECLD_ERR_PAYLOAD_SIZE - if payloadlen is too large.
  *
  * See Also: 
  *	<eecloud_max_inflight_messages_set>
@@ -613,10 +613,10 @@ libecld_EXPORT int eecloud_publish(struct eecloud *ecld, int *mid, const char *t
  *	qos -  the requested Quality of Service for this subscription.
  *
  * Returns:
- *	MOSQ_ERR_SUCCESS - on success.
- * 	MOSQ_ERR_INVAL -   if the input parameters were invalid.
- * 	MOSQ_ERR_NOMEM -   if an out of memory condition occurred.
- * 	MOSQ_ERR_NO_CONN - if the client isn't connected to a broker.
+ *	ECLD_ERR_SUCCESS - on success.
+ * 	ECLD_ERR_INVAL -   if the input parameters were invalid.
+ * 	ECLD_ERR_NOMEM -   if an out of memory condition occurred.
+ * 	ECLD_ERR_NO_CONN - if the client isn't connected to a broker.
  */
 libecld_EXPORT int eecloud_subscribe(struct eecloud *ecld, int *mid, const char *sub, int qos);
 
@@ -634,10 +634,10 @@ libecld_EXPORT int eecloud_subscribe(struct eecloud *ecld, int *mid, const char 
  *	sub -  the unsubscription pattern.
  *
  * Returns:
- *	MOSQ_ERR_SUCCESS - on success.
- * 	MOSQ_ERR_INVAL -   if the input parameters were invalid.
- * 	MOSQ_ERR_NOMEM -   if an out of memory condition occurred.
- * 	MOSQ_ERR_NO_CONN - if the client isn't connected to a broker.
+ *	ECLD_ERR_SUCCESS - on success.
+ * 	ECLD_ERR_INVAL -   if the input parameters were invalid.
+ * 	ECLD_ERR_NOMEM -   if an out of memory condition occurred.
+ * 	ECLD_ERR_NO_CONN - if the client isn't connected to a broker.
  */
 libecld_EXPORT int eecloud_unsubscribe(struct eecloud *ecld, int *mid, const char *sub);
 
@@ -652,9 +652,9 @@ libecld_EXPORT int eecloud_unsubscribe(struct eecloud *ecld, int *mid, const cha
  *	src - a pointer to a valid eecloud_message struct to copy from.
  *
  * Returns:
- *	MOSQ_ERR_SUCCESS - on success.
- * 	MOSQ_ERR_INVAL -   if the input parameters were invalid.
- * 	MOSQ_ERR_NOMEM -   if an out of memory condition occurred.
+ *	ECLD_ERR_SUCCESS - on success.
+ * 	ECLD_ERR_INVAL -   if the input parameters were invalid.
+ * 	ECLD_ERR_NOMEM -   if an out of memory condition occurred.
  *
  * See Also:
  * 	<eecloud_message_free>
@@ -704,14 +704,14 @@ libecld_EXPORT void eecloud_message_free(struct eecloud_message **message);
  *	              future compatibility.
  * 
  * Returns:
- *	MOSQ_ERR_SUCCESS -   on success.
- * 	MOSQ_ERR_INVAL -     if the input parameters were invalid.
- * 	MOSQ_ERR_NOMEM -     if an out of memory condition occurred.
- * 	MOSQ_ERR_NO_CONN -   if the client isn't connected to a broker.
- *  MOSQ_ERR_CONN_LOST - if the connection to the broker was lost.
- *	MOSQ_ERR_PROTOCOL -  if there is a protocol error communicating with the
+ *	ECLD_ERR_SUCCESS -   on success.
+ * 	ECLD_ERR_INVAL -     if the input parameters were invalid.
+ * 	ECLD_ERR_NOMEM -     if an out of memory condition occurred.
+ * 	ECLD_ERR_NO_CONN -   if the client isn't connected to a broker.
+ *  ECLD_ERR_CONN_LOST - if the connection to the broker was lost.
+ *	ECLD_ERR_PROTOCOL -  if there is a protocol error communicating with the
  *                       broker.
- * 	MOSQ_ERR_ERRNO -     if a system call returned an error. The variable errno
+ * 	ECLD_ERR_ERRNO -     if a system call returned an error. The variable errno
  *                       contains the error code, even on Windows.
  *                       Use strerror_r() where available or FormatMessage() on
  *                       Windows.
@@ -739,14 +739,14 @@ libecld_EXPORT int eecloud_loop(struct eecloud *ecld, int timeout, int max_packe
  *	              future compatibility.
  *
  * Returns:
- *	MOSQ_ERR_SUCCESS -   on success.
- * 	MOSQ_ERR_INVAL -     if the input parameters were invalid.
- * 	MOSQ_ERR_NOMEM -     if an out of memory condition occurred.
- * 	MOSQ_ERR_NO_CONN -   if the client isn't connected to a broker.
- *  MOSQ_ERR_CONN_LOST - if the connection to the broker was lost.
- *	MOSQ_ERR_PROTOCOL -  if there is a protocol error communicating with the
+ *	ECLD_ERR_SUCCESS -   on success.
+ * 	ECLD_ERR_INVAL -     if the input parameters were invalid.
+ * 	ECLD_ERR_NOMEM -     if an out of memory condition occurred.
+ * 	ECLD_ERR_NO_CONN -   if the client isn't connected to a broker.
+ *  ECLD_ERR_CONN_LOST - if the connection to the broker was lost.
+ *	ECLD_ERR_PROTOCOL -  if there is a protocol error communicating with the
  *                       broker.
- * 	MOSQ_ERR_ERRNO -     if a system call returned an error. The variable errno
+ * 	ECLD_ERR_ERRNO -     if a system call returned an error. The variable errno
  *                       contains the error code, even on Windows.
  *                       Use strerror_r() where available or FormatMessage() on
  *                       Windows.
@@ -767,9 +767,9 @@ libecld_EXPORT int eecloud_loop_forever(struct eecloud *ecld, int timeout, int m
  *  ecld - a valid eecloud instance.
  *
  * Returns:
- *	MOSQ_ERR_SUCCESS -       on success.
- * 	MOSQ_ERR_INVAL -         if the input parameters were invalid.
- *	MOSQ_ERR_NOT_SUPPORTED - if thread support is not available.
+ *	ECLD_ERR_SUCCESS -       on success.
+ * 	ECLD_ERR_INVAL -         if the input parameters were invalid.
+ *	ECLD_ERR_NOT_SUPPORTED - if thread support is not available.
  *
  * See Also:
  *	<eecloud_connect_async>, <eecloud_loop>, <eecloud_loop_forever>, <eecloud_loop_stop>
@@ -791,9 +791,9 @@ libecld_EXPORT int eecloud_loop_start(struct eecloud *ecld);
  *	        <eecloud_disconnect> must have already been called.
  *
  * Returns:
- *	MOSQ_ERR_SUCCESS -       on success.
- * 	MOSQ_ERR_INVAL -         if the input parameters were invalid.
- *	MOSQ_ERR_NOT_SUPPORTED - if thread support is not available.
+ *	ECLD_ERR_SUCCESS -       on success.
+ * 	ECLD_ERR_INVAL -         if the input parameters were invalid.
+ *	ECLD_ERR_NOT_SUPPORTED - if thread support is not available.
  *
  * See Also:
  *	<eecloud_loop>, <eecloud_loop_start>
@@ -827,14 +827,14 @@ libecld_EXPORT int eecloud_socket(struct eecloud *ecld);
  *	              future compatibility.
  *
  * Returns:
- *	MOSQ_ERR_SUCCESS -   on success.
- * 	MOSQ_ERR_INVAL -     if the input parameters were invalid.
- * 	MOSQ_ERR_NOMEM -     if an out of memory condition occurred.
- * 	MOSQ_ERR_NO_CONN -   if the client isn't connected to a broker.
- *  MOSQ_ERR_CONN_LOST - if the connection to the broker was lost.
- *	MOSQ_ERR_PROTOCOL -  if there is a protocol error communicating with the
+ *	ECLD_ERR_SUCCESS -   on success.
+ * 	ECLD_ERR_INVAL -     if the input parameters were invalid.
+ * 	ECLD_ERR_NOMEM -     if an out of memory condition occurred.
+ * 	ECLD_ERR_NO_CONN -   if the client isn't connected to a broker.
+ *  ECLD_ERR_CONN_LOST - if the connection to the broker was lost.
+ *	ECLD_ERR_PROTOCOL -  if there is a protocol error communicating with the
  *                       broker.
- * 	MOSQ_ERR_ERRNO -     if a system call returned an error. The variable errno
+ * 	ECLD_ERR_ERRNO -     if a system call returned an error. The variable errno
  *                       contains the error code, even on Windows.
  *                       Use strerror_r() where available or FormatMessage() on
  *                       Windows.
@@ -857,14 +857,14 @@ libecld_EXPORT int eecloud_loop_read(struct eecloud *ecld, int max_packets);
  *	              future compatibility.
  *
  * Returns:
- *	MOSQ_ERR_SUCCESS -   on success.
- * 	MOSQ_ERR_INVAL -     if the input parameters were invalid.
- * 	MOSQ_ERR_NOMEM -     if an out of memory condition occurred.
- * 	MOSQ_ERR_NO_CONN -   if the client isn't connected to a broker.
- *  MOSQ_ERR_CONN_LOST - if the connection to the broker was lost.
- *	MOSQ_ERR_PROTOCOL -  if there is a protocol error communicating with the
+ *	ECLD_ERR_SUCCESS -   on success.
+ * 	ECLD_ERR_INVAL -     if the input parameters were invalid.
+ * 	ECLD_ERR_NOMEM -     if an out of memory condition occurred.
+ * 	ECLD_ERR_NO_CONN -   if the client isn't connected to a broker.
+ *  ECLD_ERR_CONN_LOST - if the connection to the broker was lost.
+ *	ECLD_ERR_PROTOCOL -  if there is a protocol error communicating with the
  *                       broker.
- * 	MOSQ_ERR_ERRNO -     if a system call returned an error. The variable errno
+ * 	ECLD_ERR_ERRNO -     if a system call returned an error. The variable errno
  *                       contains the error code, even on Windows.
  *                       Use strerror_r() where available or FormatMessage() on
  *                       Windows.
@@ -888,9 +888,9 @@ libecld_EXPORT int eecloud_loop_write(struct eecloud *ecld, int max_packets);
  *	ecld - a valid eecloud instance.
  *
  * Returns:
- *	MOSQ_ERR_SUCCESS -   on success.
- * 	MOSQ_ERR_INVAL -     if the input parameters were invalid.
- * 	MOSQ_ERR_NO_CONN -   if the client isn't connected to a broker.
+ *	ECLD_ERR_SUCCESS -   on success.
+ * 	ECLD_ERR_INVAL -     if the input parameters were invalid.
+ * 	ECLD_ERR_NO_CONN -   if the client isn't connected to a broker.
  *
  * See Also:
  *	<eecloud_socket>, <eecloud_loop_read>, <eecloud_loop_write>
@@ -938,7 +938,7 @@ libecld_EXPORT int eecloud_threaded_set(struct eecloud *ecld, bool threaded);
  *	value -  the option specific value.
  *
  * Options:
- *	MOSQ_OPT_PROTOCOL_VERSION - value must be an int, set to either
+ *	ECLD_OPT_PROTOCOL_VERSION - value must be an int, set to either
  *	                            MQTT_PROTOCOL_V31 or MQTT_PROTOCOL_V311. Must
  *	                            be set before the client connects. Defaults to
  *	                            MQTT_PROTOCOL_V31.
@@ -985,9 +985,9 @@ libecld_EXPORT int eecloud_opts_set(struct eecloud *ecld, enum ecld_opt_t option
  *                instance.
  *
  * Returns:
- *	MOSQ_ERR_SUCCESS - on success.
- * 	MOSQ_ERR_INVAL -   if the input parameters were invalid.
- * 	MOSQ_ERR_NOMEM -   if an out of memory condition occurred.
+ *	ECLD_ERR_SUCCESS - on success.
+ * 	ECLD_ERR_INVAL -   if the input parameters were invalid.
+ * 	ECLD_ERR_NOMEM -   if an out of memory condition occurred.
  *
  * See Also:
  *	<eecloud_tls_opts_set>, <eecloud_tls_psk_set>, <eecloud_tls_insecure_set>
@@ -1016,8 +1016,8 @@ libecld_EXPORT int eecloud_tls_set(struct eecloud *ecld,
  *          the connection is insecure.
  *
  * Returns:
- *	MOSQ_ERR_SUCCESS - on success.
- * 	MOSQ_ERR_INVAL -   if the input parameters were invalid.
+ *	ECLD_ERR_SUCCESS - on success.
+ * 	ECLD_ERR_INVAL -   if the input parameters were invalid.
  *
  * See Also:
  *	<eecloud_tls_set>
@@ -1049,9 +1049,9 @@ libecld_EXPORT int eecloud_tls_insecure_set(struct eecloud *ecld, bool value);
  *	              default ciphers will be used.
  *
  * Returns:
- *	MOSQ_ERR_SUCCESS - on success.
- * 	MOSQ_ERR_INVAL -   if the input parameters were invalid.
- * 	MOSQ_ERR_NOMEM -   if an out of memory condition occurred.
+ *	ECLD_ERR_SUCCESS - on success.
+ * 	ECLD_ERR_INVAL -   if the input parameters were invalid.
+ * 	ECLD_ERR_NOMEM -   if an out of memory condition occurred.
  *
  * See Also:
  *	<eecloud_tls_set>
@@ -1076,9 +1076,9 @@ libecld_EXPORT int eecloud_tls_opts_set(struct eecloud *ecld, int cert_reqs, con
  *	           default ciphers will be used.
  *
  * Returns:
- *	MOSQ_ERR_SUCCESS - on success.
- * 	MOSQ_ERR_INVAL -   if the input parameters were invalid.
- * 	MOSQ_ERR_NOMEM -   if an out of memory condition occurred.
+ *	ECLD_ERR_SUCCESS - on success.
+ * 	ECLD_ERR_INVAL -   if the input parameters were invalid.
+ * 	ECLD_ERR_NOMEM -   if an out of memory condition occurred.
  *
  * See Also:
  *	<eecloud_tls_set>
@@ -1223,11 +1223,11 @@ libecld_EXPORT void eecloud_unsubscribe_callback_set(struct eecloud *ecld, void 
  *  ecld -  the eecloud instance making the callback.
  *  obj -   the user data provided in <eecloud_new>
  *  level - the log message level from the values:
- *	        MOSQ_LOG_INFO
- *	        MOSQ_LOG_NOTICE
- *	        MOSQ_LOG_WARNING
- *	        MOSQ_LOG_ERR
- *	        MOSQ_LOG_DEBUG
+ *	        ECLD_LOG_INFO
+ *	        ECLD_LOG_NOTICE
+ *	        ECLD_LOG_WARNING
+ *	        ECLD_LOG_ERR
+ *	        ECLD_LOG_DEBUG
  *	str -   the message string.
  */
 libecld_EXPORT void eecloud_log_callback_set(struct eecloud *ecld, void (*on_log)(struct eecloud *, void *, int, const char *));
@@ -1264,8 +1264,8 @@ libecld_EXPORT void eecloud_log_callback_set(struct eecloud *ecld, void (*on_log
  *                                  exponential backoff.
  *
  * Returns:
- *	MOSQ_ERR_SUCCESS - on success.
- * 	MOSQ_ERR_INVAL -   if the input parameters were invalid.
+ *	ECLD_ERR_SUCCESS - on success.
+ * 	ECLD_ERR_INVAL -   if the input parameters were invalid.
  */
 libecld_EXPORT int eecloud_reconnect_delay_set(struct eecloud *ecld, unsigned int reconnect_delay, unsigned int reconnect_delay_max, bool reconnect_exponential_backoff);
 
@@ -1289,8 +1289,8 @@ libecld_EXPORT int eecloud_reconnect_delay_set(struct eecloud *ecld, unsigned in
  *                          to 20.
  *
  * Returns:
- *	MOSQ_ERR_SUCCESS - on success.
- * 	MOSQ_ERR_INVAL -   if the input parameters were invalid.
+ *	ECLD_ERR_SUCCESS - on success.
+ * 	ECLD_ERR_INVAL -   if the input parameters were invalid.
  */
 libecld_EXPORT int eecloud_max_inflight_messages_set(struct eecloud *ecld, unsigned int max_inflight_messages);
 
@@ -1415,8 +1415,8 @@ libecld_EXPORT const char *eecloud_connack_string(int connack_code);
  *	count -    an int pointer to store the number of items in the topics array.
  *
  * Returns:
- *	MOSQ_ERR_SUCCESS - on success
- * 	MOSQ_ERR_NOMEM -   if an out of memory condition occurred.
+ *	ECLD_ERR_SUCCESS - on success
+ * 	ECLD_ERR_NOMEM -   if an out of memory condition occurred.
  *
  * Example:
  *
@@ -1445,8 +1445,8 @@ libecld_EXPORT int eecloud_sub_topic_tokenise(const char *subtopic, char ***topi
  *	count - count of items in string array.
  *
  * Returns:
- *	MOSQ_ERR_SUCCESS - on success
- * 	MOSQ_ERR_INVAL -   if the input parameters were invalid.
+ *	ECLD_ERR_SUCCESS - on success
+ * 	ECLD_ERR_INVAL -   if the input parameters were invalid.
  *
  * See Also:
  *	<eecloud_sub_topic_tokenise>
@@ -1470,9 +1470,9 @@ libecld_EXPORT int eecloud_sub_topic_tokens_free(char ***topics, int count);
  *	         matches the subscription.
  *
  * Returns:
- *	MOSQ_ERR_SUCCESS - on success
- * 	MOSQ_ERR_INVAL -   if the input parameters were invalid.
- * 	MOSQ_ERR_NOMEM -   if an out of memory condition occurred.
+ *	ECLD_ERR_SUCCESS - on success
+ * 	ECLD_ERR_INVAL -   if the input parameters were invalid.
+ * 	ECLD_ERR_NOMEM -   if an out of memory condition occurred.
  */
 libecld_EXPORT int eecloud_topic_matches_sub(const char *sub, const char *topic, bool *result);
 
@@ -1492,8 +1492,8 @@ libecld_EXPORT int eecloud_topic_matches_sub(const char *sub, const char *topic,
  *   topic - the topic to check
  *
  * Returns:
- *   MOSQ_ERR_SUCCESS - for a valid topic
- *   MOSQ_ERR_INVAL - if the topic contains a + or a #, or if it is too long.
+ *   ECLD_ERR_SUCCESS - for a valid topic
+ *   ECLD_ERR_INVAL - if the topic contains a + or a #, or if it is too long.
  *
  * See Also:
  *   <eecloud_sub_topic_check>
@@ -1518,8 +1518,8 @@ libecld_EXPORT int eecloud_pub_topic_check(const char *topic);
  *   topic - the topic to check
  *
  * Returns:
- *   MOSQ_ERR_SUCCESS - for a valid topic
- *   MOSQ_ERR_INVAL - if the topic contains a + or a # that is in an invalid
+ *   ECLD_ERR_SUCCESS - for a valid topic
+ *   ECLD_ERR_INVAL - if the topic contains a + or a # that is in an invalid
  *                    position, or if it is too long.
  *
  * See Also:

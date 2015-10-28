@@ -58,18 +58,18 @@ void _eecloud_message_cleanup_all(struct eecloud *ecld)
 
 int eecloud_message_copy(struct eecloud_message *dst, const struct eecloud_message *src)
 {
-	if(!dst || !src) return MOSQ_ERR_INVAL;
+	if(!dst || !src) return ECLD_ERR_INVAL;
 
 	dst->mid = src->mid;
 	dst->topic = _eecloud_strdup(src->topic);
-	if(!dst->topic) return MOSQ_ERR_NOMEM;
+	if(!dst->topic) return ECLD_ERR_NOMEM;
 	dst->qos = src->qos;
 	dst->retain = src->retain;
 	if(src->payloadlen){
 		dst->payload = _eecloud_malloc(src->payloadlen);
 		if(!dst->payload){
 			_eecloud_free(dst->topic);
-			return MOSQ_ERR_NOMEM;
+			return ECLD_ERR_NOMEM;
 		}
 		memcpy(dst->payload, src->payload, src->payloadlen);
 		dst->payloadlen = src->payloadlen;
@@ -77,7 +77,7 @@ int eecloud_message_copy(struct eecloud_message *dst, const struct eecloud_messa
 		dst->payloadlen = 0;
 		dst->payload = NULL;
 	}
-	return MOSQ_ERR_SUCCESS;
+	return ECLD_ERR_SUCCESS;
 }
 
 int _eecloud_message_delete(struct eecloud *ecld, uint16_t mid, enum eecloud_msg_direction dir)
@@ -87,7 +87,7 @@ int _eecloud_message_delete(struct eecloud *ecld, uint16_t mid, enum eecloud_msg
 	assert(ecld);
 
 	rc = _eecloud_message_remove(ecld, mid, dir, &message);
-	if(rc == MOSQ_ERR_SUCCESS){
+	if(rc == ECLD_ERR_SUCCESS){
 		_eecloud_message_cleanup(&message);
 	}
 	return rc;
@@ -250,15 +250,15 @@ int _eecloud_message_remove(struct eecloud *ecld, uint16_t mid, enum eecloud_msg
 					}
 				}else{
 					pthread_mutex_unlock(&ecld->out_message_mutex);
-					return MOSQ_ERR_SUCCESS;
+					return ECLD_ERR_SUCCESS;
 				}
 				cur = cur->next;
 			}
 			pthread_mutex_unlock(&ecld->out_message_mutex);
-			return MOSQ_ERR_SUCCESS;
+			return ECLD_ERR_SUCCESS;
 		}else{
 			pthread_mutex_unlock(&ecld->out_message_mutex);
-			return MOSQ_ERR_NOT_FOUND;
+			return ECLD_ERR_NOT_FOUND;
 		}
 	}else{
 		pthread_mutex_lock(&ecld->in_message_mutex);
@@ -286,9 +286,9 @@ int _eecloud_message_remove(struct eecloud *ecld, uint16_t mid, enum eecloud_msg
 
 		pthread_mutex_unlock(&ecld->in_message_mutex);
 		if(found){
-			return MOSQ_ERR_SUCCESS;
+			return ECLD_ERR_SUCCESS;
 		}else{
-			return MOSQ_ERR_NOT_FOUND;
+			return ECLD_ERR_NOT_FOUND;
 		}
 	}
 }
@@ -365,20 +365,20 @@ int _eecloud_message_out_update(struct eecloud *ecld, uint16_t mid, enum eecloud
 			message->state = state;
 			message->timestamp = eecloud_time();
 			pthread_mutex_unlock(&ecld->out_message_mutex);
-			return MOSQ_ERR_SUCCESS;
+			return ECLD_ERR_SUCCESS;
 		}
 		message = message->next;
 	}
 	pthread_mutex_unlock(&ecld->out_message_mutex);
-	return MOSQ_ERR_NOT_FOUND;
+	return ECLD_ERR_NOT_FOUND;
 }
 
 int eecloud_max_inflight_messages_set(struct eecloud *ecld, unsigned int max_inflight_messages)
 {
-	if(!ecld) return MOSQ_ERR_INVAL;
+	if(!ecld) return ECLD_ERR_INVAL;
 
 	ecld->max_inflight_messages = max_inflight_messages;
 
-	return MOSQ_ERR_SUCCESS;
+	return ECLD_ERR_SUCCESS;
 }
 

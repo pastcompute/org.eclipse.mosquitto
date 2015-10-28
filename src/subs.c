@@ -101,11 +101,11 @@ static int _subs_process(struct eecloud_db *db, struct _eecloud_subhier *hier, c
 			continue;
 		}
 		/* Check for ACL topic access. */
-		rc2 = eecloud_acl_check(db, leaf->context, topic, MOSQ_ACL_READ);
-		if(rc2 == MOSQ_ERR_ACL_DENIED){
+		rc2 = eecloud_acl_check(db, leaf->context, topic, ECLD_ACL_READ);
+		if(rc2 == ECLD_ERR_ACL_DENIED){
 			leaf = leaf->next;
 			continue;
-		}else if(rc2 == MOSQ_ERR_SUCCESS){
+		}else if(rc2 == ECLD_ERR_SUCCESS){
 			client_qos = leaf->qos;
 
 			if(db->config->upgrade_outgoing_qos){
@@ -215,7 +215,7 @@ static int _sub_topic_tokenise(const char *subtopic, struct _sub_token **topics)
 		}
 	}
 
-	return MOSQ_ERR_SUCCESS;
+	return ECLD_ERR_SUCCESS;
 
 cleanup:
 	tail = *topics;
@@ -272,7 +272,7 @@ static int _sub_add(struct eecloud_db *db, struct eecloud *context, int qos, str
 				leaf = leaf->next;
 			}
 			leaf = _eecloud_malloc(sizeof(struct _eecloud_subleaf));
-			if(!leaf) return MOSQ_ERR_NOMEM;
+			if(!leaf) return ECLD_ERR_NOMEM;
 			leaf->next = NULL;
 			leaf->context = context;
 			leaf->qos = qos;
@@ -288,7 +288,7 @@ static int _sub_add(struct eecloud_db *db, struct eecloud *context, int qos, str
 					subs = _eecloud_realloc(context->subs, sizeof(struct _eecloud_subhier *)*context->sub_count);
 					if(!subs){
 						_eecloud_free(leaf);
-						return MOSQ_ERR_NOMEM;
+						return ECLD_ERR_NOMEM;
 					}
 					context->subs = subs;
 					context->subs[context->sub_count-1] = subhier;
@@ -298,7 +298,7 @@ static int _sub_add(struct eecloud_db *db, struct eecloud *context, int qos, str
 				context->subs = _eecloud_malloc(sizeof(struct _eecloud_subhier *)*context->sub_count);
 				if(!context->subs){
 					_eecloud_free(leaf);
-					return MOSQ_ERR_NOMEM;
+					return ECLD_ERR_NOMEM;
 				}
 				context->subs[0] = subhier;
 			}
@@ -313,7 +313,7 @@ static int _sub_add(struct eecloud_db *db, struct eecloud *context, int qos, str
 			db->subscription_count++;
 #endif
 		}
-		return MOSQ_ERR_SUCCESS;
+		return ECLD_ERR_SUCCESS;
 	}
 
 	branch = subhier->children;
@@ -326,11 +326,11 @@ static int _sub_add(struct eecloud_db *db, struct eecloud *context, int qos, str
 	}
 	/* Not found */
 	branch = _eecloud_calloc(1, sizeof(struct _eecloud_subhier));
-	if(!branch) return MOSQ_ERR_NOMEM;
+	if(!branch) return ECLD_ERR_NOMEM;
 	branch->topic = _eecloud_strdup(tokens->topic);
 	if(!branch->topic){
 		_eecloud_free(branch);
-		return MOSQ_ERR_NOMEM;
+		return ECLD_ERR_NOMEM;
 	}
 	if(!last){
 		subhier->children = branch;
@@ -373,11 +373,11 @@ static int _sub_remove(struct eecloud_db *db, struct eecloud *context, struct _e
 						break;
 					}
 				}
-				return MOSQ_ERR_SUCCESS;
+				return ECLD_ERR_SUCCESS;
 			}
 			leaf = leaf->next;
 		}
-		return MOSQ_ERR_SUCCESS;
+		return ECLD_ERR_SUCCESS;
 	}
 
 	branch = subhier->children;
@@ -393,12 +393,12 @@ static int _sub_remove(struct eecloud_db *db, struct eecloud *context, struct _e
 				_eecloud_free(branch->topic);
 				_eecloud_free(branch);
 			}
-			return MOSQ_ERR_SUCCESS;
+			return ECLD_ERR_SUCCESS;
 		}
 		last = branch;
 		branch = branch->next;
 	}
-	return MOSQ_ERR_SUCCESS;
+	return ECLD_ERR_SUCCESS;
 }
 
 static void _sub_search(struct eecloud_db *db, struct _eecloud_subhier *subhier, struct _sub_token *tokens, const char *source_id, const char *topic, int qos, int retain, struct eecloud_msg_store *stored, bool set_retain)
@@ -456,14 +456,14 @@ int mqtt3_sub_add(struct eecloud_db *db, struct eecloud *context, const char *su
 		child = _eecloud_malloc(sizeof(struct _eecloud_subhier));
 		if(!child){
 			_sub_topic_tokens_free(tokens);
-			_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-			return MOSQ_ERR_NOMEM;
+			_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Out of memory.");
+			return ECLD_ERR_NOMEM;
 		}
 		child->topic = _eecloud_strdup(tokens->topic);
 		if(!child->topic){
 			_sub_topic_tokens_free(tokens);
-			_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-			return MOSQ_ERR_NOMEM;
+			_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Out of memory.");
+			return ECLD_ERR_NOMEM;
 		}
 		child->subs = NULL;
 		child->children = NULL;
@@ -481,7 +481,7 @@ int mqtt3_sub_add(struct eecloud_db *db, struct eecloud *context, const char *su
 	_sub_topic_tokens_free(tokens);
 
 	/* We aren't worried about -1 (already subscribed) return codes. */
-	if(rc == -1) rc = MOSQ_ERR_SUCCESS;
+	if(rc == -1) rc = ECLD_ERR_SUCCESS;
 	return rc;
 }
 
@@ -583,7 +583,7 @@ int mqtt3_subs_clean_session(struct eecloud_db *db, struct eecloud *context)
 	context->subs = NULL;
 	context->sub_count = 0;
 
-	return MOSQ_ERR_SUCCESS;
+	return ECLD_ERR_SUCCESS;
 }
 
 void mqtt3_sub_tree_print(struct _eecloud_subhier *root, int level)
@@ -623,10 +623,10 @@ static int _retain_process(struct eecloud_db *db, struct eecloud_msg_store *reta
 	int qos;
 	uint16_t mid;
 
-	rc = eecloud_acl_check(db, context, retained->topic, MOSQ_ACL_READ);
-	if(rc == MOSQ_ERR_ACL_DENIED){
-		return MOSQ_ERR_SUCCESS;
-	}else if(rc != MOSQ_ERR_SUCCESS){
+	rc = eecloud_acl_check(db, context, retained->topic, ECLD_ACL_READ);
+	if(rc == ECLD_ERR_ACL_DENIED){
+		return ECLD_ERR_SUCCESS;
+	}else if(rc != ECLD_ERR_SUCCESS){
 		return rc;
 	}
 
@@ -710,6 +710,6 @@ int mqtt3_retain_queue(struct eecloud_db *db, struct eecloud *context, const cha
 		tokens = tail;
 	}
 
-	return MOSQ_ERR_SUCCESS;
+	return ECLD_ERR_SUCCESS;
 }
 

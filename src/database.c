@@ -35,7 +35,7 @@ int mqtt3_db_open(struct mqtt3_config *config, struct eecloud_db *db)
 	int rc = 0;
 	struct _eecloud_subhier *child;
 
-	if(!config || !db) return MOSQ_ERR_INVAL;
+	if(!config || !db) return ECLD_ERR_INVAL;
 
 	db->last_db_id = 0;
 
@@ -56,14 +56,14 @@ int mqtt3_db_open(struct mqtt3_config *config, struct eecloud_db *db)
 
 	child = _eecloud_malloc(sizeof(struct _eecloud_subhier));
 	if(!child){
-		_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-		return MOSQ_ERR_NOMEM;
+		_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Out of memory.");
+		return ECLD_ERR_NOMEM;
 	}
 	child->next = NULL;
 	child->topic = _eecloud_strdup("");
 	if(!child->topic){
-		_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-		return MOSQ_ERR_NOMEM;
+		_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Out of memory.");
+		return ECLD_ERR_NOMEM;
 	}
 	child->subs = NULL;
 	child->children = NULL;
@@ -72,14 +72,14 @@ int mqtt3_db_open(struct mqtt3_config *config, struct eecloud_db *db)
 
 	child = _eecloud_malloc(sizeof(struct _eecloud_subhier));
 	if(!child){
-		_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-		return MOSQ_ERR_NOMEM;
+		_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Out of memory.");
+		return ECLD_ERR_NOMEM;
 	}
 	child->next = NULL;
 	child->topic = _eecloud_strdup("$SYS");
 	if(!child->topic){
-		_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-		return MOSQ_ERR_NOMEM;
+		_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Out of memory.");
+		return ECLD_ERR_NOMEM;
 	}
 	child->subs = NULL;
 	child->children = NULL;
@@ -126,7 +126,7 @@ int mqtt3_db_close(struct eecloud_db *db)
 	subhier_clean(db, db->subs.children);
 	eecloud__db_msg_store_clean(db);
 
-	return MOSQ_ERR_SUCCESS;
+	return ECLD_ERR_SUCCESS;
 }
 
 
@@ -231,7 +231,7 @@ int mqtt3_db_message_delete(struct eecloud_db *db, struct eecloud *context, uint
 	int msg_index = 0;
 	bool deleted = false;
 
-	if(!context) return MOSQ_ERR_INVAL;
+	if(!context) return ECLD_ERR_INVAL;
 
 	tail = context->msgs;
 	while(tail){
@@ -265,11 +265,11 @@ int mqtt3_db_message_delete(struct eecloud_db *db, struct eecloud *context, uint
 			tail = tail->next;
 		}
 		if(msg_index > max_inflight && deleted){
-			return MOSQ_ERR_SUCCESS;
+			return ECLD_ERR_SUCCESS;
 		}
 	}
 
-	return MOSQ_ERR_SUCCESS;
+	return ECLD_ERR_SUCCESS;
 }
 
 int mqtt3_db_message_insert(struct eecloud_db *db, struct eecloud *context, uint16_t mid, enum eecloud_msg_direction dir, int qos, bool retain, struct eecloud_msg_store *stored)
@@ -281,8 +281,8 @@ int mqtt3_db_message_insert(struct eecloud_db *db, struct eecloud *context, uint
 	char **dest_ids;
 
 	assert(stored);
-	if(!context) return MOSQ_ERR_INVAL;
-	if(!context->id) return MOSQ_ERR_SUCCESS; /* Protect against unlikely "client is disconnected but not entirely freed" scenario */
+	if(!context) return ECLD_ERR_INVAL;
+	if(!context->id) return ECLD_ERR_SUCCESS; /* Protect against unlikely "client is disconnected but not entirely freed" scenario */
 
 	/* Check whether we've already sent this message to this client
 	 * for outgoing messages only.
@@ -297,7 +297,7 @@ int mqtt3_db_message_insert(struct eecloud_db *db, struct eecloud *context, uint
 		for(i=0; i<stored->dest_id_count; i++){
 			if(!strcmp(stored->dest_ids[i], context->id)){
 				/* We have already sent this message to this client. */
-				return MOSQ_ERR_SUCCESS;
+				return ECLD_ERR_SUCCESS;
 			}
 		}
 	}
@@ -342,7 +342,7 @@ int mqtt3_db_message_insert(struct eecloud_db *db, struct eecloud *context, uint
 			/* Dropping message due to full queue. */
 			if(context->is_dropping == false){
 				context->is_dropping = true;
-				_eecloud_log_printf(NULL, MOSQ_LOG_NOTICE,
+				_eecloud_log_printf(NULL, ECLD_LOG_NOTICE,
 						"Outgoing messages are being dropped for client %s.",
 						context->id);
 			}
@@ -358,7 +358,7 @@ int mqtt3_db_message_insert(struct eecloud_db *db, struct eecloud *context, uint
 #endif
 			if(context->is_dropping == false){
 				context->is_dropping = true;
-				_eecloud_log_printf(NULL, MOSQ_LOG_NOTICE,
+				_eecloud_log_printf(NULL, ECLD_LOG_NOTICE,
 						"Outgoing messages are being dropped for client %s.",
 						context->id);
 			}
@@ -376,7 +376,7 @@ int mqtt3_db_message_insert(struct eecloud_db *db, struct eecloud *context, uint
 #endif
 
 	msg = _eecloud_malloc(sizeof(struct eecloud_client_msg));
-	if(!msg) return MOSQ_ERR_NOMEM;
+	if(!msg) return ECLD_ERR_NOMEM;
 	msg->next = NULL;
 	msg->store = stored;
 	msg->store->ref_count++;
@@ -413,10 +413,10 @@ int mqtt3_db_message_insert(struct eecloud_db *db, struct eecloud *context, uint
 			stored->dest_id_count++;
 			stored->dest_ids[stored->dest_id_count-1] = _eecloud_strdup(context->id);
 			if(!stored->dest_ids[stored->dest_id_count-1]){
-				return MOSQ_ERR_NOMEM;
+				return ECLD_ERR_NOMEM;
 			}
 		}else{
-			return MOSQ_ERR_NOMEM;
+			return ECLD_ERR_NOMEM;
 		}
 	}
 #ifdef WITH_BRIDGE
@@ -448,7 +448,7 @@ int mqtt3_db_message_update(struct eecloud *context, uint16_t mid, enum eecloud_
 		if(tail->mid == mid && tail->direction == dir){
 			tail->state = state;
 			tail->timestamp = eecloud_time();
-			return MOSQ_ERR_SUCCESS;
+			return ECLD_ERR_SUCCESS;
 		}
 		tail = tail->next;
 	}
@@ -459,7 +459,7 @@ int mqtt3_db_messages_delete(struct eecloud_db *db, struct eecloud *context)
 {
 	struct eecloud_client_msg *tail, *next;
 
-	if(!context) return MOSQ_ERR_INVAL;
+	if(!context) return ECLD_ERR_INVAL;
 
 	tail = context->msgs;
 	while(tail){
@@ -473,7 +473,7 @@ int mqtt3_db_messages_delete(struct eecloud_db *db, struct eecloud *context)
 	context->msg_count = 0;
 	context->msg_count12 = 0;
 
-	return MOSQ_ERR_SUCCESS;
+	return ECLD_ERR_SUCCESS;
 }
 
 int mqtt3_db_messages_easy_queue(struct eecloud_db *db, struct eecloud *context, const char *topic, int qos, uint32_t payloadlen, const void *payload, int retain)
@@ -483,7 +483,7 @@ int mqtt3_db_messages_easy_queue(struct eecloud_db *db, struct eecloud *context,
 
 	assert(db);
 
-	if(!topic) return MOSQ_ERR_INVAL;
+	if(!topic) return ECLD_ERR_INVAL;
 
 	if(context && context->id){
 		source_id = context->id;
@@ -503,7 +503,7 @@ int mqtt3_db_message_store(struct eecloud_db *db, const char *source, uint16_t s
 	assert(stored);
 
 	temp = _eecloud_malloc(sizeof(struct eecloud_msg_store));
-	if(!temp) return MOSQ_ERR_NOMEM;
+	if(!temp) return ECLD_ERR_NOMEM;
 
 	temp->ref_count = 0;
 	if(source){
@@ -513,8 +513,8 @@ int mqtt3_db_message_store(struct eecloud_db *db, const char *source, uint16_t s
 	}
 	if(!temp->source_id){
 		_eecloud_free(temp);
-		_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-		return MOSQ_ERR_NOMEM;
+		_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Out of memory.");
+		return ECLD_ERR_NOMEM;
 	}
 	temp->source_mid = source_mid;
 	temp->mid = 0;
@@ -525,8 +525,8 @@ int mqtt3_db_message_store(struct eecloud_db *db, const char *source, uint16_t s
 		if(!temp->topic){
 			_eecloud_free(temp->source_id);
 			_eecloud_free(temp);
-			_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-			return MOSQ_ERR_NOMEM;
+			_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Out of memory.");
+			return ECLD_ERR_NOMEM;
 		}
 	}else{
 		temp->topic = NULL;
@@ -539,7 +539,7 @@ int mqtt3_db_message_store(struct eecloud_db *db, const char *source, uint16_t s
 			if(temp->topic) _eecloud_free(temp->topic);
 			if(temp->payload) _eecloud_free(temp->payload);
 			_eecloud_free(temp);
-			return MOSQ_ERR_NOMEM;
+			return ECLD_ERR_NOMEM;
 		}
 		memcpy(temp->payload, payload, sizeof(char)*payloadlen);
 	}else{
@@ -566,21 +566,21 @@ int mqtt3_db_message_store(struct eecloud_db *db, const char *source, uint16_t s
 
 	eecloud__db_msg_store_add(db, temp);
 
-	return MOSQ_ERR_SUCCESS;
+	return ECLD_ERR_SUCCESS;
 }
 
 int mqtt3_db_message_store_find(struct eecloud *context, uint16_t mid, struct eecloud_msg_store **stored)
 {
 	struct eecloud_client_msg *tail;
 
-	if(!context) return MOSQ_ERR_INVAL;
+	if(!context) return ECLD_ERR_INVAL;
 
 	*stored = NULL;
 	tail = context->msgs;
 	while(tail){
 		if(tail->store->source_mid == mid && tail->direction == ecld_md_in){
 			*stored = tail->store;
-			return MOSQ_ERR_SUCCESS;
+			return ECLD_ERR_SUCCESS;
 		}
 		tail = tail->next;
 	}
@@ -666,7 +666,7 @@ int mqtt3_db_message_reconnect_reset(struct eecloud_db *db, struct eecloud *cont
 		}
 	}
 
-	return MOSQ_ERR_SUCCESS;
+	return ECLD_ERR_SUCCESS;
 }
 
 int mqtt3_db_message_timeout_check(struct eecloud_db *db, unsigned int timeout)
@@ -709,7 +709,7 @@ int mqtt3_db_message_timeout_check(struct eecloud_db *db, unsigned int timeout)
 		}
 	}
 
-	return MOSQ_ERR_SUCCESS;
+	return ECLD_ERR_SUCCESS;
 }
 
 int mqtt3_db_message_release(struct eecloud_db *db, struct eecloud *context, uint16_t mid, enum eecloud_msg_direction dir)
@@ -722,7 +722,7 @@ int mqtt3_db_message_release(struct eecloud_db *db, struct eecloud *context, uin
 	int msg_index = 0;
 	bool deleted = false;
 
-	if(!context) return MOSQ_ERR_INVAL;
+	if(!context) return ECLD_ERR_INVAL;
 
 	tail = context->msgs;
 	while(tail){
@@ -769,11 +769,11 @@ int mqtt3_db_message_release(struct eecloud_db *db, struct eecloud *context, uin
 			tail = tail->next;
 		}
 		if(msg_index > max_inflight && deleted){
-			return MOSQ_ERR_SUCCESS;
+			return ECLD_ERR_SUCCESS;
 		}
 	}
 	if(deleted){
-		return MOSQ_ERR_SUCCESS;
+		return ECLD_ERR_SUCCESS;
 	}else{
 		return 1;
 	}
@@ -794,11 +794,11 @@ int mqtt3_db_message_write(struct eecloud_db *db, struct eecloud *context)
 
 	if(!context || context->sock == INVALID_SOCKET
 			|| (context->state == ecld_cs_connected && !context->id)){
-		return MOSQ_ERR_INVAL;
+		return ECLD_ERR_INVAL;
 	}
 
 	if(context->state != ecld_cs_connected){
-		return MOSQ_ERR_SUCCESS;
+		return ECLD_ERR_SUCCESS;
 	}
 
 	tail = context->msgs;
@@ -902,7 +902,7 @@ int mqtt3_db_message_write(struct eecloud_db *db, struct eecloud *context)
 		}
 	}
 
-	return MOSQ_ERR_SUCCESS;
+	return ECLD_ERR_SUCCESS;
 }
 
 void mqtt3_db_limits_set(int inflight, int queued)

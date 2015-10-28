@@ -137,7 +137,7 @@ int main(int argc, char *argv[])
 	eecloud_lib_init();
 
 	ecld = eecloud_new("qos-test", NULL);
-	eecloud_log_init(ecld, MOSQ_LOG_ALL, MOSQ_LOG_STDOUT);
+	eecloud_log_init(ecld, ECLD_LOG_ALL, ECLD_LOG_STDOUT);
 	eecloud_message_callback_set(ecld, on_message);
 	eecloud_publish_callback_set(ecld, on_publish);
 	eecloud_subscribe_callback_set(ecld, on_subscribe);

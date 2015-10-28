@@ -95,9 +95,9 @@ static int _conf_attempt_resolve(const char *host, const char *text, int log, co
 			_eecloud_log_printf(NULL, log, "%s: Error resolving %s.", msg, text);
 		}
 #endif
-		return MOSQ_ERR_INVAL;
+		return ECLD_ERR_INVAL;
 	}
-	return MOSQ_ERR_SUCCESS;
+	return ECLD_ERR_SUCCESS;
 }
 
 static void _config_init_reload(struct mqtt3_config *config)
@@ -139,7 +139,7 @@ static void _config_init_reload(struct mqtt3_config *config)
 	if(config->verbose){
 		config->log_type = INT_MAX;
 	}else{
-		config->log_type = MOSQ_LOG_ERR | MOSQ_LOG_WARNING | MOSQ_LOG_NOTICE | MOSQ_LOG_INFO;
+		config->log_type = ECLD_LOG_ERR | ECLD_LOG_WARNING | ECLD_LOG_NOTICE | ECLD_LOG_INFO;
 	}
 #endif
 	config->log_timestamp = true;
@@ -330,39 +330,39 @@ int mqtt3_config_parse_args(struct mqtt3_config *config, int argc, char *argv[])
 			if(i<argc-1){
 				config->config_file = _eecloud_strdup(argv[i+1]);
 				if(!config->config_file){
-					_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-					return MOSQ_ERR_NOMEM;
+					_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Out of memory.");
+					return ECLD_ERR_NOMEM;
 				}
 
 				if(mqtt3_config_read(config, false)){
-					_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to open configuration file.");
-					return MOSQ_ERR_INVAL;
+					_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Unable to open configuration file.");
+					return ECLD_ERR_INVAL;
 				}
 			}else{
-				_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: -c argument given, but no config file specified.");
-				return MOSQ_ERR_INVAL;
+				_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: -c argument given, but no config file specified.");
+				return ECLD_ERR_INVAL;
 			}
 			i++;
 		}else if(!strcmp(argv[i], "-d") || !strcmp(argv[i], "--daemon")){
 			config->daemon = true;
 		}else if(!strcmp(argv[i], "-h") || !strcmp(argv[i], "--help")){
 			print_usage();
-			return MOSQ_ERR_INVAL;
+			return ECLD_ERR_INVAL;
 		}else if(!strcmp(argv[i], "-p") || !strcmp(argv[i], "--port")){
 			if(i<argc-1){
 				port_tmp = atoi(argv[i+1]);
 				if(port_tmp<1 || port_tmp>65535){
-					_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid port specified (%d).", port_tmp);
-					return MOSQ_ERR_INVAL;
+					_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Invalid port specified (%d).", port_tmp);
+					return ECLD_ERR_INVAL;
 				}else{
 					if(config->default_listener.port){
-						_eecloud_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Default listener port specified multiple times. Only the latest will be used.");
+						_eecloud_log_printf(NULL, ECLD_LOG_WARNING, "Warning: Default listener port specified multiple times. Only the latest will be used.");
 					}
 					config->default_listener.port = port_tmp;
 				}
 			}else{
-				_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: -p argument given, but no port specified.");
-				return MOSQ_ERR_INVAL;
+				_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: -p argument given, but no port specified.");
+				return ECLD_ERR_INVAL;
 			}
 			i++;
 		}else if(!strcmp(argv[i], "-v") || !strcmp(argv[i], "--verbose")){
@@ -370,7 +370,7 @@ int mqtt3_config_parse_args(struct mqtt3_config *config, int argc, char *argv[])
 		}else{
 			fprintf(stderr, "Error: Unknown option '%s'.\n",argv[i]);
 			print_usage();
-			return MOSQ_ERR_INVAL;
+			return ECLD_ERR_INVAL;
 		}
 	}
 
@@ -396,8 +396,8 @@ int mqtt3_config_parse_args(struct mqtt3_config *config, int argc, char *argv[])
 		config->listener_count++;
 		config->listeners = _eecloud_realloc(config->listeners, sizeof(struct _mqtt3_listener)*config->listener_count);
 		if(!config->listeners){
-			_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-			return MOSQ_ERR_NOMEM;
+			_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Out of memory.");
+			return ECLD_ERR_NOMEM;
 		}
 		memset(&config->listeners[config->listener_count-1], 0, sizeof(struct _mqtt3_listener));
 		if(config->default_listener.port){
@@ -444,12 +444,12 @@ int mqtt3_config_parse_args(struct mqtt3_config *config, int argc, char *argv[])
 	if(config->verbose){
 		config->log_type = INT_MAX;
 	}
-	return MOSQ_ERR_SUCCESS;
+	return ECLD_ERR_SUCCESS;
 }
 
 int mqtt3_config_read(struct mqtt3_config *config, bool reload)
 {
-	int rc = MOSQ_ERR_SUCCESS;
+	int rc = ECLD_ERR_SUCCESS;
 	struct config_recurse cr;
 	int lineno;
 	int len;
@@ -459,7 +459,7 @@ int mqtt3_config_read(struct mqtt3_config *config, bool reload)
 
 	cr.log_dest = MQTT3_LOG_NONE;
 	cr.log_dest_set = 0;
-	cr.log_type = MOSQ_LOG_NONE;
+	cr.log_type = ECLD_LOG_NONE;
 	cr.log_type_set = 0;
 	cr.max_inflight_messages = 20;
 	cr.max_queued_messages = 100;
@@ -472,7 +472,7 @@ int mqtt3_config_read(struct mqtt3_config *config, bool reload)
 	}
 	rc = _config_read_file(config, reload, config->config_file, &cr, 0, &lineno);
 	if(rc){
-		_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error found at %s:%d.", config->config_file, lineno);
+		_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error found at %s:%d.", config->config_file, lineno);
 		return rc;
 	}
 
@@ -480,7 +480,7 @@ int mqtt3_config_read(struct mqtt3_config *config, bool reload)
 	if(config->persistence){
 		if(!config->persistence_file){
 			config->persistence_file = _eecloud_strdup("eecloud.db");
-			if(!config->persistence_file) return MOSQ_ERR_NOMEM;
+			if(!config->persistence_file) return ECLD_ERR_NOMEM;
 		}
 		if(config->persistence_filepath){
 			_eecloud_free(config->persistence_filepath);
@@ -488,11 +488,11 @@ int mqtt3_config_read(struct mqtt3_config *config, bool reload)
 		if(config->persistence_location && strlen(config->persistence_location)){
 			len = strlen(config->persistence_location) + strlen(config->persistence_file) + 1;
 			config->persistence_filepath = _eecloud_malloc(len);
-			if(!config->persistence_filepath) return MOSQ_ERR_NOMEM;
+			if(!config->persistence_filepath) return ECLD_ERR_NOMEM;
 			snprintf(config->persistence_filepath, len, "%s%s", config->persistence_location, config->persistence_file);
 		}else{
 			config->persistence_filepath = _eecloud_strdup(config->persistence_file);
-			if(!config->persistence_filepath) return MOSQ_ERR_NOMEM;
+			if(!config->persistence_filepath) return ECLD_ERR_NOMEM;
 		}
 	}
 #endif
@@ -508,17 +508,17 @@ int mqtt3_config_read(struct mqtt3_config *config, bool reload)
 #ifdef WITH_BRIDGE
 	for(i=0; i<config->bridge_count; i++){
 		if(!config->bridges[i].name || !config->bridges[i].addresses || !config->bridges[i].topic_count){
-			_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
-			return MOSQ_ERR_INVAL;
+			_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Invalid bridge configuration.");
+			return ECLD_ERR_INVAL;
 		}
 #ifdef REAL_WITH_TLS_PSK
 		if(config->bridges[i].tls_psk && !config->bridges[i].tls_psk_identity){
-			_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration: missing bridge_identity.\n");
-			return MOSQ_ERR_INVAL;
+			_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Invalid bridge configuration: missing bridge_identity.\n");
+			return ECLD_ERR_INVAL;
 		}
 		if(config->bridges[i].tls_psk_identity && !config->bridges[i].tls_psk){
-			_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration: missing bridge_psk.\n");
-			return MOSQ_ERR_INVAL;
+			_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Invalid bridge configuration: missing bridge_psk.\n");
+			return ECLD_ERR_INVAL;
 		}
 #endif
 	}
@@ -532,7 +532,7 @@ int mqtt3_config_read(struct mqtt3_config *config, bool reload)
 	}else if(cr.log_type_set){
 		config->log_type = cr.log_type;
 	}
-	return MOSQ_ERR_SUCCESS;
+	return ECLD_ERR_SUCCESS;
 }
 
 int _config_read_file_core(struct mqtt3_config *config, bool reload, const char *file, struct config_recurse *cr, int level, int *lineno, FILE *fptr)
@@ -582,20 +582,20 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 							config->acl_file = NULL;
 						}
 					}
-					if(_conf_parse_string(&token, "acl_file", &config->acl_file, saveptr)) return MOSQ_ERR_INVAL;
+					if(_conf_parse_string(&token, "acl_file", &config->acl_file, saveptr)) return ECLD_ERR_INVAL;
 				}else if(!strcmp(token, "address") || !strcmp(token, "addresses")){
 #ifdef WITH_BRIDGE
 					if(reload) continue; // FIXME
 					if(!cur_bridge || cur_bridge->addresses){
-						_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
-						return MOSQ_ERR_INVAL;
+						_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Invalid bridge configuration.");
+						return ECLD_ERR_INVAL;
 					}
 					while((token = strtok_r(NULL, " ", &saveptr))){
 						cur_bridge->address_count++;
 						cur_bridge->addresses = _eecloud_realloc(cur_bridge->addresses, sizeof(struct bridge_address)*cur_bridge->address_count);
 						if(!cur_bridge->addresses){
-							_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-							return MOSQ_ERR_NOMEM;
+							_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Out of memory.");
+							return ECLD_ERR_NOMEM;
 						}
 						cur_bridge->addresses[cur_bridge->address_count-1].address = token;
 					}
@@ -606,43 +606,43 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 							if(token){
 								tmp_int = atoi(token);
 								if(tmp_int < 1 || tmp_int > 65535){
-									_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid port value (%d).", tmp_int);
-									return MOSQ_ERR_INVAL;
+									_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Invalid port value (%d).", tmp_int);
+									return ECLD_ERR_INVAL;
 								}
 								cur_bridge->addresses[i].port = tmp_int;
 							}else{
 								cur_bridge->addresses[i].port = 1883;
 							}
 							cur_bridge->addresses[i].address = _eecloud_strdup(address);
-							_conf_attempt_resolve(address, "bridge address", MOSQ_LOG_WARNING, "Warning");
+							_conf_attempt_resolve(address, "bridge address", ECLD_LOG_WARNING, "Warning");
 						}
 					}
 					if(cur_bridge->address_count == 0){
-						_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Empty address value in configuration.");
-						return MOSQ_ERR_INVAL;
+						_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Empty address value in configuration.");
+						return ECLD_ERR_INVAL;
 					}
 #else
-					_eecloud_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge support not available.");
+					_eecloud_log_printf(NULL, ECLD_LOG_WARNING, "Warning: Bridge support not available.");
 #endif
 				}else if(!strcmp(token, "allow_anonymous")){
-					if(_conf_parse_bool(&token, "allow_anonymous", &config->allow_anonymous, saveptr)) return MOSQ_ERR_INVAL;
+					if(_conf_parse_bool(&token, "allow_anonymous", &config->allow_anonymous, saveptr)) return ECLD_ERR_INVAL;
 				}else if(!strcmp(token, "allow_duplicate_messages")){
-					if(_conf_parse_bool(&token, "allow_duplicate_messages", &config->allow_duplicate_messages, saveptr)) return MOSQ_ERR_INVAL;
+					if(_conf_parse_bool(&token, "allow_duplicate_messages", &config->allow_duplicate_messages, saveptr)) return ECLD_ERR_INVAL;
 				}else if(!strcmp(token, "allow_zero_length_clientid")){
-					if(_conf_parse_bool(&token, "allow_zero_length_clientid", &config->allow_zero_length_clientid, saveptr)) return MOSQ_ERR_INVAL;
+					if(_conf_parse_bool(&token, "allow_zero_length_clientid", &config->allow_zero_length_clientid, saveptr)) return ECLD_ERR_INVAL;
 				}else if(!strncmp(token, "auth_opt_", 9)){
 					if(strlen(token) < 12){
 						/* auth_opt_ == 9, + one digit key == 10, + one space == 11, + one value == 12 */
-						_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid auth_opt_ config option.");
-						return MOSQ_ERR_INVAL;
+						_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Invalid auth_opt_ config option.");
+						return ECLD_ERR_INVAL;
 					}
 					key = _eecloud_strdup(&token[9]);
 					if(!key){
-						_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-						return MOSQ_ERR_NOMEM;
+						_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Out of memory.");
+						return ECLD_ERR_NOMEM;
 					}else if(strlen(key) == 0){
-						_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid auth_opt_ config option.");
-						return MOSQ_ERR_INVAL;
+						_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Invalid auth_opt_ config option.");
+						return ECLD_ERR_INVAL;
 					}
 					token += 9+strlen(key)+1;
 					while(token[0] == ' ' || token[0] == '\t'){
@@ -652,224 +652,224 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 						config->auth_option_count++;
 						config->auth_options = _eecloud_realloc(config->auth_options, config->auth_option_count*sizeof(struct eecloud_auth_opt));
 						if(!config->auth_options){
-							_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-							return MOSQ_ERR_NOMEM;
+							_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Out of memory.");
+							return ECLD_ERR_NOMEM;
 						}
 						config->auth_options[config->auth_option_count-1].key = key;
 						config->auth_options[config->auth_option_count-1].value = _eecloud_strdup(token);
 						if(!config->auth_options[config->auth_option_count-1].value){
-							_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-							return MOSQ_ERR_NOMEM;
+							_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Out of memory.");
+							return ECLD_ERR_NOMEM;
 						}
 					}else{
-						_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Empty %s value in configuration.", key);
-						return MOSQ_ERR_INVAL;
+						_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Empty %s value in configuration.", key);
+						return ECLD_ERR_INVAL;
 					}
 				}else if(!strcmp(token, "auth_plugin")){
 					if(reload) continue; // Auth plugin not currently valid for reloading.
-					if(_conf_parse_string(&token, "auth_plugin", &config->auth_plugin, saveptr)) return MOSQ_ERR_INVAL;
+					if(_conf_parse_string(&token, "auth_plugin", &config->auth_plugin, saveptr)) return ECLD_ERR_INVAL;
 				}else if(!strcmp(token, "auto_id_prefix")){
-					if(_conf_parse_string(&token, "auto_id_prefix", &config->auto_id_prefix, saveptr)) return MOSQ_ERR_INVAL;
+					if(_conf_parse_string(&token, "auto_id_prefix", &config->auto_id_prefix, saveptr)) return ECLD_ERR_INVAL;
 					if(config->auto_id_prefix){
 						config->auto_id_prefix_len = strlen(config->auto_id_prefix);
 					}else{
 						config->auto_id_prefix_len = 0;
 					}
 				}else if(!strcmp(token, "autosave_interval")){
-					if(_conf_parse_int(&token, "autosave_interval", &config->autosave_interval, saveptr)) return MOSQ_ERR_INVAL;
+					if(_conf_parse_int(&token, "autosave_interval", &config->autosave_interval, saveptr)) return ECLD_ERR_INVAL;
 					if(config->autosave_interval < 0) config->autosave_interval = 0;
 				}else if(!strcmp(token, "autosave_on_changes")){
-					if(_conf_parse_bool(&token, "autosave_on_changes", &config->autosave_on_changes, saveptr)) return MOSQ_ERR_INVAL;
+					if(_conf_parse_bool(&token, "autosave_on_changes", &config->autosave_on_changes, saveptr)) return ECLD_ERR_INVAL;
 				}else if(!strcmp(token, "bind_address")){
 					if(reload) continue; // Listener not valid for reloading.
-					if(_conf_parse_string(&token, "default listener bind_address", &config->default_listener.host, saveptr)) return MOSQ_ERR_INVAL;
-					if(_conf_attempt_resolve(config->default_listener.host, "bind_address", MOSQ_LOG_ERR, "Error")){
-						return MOSQ_ERR_INVAL;
+					if(_conf_parse_string(&token, "default listener bind_address", &config->default_listener.host, saveptr)) return ECLD_ERR_INVAL;
+					if(_conf_attempt_resolve(config->default_listener.host, "bind_address", ECLD_LOG_ERR, "Error")){
+						return ECLD_ERR_INVAL;
 					}
 				}else if(!strcmp(token, "bridge_attempt_unsubscribe")){
 #ifdef WITH_BRIDGE
 					if(reload) continue; // FIXME
 					if(!cur_bridge){
-						_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
-						return MOSQ_ERR_INVAL;
+						_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Invalid bridge configuration.");
+						return ECLD_ERR_INVAL;
 					}
-					if(_conf_parse_bool(&token, "bridge_attempt_unsubscribe", &cur_bridge->attempt_unsubscribe, saveptr)) return MOSQ_ERR_INVAL;
+					if(_conf_parse_bool(&token, "bridge_attempt_unsubscribe", &cur_bridge->attempt_unsubscribe, saveptr)) return ECLD_ERR_INVAL;
 #else
-					_eecloud_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge support not available.");
+					_eecloud_log_printf(NULL, ECLD_LOG_WARNING, "Warning: Bridge support not available.");
 #endif
 				}else if(!strcmp(token, "bridge_cafile")){
 #if defined(WITH_BRIDGE) && defined(WITH_TLS)
 					if(reload) continue; // FIXME
 					if(!cur_bridge){
-						_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
-						return MOSQ_ERR_INVAL;
+						_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Invalid bridge configuration.");
+						return ECLD_ERR_INVAL;
 					}
 #ifdef REAL_WITH_TLS_PSK
 					if(cur_bridge->tls_psk_identity || cur_bridge->tls_psk){
-						_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Cannot use both certificate and psk encryption in a single bridge.");
-						return MOSQ_ERR_INVAL;
+						_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Cannot use both certificate and psk encryption in a single bridge.");
+						return ECLD_ERR_INVAL;
 					}
 #endif
 					token = strtok_r(NULL, " ", &saveptr);
 					if(token){
 						if(cur_bridge->tls_cafile){
-							_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Duplicate bridge_cafile value in bridge configuration.");
-							return MOSQ_ERR_INVAL;
+							_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Duplicate bridge_cafile value in bridge configuration.");
+							return ECLD_ERR_INVAL;
 						}
 						cur_bridge->tls_cafile = _eecloud_strdup(token);
 						if(!cur_bridge->tls_cafile){
-							_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-							return MOSQ_ERR_NOMEM;
+							_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Out of memory.");
+							return ECLD_ERR_NOMEM;
 						}
 					}else{
-						_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Empty bridge_cafile value in configuration.");
-						return MOSQ_ERR_INVAL;
+						_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Empty bridge_cafile value in configuration.");
+						return ECLD_ERR_INVAL;
 					}
 #else
-					_eecloud_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge and/or TLS support not available.");
+					_eecloud_log_printf(NULL, ECLD_LOG_WARNING, "Warning: Bridge and/or TLS support not available.");
 #endif
 				}else if(!strcmp(token, "bridge_capath")){
 #if defined(WITH_BRIDGE) && defined(WITH_TLS)
 					if(reload) continue; // FIXME
 					if(!cur_bridge){
-						_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
-						return MOSQ_ERR_INVAL;
+						_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Invalid bridge configuration.");
+						return ECLD_ERR_INVAL;
 					}
 #ifdef REAL_WITH_TLS_PSK
 					if(cur_bridge->tls_psk_identity || cur_bridge->tls_psk){
-						_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Cannot use both certificate and psk encryption in a single bridge.");
-						return MOSQ_ERR_INVAL;
+						_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Cannot use both certificate and psk encryption in a single bridge.");
+						return ECLD_ERR_INVAL;
 					}
 #endif
 					token = strtok_r(NULL, " ", &saveptr);
 					if(token){
 						if(cur_bridge->tls_capath){
-							_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Duplicate bridge_capath value in bridge configuration.");
-							return MOSQ_ERR_INVAL;
+							_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Duplicate bridge_capath value in bridge configuration.");
+							return ECLD_ERR_INVAL;
 						}
 						cur_bridge->tls_capath = _eecloud_strdup(token);
 						if(!cur_bridge->tls_capath){
-							_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-							return MOSQ_ERR_NOMEM;
+							_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Out of memory.");
+							return ECLD_ERR_NOMEM;
 						}
 					}else{
-						_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Empty bridge_capath value in configuration.");
-						return MOSQ_ERR_INVAL;
+						_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Empty bridge_capath value in configuration.");
+						return ECLD_ERR_INVAL;
 					}
 #else
-					_eecloud_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge and/or TLS support not available.");
+					_eecloud_log_printf(NULL, ECLD_LOG_WARNING, "Warning: Bridge and/or TLS support not available.");
 #endif
 				}else if(!strcmp(token, "bridge_certfile")){
 #if defined(WITH_BRIDGE) && defined(WITH_TLS)
 					if(reload) continue; // FIXME
 					if(!cur_bridge){
-						_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
-						return MOSQ_ERR_INVAL;
+						_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Invalid bridge configuration.");
+						return ECLD_ERR_INVAL;
 					}
 #ifdef REAL_WITH_TLS_PSK
 					if(cur_bridge->tls_psk_identity || cur_bridge->tls_psk){
-						_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Cannot use both certificate and psk encryption in a single bridge.");
-						return MOSQ_ERR_INVAL;
+						_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Cannot use both certificate and psk encryption in a single bridge.");
+						return ECLD_ERR_INVAL;
 					}
 #endif
 					token = strtok_r(NULL, " ", &saveptr);
 					if(token){
 						if(cur_bridge->tls_certfile){
-							_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Duplicate bridge_certfile value in bridge configuration.");
-							return MOSQ_ERR_INVAL;
+							_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Duplicate bridge_certfile value in bridge configuration.");
+							return ECLD_ERR_INVAL;
 						}
 						cur_bridge->tls_certfile = _eecloud_strdup(token);
 						if(!cur_bridge->tls_certfile){
-							_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-							return MOSQ_ERR_NOMEM;
+							_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Out of memory.");
+							return ECLD_ERR_NOMEM;
 						}
 					}else{
-						_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Empty bridge_certfile value in configuration.");
-						return MOSQ_ERR_INVAL;
+						_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Empty bridge_certfile value in configuration.");
+						return ECLD_ERR_INVAL;
 					}
 #else
-					_eecloud_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge and/or TLS support not available.");
+					_eecloud_log_printf(NULL, ECLD_LOG_WARNING, "Warning: Bridge and/or TLS support not available.");
 #endif
 				}else if(!strcmp(token, "bridge_identity")){
 #if defined(WITH_BRIDGE) && defined(REAL_WITH_TLS_PSK)
 					if(reload) continue; // FIXME
 					if(!cur_bridge){
-						_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
-						return MOSQ_ERR_INVAL;
+						_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Invalid bridge configuration.");
+						return ECLD_ERR_INVAL;
 					}
 					if(cur_bridge->tls_cafile || cur_bridge->tls_capath || cur_bridge->tls_certfile || cur_bridge->tls_keyfile){
-						_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Cannot use both certificate and identity encryption in a single bridge.");
-						return MOSQ_ERR_INVAL;
+						_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Cannot use both certificate and identity encryption in a single bridge.");
+						return ECLD_ERR_INVAL;
 					}
 					token = strtok_r(NULL, " ", &saveptr);
 					if(token){
 						if(cur_bridge->tls_psk_identity){
-							_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Duplicate bridge_identity value in bridge configuration.");
-							return MOSQ_ERR_INVAL;
+							_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Duplicate bridge_identity value in bridge configuration.");
+							return ECLD_ERR_INVAL;
 						}
 						cur_bridge->tls_psk_identity = _eecloud_strdup(token);
 						if(!cur_bridge->tls_psk_identity){
-							_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-							return MOSQ_ERR_NOMEM;
+							_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Out of memory.");
+							return ECLD_ERR_NOMEM;
 						}
 					}else{
-						_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Empty bridge_identity value in configuration.");
-						return MOSQ_ERR_INVAL;
+						_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Empty bridge_identity value in configuration.");
+						return ECLD_ERR_INVAL;
 					}
 #else
-					_eecloud_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge and/or TLS-PSK support not available.");
+					_eecloud_log_printf(NULL, ECLD_LOG_WARNING, "Warning: Bridge and/or TLS-PSK support not available.");
 #endif
 				}else if(!strcmp(token, "bridge_insecure")){
 #if defined(WITH_BRIDGE) && defined(WITH_TLS)
 					if(reload) continue; // FIXME
 					if(!cur_bridge){
-						_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
-						return MOSQ_ERR_INVAL;
+						_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Invalid bridge configuration.");
+						return ECLD_ERR_INVAL;
 					}
-					if(_conf_parse_bool(&token, "bridge_insecure", &cur_bridge->tls_insecure, saveptr)) return MOSQ_ERR_INVAL;
+					if(_conf_parse_bool(&token, "bridge_insecure", &cur_bridge->tls_insecure, saveptr)) return ECLD_ERR_INVAL;
 					if(cur_bridge->tls_insecure){
-						_eecloud_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge %s using insecure mode.", cur_bridge->name);
+						_eecloud_log_printf(NULL, ECLD_LOG_WARNING, "Warning: Bridge %s using insecure mode.", cur_bridge->name);
 					}
 #else
-					_eecloud_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge and/or TLS-PSK support not available.");
+					_eecloud_log_printf(NULL, ECLD_LOG_WARNING, "Warning: Bridge and/or TLS-PSK support not available.");
 #endif
 				}else if(!strcmp(token, "bridge_keyfile")){
 #if defined(WITH_BRIDGE) && defined(WITH_TLS)
 					if(reload) continue; // FIXME
 					if(!cur_bridge){
-						_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
-						return MOSQ_ERR_INVAL;
+						_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Invalid bridge configuration.");
+						return ECLD_ERR_INVAL;
 					}
 #ifdef REAL_WITH_TLS_PSK
 					if(cur_bridge->tls_psk_identity || cur_bridge->tls_psk){
-						_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Cannot use both certificate and psk encryption in a single bridge.");
-						return MOSQ_ERR_INVAL;
+						_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Cannot use both certificate and psk encryption in a single bridge.");
+						return ECLD_ERR_INVAL;
 					}
 #endif
 					token = strtok_r(NULL, " ", &saveptr);
 					if(token){
 						if(cur_bridge->tls_keyfile){
-							_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Duplicate bridge_keyfile value in bridge configuration.");
-							return MOSQ_ERR_INVAL;
+							_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Duplicate bridge_keyfile value in bridge configuration.");
+							return ECLD_ERR_INVAL;
 						}
 						cur_bridge->tls_keyfile = _eecloud_strdup(token);
 						if(!cur_bridge->tls_keyfile){
-							_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-							return MOSQ_ERR_NOMEM;
+							_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Out of memory.");
+							return ECLD_ERR_NOMEM;
 						}
 					}else{
-						_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Empty bridge_keyfile value in configuration.");
-						return MOSQ_ERR_INVAL;
+						_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Empty bridge_keyfile value in configuration.");
+						return ECLD_ERR_INVAL;
 					}
 #else
-					_eecloud_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge and/or TLS support not available.");
+					_eecloud_log_printf(NULL, ECLD_LOG_WARNING, "Warning: Bridge and/or TLS support not available.");
 #endif
 				}else if(!strcmp(token, "bridge_protocol_version")){
 #ifdef WITH_BRIDGE
 					if(reload) continue; // FIXME
 					if(!cur_bridge){
-						_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
-						return MOSQ_ERR_INVAL;
+						_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Invalid bridge configuration.");
+						return ECLD_ERR_INVAL;
 					}
 					token = strtok_r(NULL, " ", &saveptr);
 					if(token){
@@ -878,141 +878,141 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 						}else if(!strcmp(token, "mqttv311")){
 							cur_bridge->protocol_version = ecld_p_mqtt311;
 						}else{
-							_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge_protocol_version value (%s).", token);
-							return MOSQ_ERR_INVAL;
+							_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Invalid bridge_protocol_version value (%s).", token);
+							return ECLD_ERR_INVAL;
 						}
 					}else{
-						_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Empty bridge_protocol_version value in configuration.");
-						return MOSQ_ERR_INVAL;
+						_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Empty bridge_protocol_version value in configuration.");
+						return ECLD_ERR_INVAL;
 					}
 #else
-					_eecloud_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge support not available.");
+					_eecloud_log_printf(NULL, ECLD_LOG_WARNING, "Warning: Bridge support not available.");
 #endif
 				}else if(!strcmp(token, "bridge_psk")){
 #if defined(WITH_BRIDGE) && defined(REAL_WITH_TLS_PSK)
 					if(reload) continue; // FIXME
 					if(!cur_bridge){
-						_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
-						return MOSQ_ERR_INVAL;
+						_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Invalid bridge configuration.");
+						return ECLD_ERR_INVAL;
 					}
 					if(cur_bridge->tls_cafile || cur_bridge->tls_capath || cur_bridge->tls_certfile || cur_bridge->tls_keyfile){
-						_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Cannot use both certificate and psk encryption in a single bridge.");
-						return MOSQ_ERR_INVAL;
+						_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Cannot use both certificate and psk encryption in a single bridge.");
+						return ECLD_ERR_INVAL;
 					}
 					token = strtok_r(NULL, " ", &saveptr);
 					if(token){
 						if(cur_bridge->tls_psk){
-							_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Duplicate bridge_psk value in bridge configuration.");
-							return MOSQ_ERR_INVAL;
+							_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Duplicate bridge_psk value in bridge configuration.");
+							return ECLD_ERR_INVAL;
 						}
 						cur_bridge->tls_psk = _eecloud_strdup(token);
 						if(!cur_bridge->tls_psk){
-							_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-							return MOSQ_ERR_NOMEM;
+							_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Out of memory.");
+							return ECLD_ERR_NOMEM;
 						}
 					}else{
-						_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Empty bridge_psk value in configuration.");
-						return MOSQ_ERR_INVAL;
+						_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Empty bridge_psk value in configuration.");
+						return ECLD_ERR_INVAL;
 					}
 #else
-					_eecloud_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge and/or TLS-PSK support not available.");
+					_eecloud_log_printf(NULL, ECLD_LOG_WARNING, "Warning: Bridge and/or TLS-PSK support not available.");
 #endif
 				}else if(!strcmp(token, "bridge_tls_version")){
 #if defined(WITH_BRIDGE) && defined(WITH_TLS)
 					if(reload) continue; // FIXME
 					if(!cur_bridge){
-						_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
-						return MOSQ_ERR_INVAL;
+						_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Invalid bridge configuration.");
+						return ECLD_ERR_INVAL;
 					}
 					token = strtok_r(NULL, " ", &saveptr);
 					if(token){
 						if(cur_bridge->tls_version){
-							_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Duplicate bridge_tls_version value in bridge configuration.");
-							return MOSQ_ERR_INVAL;
+							_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Duplicate bridge_tls_version value in bridge configuration.");
+							return ECLD_ERR_INVAL;
 						}
 						cur_bridge->tls_version = _eecloud_strdup(token);
 						if(!cur_bridge->tls_version){
-							_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-							return MOSQ_ERR_NOMEM;
+							_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Out of memory.");
+							return ECLD_ERR_NOMEM;
 						}
 					}else{
-						_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Empty bridge_tls_version value in configuration.");
-						return MOSQ_ERR_INVAL;
+						_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Empty bridge_tls_version value in configuration.");
+						return ECLD_ERR_INVAL;
 					}
 #else
-					_eecloud_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge and/or TLS support not available.");
+					_eecloud_log_printf(NULL, ECLD_LOG_WARNING, "Warning: Bridge and/or TLS support not available.");
 #endif
 				}else if(!strcmp(token, "cafile")){
 #if defined(WITH_TLS)
 					if(reload) continue; // Listeners not valid for reloading.
 					if(cur_listener->psk_hint){
-						_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Cannot use both certificate and psk encryption in a single listener.");
-						return MOSQ_ERR_INVAL;
+						_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Cannot use both certificate and psk encryption in a single listener.");
+						return ECLD_ERR_INVAL;
 					}
-					if(_conf_parse_string(&token, "cafile", &cur_listener->cafile, saveptr)) return MOSQ_ERR_INVAL;
+					if(_conf_parse_string(&token, "cafile", &cur_listener->cafile, saveptr)) return ECLD_ERR_INVAL;
 #else
-					_eecloud_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: TLS support not available.");
+					_eecloud_log_printf(NULL, ECLD_LOG_WARNING, "Warning: TLS support not available.");
 #endif
 				}else if(!strcmp(token, "capath")){
 #ifdef WITH_TLS
 					if(reload) continue; // Listeners not valid for reloading.
-					if(_conf_parse_string(&token, "capath", &cur_listener->capath, saveptr)) return MOSQ_ERR_INVAL;
+					if(_conf_parse_string(&token, "capath", &cur_listener->capath, saveptr)) return ECLD_ERR_INVAL;
 #else
-					_eecloud_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: TLS support not available.");
+					_eecloud_log_printf(NULL, ECLD_LOG_WARNING, "Warning: TLS support not available.");
 #endif
 				}else if(!strcmp(token, "certfile")){
 #ifdef WITH_TLS
 					if(reload) continue; // Listeners not valid for reloading.
 					if(cur_listener->psk_hint){
-						_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Cannot use both certificate and psk encryption in a single listener.");
-						return MOSQ_ERR_INVAL;
+						_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Cannot use both certificate and psk encryption in a single listener.");
+						return ECLD_ERR_INVAL;
 					}
-					if(_conf_parse_string(&token, "certfile", &cur_listener->certfile, saveptr)) return MOSQ_ERR_INVAL;
+					if(_conf_parse_string(&token, "certfile", &cur_listener->certfile, saveptr)) return ECLD_ERR_INVAL;
 #else
-					_eecloud_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: TLS support not available.");
+					_eecloud_log_printf(NULL, ECLD_LOG_WARNING, "Warning: TLS support not available.");
 #endif
 				}else if(!strcmp(token, "ciphers")){
 #ifdef WITH_TLS
 					if(reload) continue; // Listeners not valid for reloading.
-					if(_conf_parse_string(&token, "ciphers", &cur_listener->ciphers, saveptr)) return MOSQ_ERR_INVAL;
+					if(_conf_parse_string(&token, "ciphers", &cur_listener->ciphers, saveptr)) return ECLD_ERR_INVAL;
 #else
-					_eecloud_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: TLS support not available.");
+					_eecloud_log_printf(NULL, ECLD_LOG_WARNING, "Warning: TLS support not available.");
 #endif
 				}else if(!strcmp(token, "clientid") || !strcmp(token, "remote_clientid")){
 #ifdef WITH_BRIDGE
 					if(reload) continue; // FIXME
 					if(!cur_bridge){
-						_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
-						return MOSQ_ERR_INVAL;
+						_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Invalid bridge configuration.");
+						return ECLD_ERR_INVAL;
 					}
 					token = strtok_r(NULL, " ", &saveptr);
 					if(token){
 						if(cur_bridge->remote_clientid){
-							_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Duplicate clientid value in bridge configuration.");
-							return MOSQ_ERR_INVAL;
+							_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Duplicate clientid value in bridge configuration.");
+							return ECLD_ERR_INVAL;
 						}
 						cur_bridge->remote_clientid = _eecloud_strdup(token);
 						if(!cur_bridge->remote_clientid){
-							_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-							return MOSQ_ERR_NOMEM;
+							_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Out of memory.");
+							return ECLD_ERR_NOMEM;
 						}
 					}else{
-						_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Empty clientid value in configuration.");
-						return MOSQ_ERR_INVAL;
+						_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Empty clientid value in configuration.");
+						return ECLD_ERR_INVAL;
 					}
 #else
-					_eecloud_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge support not available.");
+					_eecloud_log_printf(NULL, ECLD_LOG_WARNING, "Warning: Bridge support not available.");
 #endif
 				}else if(!strcmp(token, "cleansession")){
 #ifdef WITH_BRIDGE
 					if(reload) continue; // FIXME
 					if(!cur_bridge){
-						_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
-						return MOSQ_ERR_INVAL;
+						_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Invalid bridge configuration.");
+						return ECLD_ERR_INVAL;
 					}
-					if(_conf_parse_bool(&token, "cleansession", &cur_bridge->clean_session, saveptr)) return MOSQ_ERR_INVAL;
+					if(_conf_parse_bool(&token, "cleansession", &cur_bridge->clean_session, saveptr)) return ECLD_ERR_INVAL;
 #else
-					_eecloud_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge support not available.");
+					_eecloud_log_printf(NULL, ECLD_LOG_WARNING, "Warning: Bridge support not available.");
 #endif
 				}else if(!strcmp(token, "clientid_prefixes")){
 					if(reload){
@@ -1021,7 +1021,7 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 							config->clientid_prefixes = NULL;
 						}
 					}
-					if(_conf_parse_string(&token, "clientid_prefixes", &config->clientid_prefixes, saveptr)) return MOSQ_ERR_INVAL;
+					if(_conf_parse_string(&token, "clientid_prefixes", &config->clientid_prefixes, saveptr)) return ECLD_ERR_INVAL;
 				}else if(!strcmp(token, "connection")){
 #ifdef WITH_BRIDGE
 					if(reload) continue; // FIXME
@@ -1030,15 +1030,15 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 						config->bridge_count++;
 						config->bridges = _eecloud_realloc(config->bridges, config->bridge_count*sizeof(struct _mqtt3_bridge));
 						if(!config->bridges){
-							_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-							return MOSQ_ERR_NOMEM;
+							_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Out of memory.");
+							return ECLD_ERR_NOMEM;
 						}
 						cur_bridge = &(config->bridges[config->bridge_count-1]);
 						memset(cur_bridge, 0, sizeof(struct _mqtt3_bridge));
 						cur_bridge->name = _eecloud_strdup(token);
 						if(!cur_bridge->name){
-							_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-							return MOSQ_ERR_NOMEM;
+							_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Out of memory.");
+							return ECLD_ERR_NOMEM;
 						}
 						cur_bridge->keepalive = 60;
 						cur_bridge->notifications = true;
@@ -1050,55 +1050,55 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 						cur_bridge->attempt_unsubscribe = true;
 						cur_bridge->protocol_version = ecld_p_mqtt31;
 					}else{
-						_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Empty connection value in configuration.");
-						return MOSQ_ERR_INVAL;
+						_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Empty connection value in configuration.");
+						return ECLD_ERR_INVAL;
 					}
 #else
-					_eecloud_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge support not available.");
+					_eecloud_log_printf(NULL, ECLD_LOG_WARNING, "Warning: Bridge support not available.");
 #endif
 				}else if(!strcmp(token, "connection_messages")){
-					if(_conf_parse_bool(&token, token, &config->connection_messages, saveptr)) return MOSQ_ERR_INVAL;
+					if(_conf_parse_bool(&token, token, &config->connection_messages, saveptr)) return ECLD_ERR_INVAL;
 				}else if(!strcmp(token, "crlfile")){
 #ifdef WITH_TLS
 					if(reload) continue; // Listeners not valid for reloading.
-					if(_conf_parse_string(&token, "crlfile", &cur_listener->crlfile, saveptr)) return MOSQ_ERR_INVAL;
+					if(_conf_parse_string(&token, "crlfile", &cur_listener->crlfile, saveptr)) return ECLD_ERR_INVAL;
 #else
-					_eecloud_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: TLS support not available.");
+					_eecloud_log_printf(NULL, ECLD_LOG_WARNING, "Warning: TLS support not available.");
 #endif
 				}else if(!strcmp(token, "http_dir")){
 #ifdef WITH_WEBSOCKETS
 					if(reload) continue; // Listeners not valid for reloading.
-					if(_conf_parse_string(&token, "http_dir", &cur_listener->http_dir, saveptr)) return MOSQ_ERR_INVAL;
+					if(_conf_parse_string(&token, "http_dir", &cur_listener->http_dir, saveptr)) return ECLD_ERR_INVAL;
 #else
-					_eecloud_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Websockets support not available.");
+					_eecloud_log_printf(NULL, ECLD_LOG_WARNING, "Warning: Websockets support not available.");
 #endif
 				}else if(!strcmp(token, "idle_timeout")){
 #ifdef WITH_BRIDGE
 					if(reload) continue; // FIXME
 					if(!cur_bridge){
-						_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
-						return MOSQ_ERR_INVAL;
+						_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Invalid bridge configuration.");
+						return ECLD_ERR_INVAL;
 					}
-					if(_conf_parse_int(&token, "idle_timeout", &cur_bridge->idle_timeout, saveptr)) return MOSQ_ERR_INVAL;
+					if(_conf_parse_int(&token, "idle_timeout", &cur_bridge->idle_timeout, saveptr)) return ECLD_ERR_INVAL;
 					if(cur_bridge->idle_timeout < 1){
-						_eecloud_log_printf(NULL, MOSQ_LOG_NOTICE, "idle_timeout interval too low, using 1 second.");
+						_eecloud_log_printf(NULL, ECLD_LOG_NOTICE, "idle_timeout interval too low, using 1 second.");
 						cur_bridge->idle_timeout = 1;
 					}
 #else
-					_eecloud_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge support not available.");
+					_eecloud_log_printf(NULL, ECLD_LOG_WARNING, "Warning: Bridge support not available.");
 #endif
 				}else if(!strcmp(token, "include_dir")){
 					if(level == 0){
 						/* Only process include_dir from the main config file. */
 						token = strtok_r(NULL, " ", &saveptr);
 						if(!token){
-							_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Empty include_dir value in configuration.");
+							_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Empty include_dir value in configuration.");
 						}
 #ifdef WIN32
 						snprintf(dirpath, MAX_PATH, "%s\\*.conf", token);
 						fh = FindFirstFile(dirpath, &find_data);
 						if(fh == INVALID_HANDLE_VALUE){
-							_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to open include_dir '%s'.", token);
+							_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Unable to open include_dir '%s'.", token);
 							return 1;
 						}
 
@@ -1107,7 +1107,7 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 							conf_file = _eecloud_malloc(len+1);
 							if(!conf_file){
 								FindClose(fh);
-								return MOSQ_ERR_NOMEM;
+								return ECLD_ERR_NOMEM;
 							}
 							snprintf(conf_file, len, "%s\\%s", token, find_data.cFileName);
 							conf_file[len] = '\0';
@@ -1115,7 +1115,7 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 							rc = _config_read_file(config, reload, conf_file, cr, level+1, &lineno_ext);
 							if(rc){
 								FindClose(fh);
-								_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error found at %s:%d.", conf_file, lineno_ext);
+								_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error found at %s:%d.", conf_file, lineno_ext);
 								_eecloud_free(conf_file);
 								return rc;
 							}
@@ -1126,7 +1126,7 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 #else
 						dh = opendir(token);
 						if(!dh){
-							_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to open include_dir '%s'.", token);
+							_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Unable to open include_dir '%s'.", token);
 							return 1;
 						}
 						while((de = readdir(dh)) != NULL){
@@ -1136,7 +1136,7 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 									conf_file = _eecloud_malloc(len+1);
 									if(!conf_file){
 										closedir(dh);
-										return MOSQ_ERR_NOMEM;
+										return ECLD_ERR_NOMEM;
 									}
 									snprintf(conf_file, len, "%s/%s", token, de->d_name);
 									conf_file[len] = '\0';
@@ -1144,7 +1144,7 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 									rc = _config_read_file(config, reload, conf_file, cr, level+1, &lineno_ext);
 									if(rc){
 										closedir(dh);
-										_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error found at %s:%d.", conf_file, lineno_ext);
+										_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error found at %s:%d.", conf_file, lineno_ext);
 										_eecloud_free(conf_file);
 										return rc;
 									}
@@ -1159,23 +1159,23 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 #ifdef WITH_BRIDGE
 					if(reload) continue; // FIXME
 					if(!cur_bridge){
-						_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
-						return MOSQ_ERR_INVAL;
+						_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Invalid bridge configuration.");
+						return ECLD_ERR_INVAL;
 					}
-					if(_conf_parse_int(&token, "keepalive_interval", &cur_bridge->keepalive, saveptr)) return MOSQ_ERR_INVAL;
+					if(_conf_parse_int(&token, "keepalive_interval", &cur_bridge->keepalive, saveptr)) return ECLD_ERR_INVAL;
 					if(cur_bridge->keepalive < 5){
-						_eecloud_log_printf(NULL, MOSQ_LOG_NOTICE, "keepalive interval too low, using 5 seconds.");
+						_eecloud_log_printf(NULL, ECLD_LOG_NOTICE, "keepalive interval too low, using 5 seconds.");
 						cur_bridge->keepalive = 5;
 					}
 #else
-					_eecloud_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge support not available.");
+					_eecloud_log_printf(NULL, ECLD_LOG_WARNING, "Warning: Bridge support not available.");
 #endif
 				}else if(!strcmp(token, "keyfile")){
 #ifdef WITH_TLS
 					if(reload) continue; // Listeners not valid for reloading.
-					if(_conf_parse_string(&token, "keyfile", &cur_listener->keyfile, saveptr)) return MOSQ_ERR_INVAL;
+					if(_conf_parse_string(&token, "keyfile", &cur_listener->keyfile, saveptr)) return ECLD_ERR_INVAL;
 #else
-					_eecloud_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: TLS support not available.");
+					_eecloud_log_printf(NULL, ECLD_LOG_WARNING, "Warning: TLS support not available.");
 #endif
 				}else if(!strcmp(token, "listener")){
 					if(reload) continue; // Listeners not valid for reloading.
@@ -1184,13 +1184,13 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 						config->listener_count++;
 						config->listeners = _eecloud_realloc(config->listeners, sizeof(struct _mqtt3_listener)*config->listener_count);
 						if(!config->listeners){
-							_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-							return MOSQ_ERR_NOMEM;
+							_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Out of memory.");
+							return ECLD_ERR_NOMEM;
 						}
 						tmp_int = atoi(token);
 						if(tmp_int < 1 || tmp_int > 65535){
-							_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid port value (%d).", tmp_int);
-							return MOSQ_ERR_INVAL;
+							_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Invalid port value (%d).", tmp_int);
+							return ECLD_ERR_INVAL;
 						}
 						cur_listener = &config->listeners[config->listener_count-1];
 						memset(cur_listener, 0, sizeof(struct _mqtt3_listener));
@@ -1203,80 +1203,80 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 							cur_listener->host = NULL;
 						}
 					}else{
-						_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Empty listener value in configuration.");
-						return MOSQ_ERR_INVAL;
+						_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Empty listener value in configuration.");
+						return ECLD_ERR_INVAL;
 					}
 				}else if(!strcmp(token, "local_clientid")){
 #ifdef WITH_BRIDGE
 					if(reload) continue; // FIXME
 					if(!cur_bridge){
-						_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
-						return MOSQ_ERR_INVAL;
+						_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Invalid bridge configuration.");
+						return ECLD_ERR_INVAL;
 					}
 					token = strtok_r(NULL, " ", &saveptr);
 					if(token){
 						if(cur_bridge->local_clientid){
-							_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Duplicate local_clientid value in bridge configuration.");
-							return MOSQ_ERR_INVAL;
+							_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Duplicate local_clientid value in bridge configuration.");
+							return ECLD_ERR_INVAL;
 						}
 						cur_bridge->local_clientid = _eecloud_strdup(token);
 						if(!cur_bridge->local_clientid){
-							_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-							return MOSQ_ERR_NOMEM;
+							_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Out of memory.");
+							return ECLD_ERR_NOMEM;
 						}
 					}else{
 						cur_bridge->local_clientid = NULL;
 					}
 #else
-					_eecloud_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge support not available.");
+					_eecloud_log_printf(NULL, ECLD_LOG_WARNING, "Warning: Bridge support not available.");
 #endif
 				}else if(!strcmp(token, "local_password")){
 #ifdef WITH_BRIDGE
 					if(reload) continue; // FIXME
 					if(!cur_bridge){
-						_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
-						return MOSQ_ERR_INVAL;
+						_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Invalid bridge configuration.");
+						return ECLD_ERR_INVAL;
 					}
 					token = strtok_r(NULL, " ", &saveptr);
 					if(token){
 						if(cur_bridge->local_password){
-							_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Duplicate local_password value in bridge configuration.");
-							return MOSQ_ERR_INVAL;
+							_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Duplicate local_password value in bridge configuration.");
+							return ECLD_ERR_INVAL;
 						}
 						cur_bridge->local_password = _eecloud_strdup(token);
 						if(!cur_bridge->local_password){
-							_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-							return MOSQ_ERR_NOMEM;
+							_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Out of memory.");
+							return ECLD_ERR_NOMEM;
 						}
 					}else{
 						cur_bridge->local_password = NULL;
 					}
 #else
-					_eecloud_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge support not available.");
+					_eecloud_log_printf(NULL, ECLD_LOG_WARNING, "Warning: Bridge support not available.");
 #endif
 				}else if(!strcmp(token, "local_username")){
 #ifdef WITH_BRIDGE
 					if(reload) continue; // FIXME
 					if(!cur_bridge){
-						_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
-						return MOSQ_ERR_INVAL;
+						_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Invalid bridge configuration.");
+						return ECLD_ERR_INVAL;
 					}
 					token = strtok_r(NULL, " ", &saveptr);
 					if(token){
 						if(cur_bridge->local_username){
-							_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Duplicate local_username value in bridge configuration.");
-							return MOSQ_ERR_INVAL;
+							_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Duplicate local_username value in bridge configuration.");
+							return ECLD_ERR_INVAL;
 						}
 						cur_bridge->local_username = _eecloud_strdup(token);
 						if(!cur_bridge->local_username){
-							_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-							return MOSQ_ERR_NOMEM;
+							_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Out of memory.");
+							return ECLD_ERR_NOMEM;
 						}
 					}else{
 						cur_bridge->local_username = NULL;
 					}
 #else
-					_eecloud_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge support not available.");
+					_eecloud_log_printf(NULL, ECLD_LOG_WARNING, "Warning: Bridge support not available.");
 #endif
 				}else if(!strcmp(token, "log_dest")){
 					token = strtok_r(NULL, " ", &saveptr);
@@ -1295,8 +1295,8 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 						}else if(!strcmp(token, "file")){
 							cr->log_dest |= MQTT3_LOG_FILE;
 							if(config->log_fptr || config->log_file){
-								_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Duplicate \"log_dest file\" value.");
-								return MOSQ_ERR_INVAL;
+								_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Duplicate \"log_dest file\" value.");
+								return ECLD_ERR_INVAL;
 							}
 							/* Get remaining string. */
 							token = &token[strlen(token)+1];
@@ -1306,34 +1306,34 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 							if(token[0]){
 								config->log_file = _eecloud_strdup(token);
 								if(!config->log_file){
-									_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-									return MOSQ_ERR_NOMEM;
+									_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Out of memory.");
+									return ECLD_ERR_NOMEM;
 								}
 							}else{
-								_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Empty \"log_dest file\" value in configuration.");
-								return MOSQ_ERR_INVAL;
+								_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Empty \"log_dest file\" value in configuration.");
+								return ECLD_ERR_INVAL;
 							}
 						}else{
-							_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid log_dest value (%s).", token);
-							return MOSQ_ERR_INVAL;
+							_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Invalid log_dest value (%s).", token);
+							return ECLD_ERR_INVAL;
 						}
 #if defined(WIN32) || defined(__CYGWIN__)
 						if(service_handle){
 							if(cr->log_dest == MQTT3_LOG_STDOUT || cr->log_dest == MQTT3_LOG_STDERR){
-								_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Cannot log to stdout/stderr when running as a Windows service.");
-								return MOSQ_ERR_INVAL;
+								_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Cannot log to stdout/stderr when running as a Windows service.");
+								return ECLD_ERR_INVAL;
 							}
 						}
 #endif
 					}else{
-						_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Empty log_dest value in configuration.");
-						return MOSQ_ERR_INVAL;
+						_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Empty log_dest value in configuration.");
+						return ECLD_ERR_INVAL;
 					}
 				}else if(!strcmp(token, "log_facility")){
 #if defined(WIN32) || defined(__CYGWIN__)
-					_eecloud_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: log_facility not supported on Windows.");
+					_eecloud_log_printf(NULL, ECLD_LOG_WARNING, "Warning: log_facility not supported on Windows.");
 #else
-					if(_conf_parse_int(&token, "log_facility", &tmp_int, saveptr)) return MOSQ_ERR_INVAL;
+					if(_conf_parse_int(&token, "log_facility", &tmp_int, saveptr)) return ECLD_ERR_INVAL;
 					switch(tmp_int){
 						case 0:
 							config->log_facility = LOG_LOCAL0;
@@ -1360,44 +1360,44 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 							config->log_facility = LOG_LOCAL7;
 							break;
 						default:
-							_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid log_facility value (%d).", tmp_int);
-							return MOSQ_ERR_INVAL;
+							_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Invalid log_facility value (%d).", tmp_int);
+							return ECLD_ERR_INVAL;
 					}
 #endif
 				}else if(!strcmp(token, "log_timestamp")){
-					if(_conf_parse_bool(&token, token, &config->log_timestamp, saveptr)) return MOSQ_ERR_INVAL;
+					if(_conf_parse_bool(&token, token, &config->log_timestamp, saveptr)) return ECLD_ERR_INVAL;
 				}else if(!strcmp(token, "log_type")){
 					token = strtok_r(NULL, " ", &saveptr);
 					if(token){
 						cr->log_type_set = 1;
 						if(!strcmp(token, "none")){
-							cr->log_type = MOSQ_LOG_NONE;
+							cr->log_type = ECLD_LOG_NONE;
 						}else if(!strcmp(token, "information")){
-							cr->log_type |= MOSQ_LOG_INFO;
+							cr->log_type |= ECLD_LOG_INFO;
 						}else if(!strcmp(token, "notice")){
-							cr->log_type |= MOSQ_LOG_NOTICE;
+							cr->log_type |= ECLD_LOG_NOTICE;
 						}else if(!strcmp(token, "warning")){
-							cr->log_type |= MOSQ_LOG_WARNING;
+							cr->log_type |= ECLD_LOG_WARNING;
 						}else if(!strcmp(token, "error")){
-							cr->log_type |= MOSQ_LOG_ERR;
+							cr->log_type |= ECLD_LOG_ERR;
 						}else if(!strcmp(token, "debug")){
-							cr->log_type |= MOSQ_LOG_DEBUG;
+							cr->log_type |= ECLD_LOG_DEBUG;
 						}else if(!strcmp(token, "subscribe")){
-							cr->log_type |= MOSQ_LOG_SUBSCRIBE;
+							cr->log_type |= ECLD_LOG_SUBSCRIBE;
 						}else if(!strcmp(token, "unsubscribe")){
-							cr->log_type |= MOSQ_LOG_UNSUBSCRIBE;
+							cr->log_type |= ECLD_LOG_UNSUBSCRIBE;
 #ifdef WITH_WEBSOCKETS
 						}else if(!strcmp(token, "websockets")){
-							cr->log_type |= MOSQ_LOG_WEBSOCKETS;
+							cr->log_type |= ECLD_LOG_WEBSOCKETS;
 #endif
 						}else if(!strcmp(token, "all")){
 							cr->log_type = INT_MAX;
 						}else{
-							_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid log_type value (%s).", token);
-							return MOSQ_ERR_INVAL;
+							_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Invalid log_type value (%s).", token);
+							return ECLD_ERR_INVAL;
 						}
 					}else{
-						_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Empty log_type value in configuration.");
+						_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Empty log_type value in configuration.");
 					}
 				}else if(!strcmp(token, "max_connections")){
 					if(reload) continue; // Listeners not valid for reloading.
@@ -1406,7 +1406,7 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 						cur_listener->max_connections = atoi(token);
 						if(cur_listener->max_connections < 0) cur_listener->max_connections = -1;
 					}else{
-						_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Empty max_connections value in configuration.");
+						_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Empty max_connections value in configuration.");
 					}
 				}else if(!strcmp(token, "max_inflight_messages")){
 					token = strtok_r(NULL, " ", &saveptr);
@@ -1414,7 +1414,7 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 						cr->max_inflight_messages = atoi(token);
 						if(cr->max_inflight_messages < 0) cr->max_inflight_messages = 0;
 					}else{
-						_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Empty max_inflight_messages value in configuration.");
+						_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Empty max_inflight_messages value in configuration.");
 					}
 				}else if(!strcmp(token, "max_queued_messages")){
 					token = strtok_r(NULL, " ", &saveptr);
@@ -1422,73 +1422,73 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 						cr->max_queued_messages = atoi(token);
 						if(cr->max_queued_messages < 0) cr->max_queued_messages = 0;
 					}else{
-						_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Empty max_queued_messages value in configuration.");
+						_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Empty max_queued_messages value in configuration.");
 					}
 				}else if(!strcmp(token, "message_size_limit")){
-					if(_conf_parse_int(&token, "message_size_limit", (int *)&config->message_size_limit, saveptr)) return MOSQ_ERR_INVAL;
+					if(_conf_parse_int(&token, "message_size_limit", (int *)&config->message_size_limit, saveptr)) return ECLD_ERR_INVAL;
 					if(config->message_size_limit > MQTT_MAX_PAYLOAD){
-						_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid message_size_limit value (%d).", config->message_size_limit);
-						return MOSQ_ERR_INVAL;
+						_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Invalid message_size_limit value (%d).", config->message_size_limit);
+						return ECLD_ERR_INVAL;
 					}
 				}else if(!strcmp(token, "mount_point")){
 					if(reload) continue; // Listeners not valid for reloading.
 					if(config->listener_count == 0){
-						_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: You must use create a listener before using the mount_point option in the configuration file.");
-						return MOSQ_ERR_INVAL;
+						_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: You must use create a listener before using the mount_point option in the configuration file.");
+						return ECLD_ERR_INVAL;
 					}
-					if(_conf_parse_string(&token, "mount_point", &cur_listener->mount_point, saveptr)) return MOSQ_ERR_INVAL;
-					if(eecloud_pub_topic_check(cur_listener->mount_point) != MOSQ_ERR_SUCCESS){
-						_eecloud_log_printf(NULL, MOSQ_LOG_ERR,
+					if(_conf_parse_string(&token, "mount_point", &cur_listener->mount_point, saveptr)) return ECLD_ERR_INVAL;
+					if(eecloud_pub_topic_check(cur_listener->mount_point) != ECLD_ERR_SUCCESS){
+						_eecloud_log_printf(NULL, ECLD_LOG_ERR,
 								"Error: Invalid mount_point '%s'. Does it contain a wildcard character?",
 								cur_listener->mount_point);
-						return MOSQ_ERR_INVAL;
+						return ECLD_ERR_INVAL;
 					}
 				}else if(!strcmp(token, "notifications")){
 #ifdef WITH_BRIDGE
 					if(reload) continue; // FIXME
 					if(!cur_bridge){
-						_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
-						return MOSQ_ERR_INVAL;
+						_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Invalid bridge configuration.");
+						return ECLD_ERR_INVAL;
 					}
-					if(_conf_parse_bool(&token, "notifications", &cur_bridge->notifications, saveptr)) return MOSQ_ERR_INVAL;
+					if(_conf_parse_bool(&token, "notifications", &cur_bridge->notifications, saveptr)) return ECLD_ERR_INVAL;
 #else
-					_eecloud_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge support not available.");
+					_eecloud_log_printf(NULL, ECLD_LOG_WARNING, "Warning: Bridge support not available.");
 #endif
 				}else if(!strcmp(token, "notification_topic")){
 #ifdef WITH_BRIDGE
 					if(reload) continue; // FIXME
 					if(!cur_bridge){
-						_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
-						return MOSQ_ERR_INVAL;
+						_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Invalid bridge configuration.");
+						return ECLD_ERR_INVAL;
 					}
-					if(_conf_parse_string(&token, "notification_topic", &cur_bridge->notification_topic, saveptr)) return MOSQ_ERR_INVAL;
+					if(_conf_parse_string(&token, "notification_topic", &cur_bridge->notification_topic, saveptr)) return ECLD_ERR_INVAL;
 #else
-					_eecloud_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge support not available.");
+					_eecloud_log_printf(NULL, ECLD_LOG_WARNING, "Warning: Bridge support not available.");
 #endif
 				}else if(!strcmp(token, "password") || !strcmp(token, "remote_password")){
 #ifdef WITH_BRIDGE
 					if(reload) continue; // FIXME
 					if(!cur_bridge){
-						_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
-						return MOSQ_ERR_INVAL;
+						_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Invalid bridge configuration.");
+						return ECLD_ERR_INVAL;
 					}
 					token = strtok_r(NULL, " ", &saveptr);
 					if(token){
 						if(cur_bridge->remote_password){
-							_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Duplicate password value in bridge configuration.");
-							return MOSQ_ERR_INVAL;
+							_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Duplicate password value in bridge configuration.");
+							return ECLD_ERR_INVAL;
 						}
 						cur_bridge->remote_password = _eecloud_strdup(token);
 						if(!cur_bridge->remote_password){
-							_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-							return MOSQ_ERR_NOMEM;
+							_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Out of memory.");
+							return ECLD_ERR_NOMEM;
 						}
 					}else{
-						_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Empty password value in configuration.");
-						return MOSQ_ERR_INVAL;
+						_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Empty password value in configuration.");
+						return ECLD_ERR_INVAL;
 					}
 #else
-					_eecloud_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge support not available.");
+					_eecloud_log_printf(NULL, ECLD_LOG_WARNING, "Warning: Bridge support not available.");
 #endif
 				}else if(!strcmp(token, "password_file")){
 					if(reload){
@@ -1497,13 +1497,13 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 							config->password_file = NULL;
 						}
 					}
-					if(_conf_parse_string(&token, "password_file", &config->password_file, saveptr)) return MOSQ_ERR_INVAL;
+					if(_conf_parse_string(&token, "password_file", &config->password_file, saveptr)) return ECLD_ERR_INVAL;
 				}else if(!strcmp(token, "persistence") || !strcmp(token, "retained_persistence")){
-					if(_conf_parse_bool(&token, token, &config->persistence, saveptr)) return MOSQ_ERR_INVAL;
+					if(_conf_parse_bool(&token, token, &config->persistence, saveptr)) return ECLD_ERR_INVAL;
 				}else if(!strcmp(token, "persistence_file")){
-					if(_conf_parse_string(&token, "persistence_file", &config->persistence_file, saveptr)) return MOSQ_ERR_INVAL;
+					if(_conf_parse_string(&token, "persistence_file", &config->persistence_file, saveptr)) return ECLD_ERR_INVAL;
 				}else if(!strcmp(token, "persistence_location")){
-					if(_conf_parse_string(&token, "persistence_location", &config->persistence_location, saveptr)) return MOSQ_ERR_INVAL;
+					if(_conf_parse_string(&token, "persistence_location", &config->persistence_location, saveptr)) return ECLD_ERR_INVAL;
 				}else if(!strcmp(token, "persistent_client_expiration")){
 					token = strtok_r(NULL, " ", &saveptr);
 					if(token){
@@ -1524,30 +1524,30 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 								expiration_mult = 86400*365;
 								break;
 							default:
-								_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid persistent_client_expiration duration in configuration.");
-								return MOSQ_ERR_INVAL;
+								_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Invalid persistent_client_expiration duration in configuration.");
+								return ECLD_ERR_INVAL;
 						}
 						token[strlen(token)-1] = '\0';
 						config->persistent_client_expiration = atoi(token)*expiration_mult;
 						if(config->persistent_client_expiration <= 0){
-							_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid persistent_client_expiration duration in configuration.");
-							return MOSQ_ERR_INVAL;
+							_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Invalid persistent_client_expiration duration in configuration.");
+							return ECLD_ERR_INVAL;
 						}
 					}else{
-						_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Empty persistent_client_expiration value in configuration.");
+						_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Empty persistent_client_expiration value in configuration.");
 					}
 				}else if(!strcmp(token, "pid_file")){
 					if(reload) continue; // pid file not valid for reloading.
-					if(_conf_parse_string(&token, "pid_file", &config->pid_file, saveptr)) return MOSQ_ERR_INVAL;
+					if(_conf_parse_string(&token, "pid_file", &config->pid_file, saveptr)) return ECLD_ERR_INVAL;
 				}else if(!strcmp(token, "port")){
 					if(reload) continue; // Listener not valid for reloading.
 					if(config->default_listener.port){
-						_eecloud_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Default listener port specified multiple times. Only the latest will be used.");
+						_eecloud_log_printf(NULL, ECLD_LOG_WARNING, "Warning: Default listener port specified multiple times. Only the latest will be used.");
 					}
-					if(_conf_parse_int(&token, "port", &tmp_int, saveptr)) return MOSQ_ERR_INVAL;
+					if(_conf_parse_int(&token, "port", &tmp_int, saveptr)) return ECLD_ERR_INVAL;
 					if(tmp_int < 1 || tmp_int > 65535){
-						_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid port value (%d).", tmp_int);
-						return MOSQ_ERR_INVAL;
+						_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Invalid port value (%d).", tmp_int);
+						return ECLD_ERR_INVAL;
 					}
 					config->default_listener.port = tmp_int;
 				}else if(!strcmp(token, "protocol")){
@@ -1564,15 +1564,15 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 							cur_listener->protocol = mp_websockets;
 							config->have_websockets_listener = true;
 #else
-							_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Websockets support not available.");
-							return MOSQ_ERR_INVAL;
+							_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Websockets support not available.");
+							return ECLD_ERR_INVAL;
 #endif
 						}else{
-							_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid protocol value (%s).", token);
-							return MOSQ_ERR_INVAL;
+							_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Invalid protocol value (%s).", token);
+							return ECLD_ERR_INVAL;
 						}
 					}else{
-						_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Empty protocol value in configuration.");
+						_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Empty protocol value in configuration.");
 					}
 				}else if(!strcmp(token, "psk_file")){
 #ifdef REAL_WITH_TLS_PSK
@@ -1582,64 +1582,64 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 							config->psk_file = NULL;
 						}
 					}
-					if(_conf_parse_string(&token, "psk_file", &config->psk_file, saveptr)) return MOSQ_ERR_INVAL;
+					if(_conf_parse_string(&token, "psk_file", &config->psk_file, saveptr)) return ECLD_ERR_INVAL;
 #else
-					_eecloud_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: TLS/TLS-PSK support not available.");
+					_eecloud_log_printf(NULL, ECLD_LOG_WARNING, "Warning: TLS/TLS-PSK support not available.");
 #endif
 				}else if(!strcmp(token, "psk_hint")){
 #ifdef REAL_WITH_TLS_PSK
 					if(reload) continue; // Listeners not valid for reloading.
-					if(_conf_parse_string(&token, "psk_hint", &cur_listener->psk_hint, saveptr)) return MOSQ_ERR_INVAL;
+					if(_conf_parse_string(&token, "psk_hint", &cur_listener->psk_hint, saveptr)) return ECLD_ERR_INVAL;
 #else
-					_eecloud_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: TLS/TLS-PSK support not available.");
+					_eecloud_log_printf(NULL, ECLD_LOG_WARNING, "Warning: TLS/TLS-PSK support not available.");
 #endif
 				}else if(!strcmp(token, "queue_qos0_messages")){
-					if(_conf_parse_bool(&token, token, &config->queue_qos0_messages, saveptr)) return MOSQ_ERR_INVAL;
+					if(_conf_parse_bool(&token, token, &config->queue_qos0_messages, saveptr)) return ECLD_ERR_INVAL;
 				}else if(!strcmp(token, "require_certificate")){
 #ifdef WITH_TLS
 					if(reload) continue; // Listeners not valid for reloading.
-					if(_conf_parse_bool(&token, "require_certificate", &cur_listener->require_certificate, saveptr)) return MOSQ_ERR_INVAL;
+					if(_conf_parse_bool(&token, "require_certificate", &cur_listener->require_certificate, saveptr)) return ECLD_ERR_INVAL;
 #else
-					_eecloud_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: TLS support not available.");
+					_eecloud_log_printf(NULL, ECLD_LOG_WARNING, "Warning: TLS support not available.");
 #endif
 				}else if(!strcmp(token, "restart_timeout")){
 #ifdef WITH_BRIDGE
 					if(reload) continue; // FIXME
 					if(!cur_bridge){
-						_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
-						return MOSQ_ERR_INVAL;
+						_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Invalid bridge configuration.");
+						return ECLD_ERR_INVAL;
 					}
-					if(_conf_parse_int(&token, "restart_timeout", &cur_bridge->restart_timeout, saveptr)) return MOSQ_ERR_INVAL;
+					if(_conf_parse_int(&token, "restart_timeout", &cur_bridge->restart_timeout, saveptr)) return ECLD_ERR_INVAL;
 					if(cur_bridge->restart_timeout < 1){
-						_eecloud_log_printf(NULL, MOSQ_LOG_NOTICE, "restart_timeout interval too low, using 1 second.");
+						_eecloud_log_printf(NULL, ECLD_LOG_NOTICE, "restart_timeout interval too low, using 1 second.");
 						cur_bridge->restart_timeout = 1;
 					}
 #else
-					_eecloud_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge support not available.");
+					_eecloud_log_printf(NULL, ECLD_LOG_WARNING, "Warning: Bridge support not available.");
 #endif
 				}else if(!strcmp(token, "retry_interval")){
-					if(_conf_parse_int(&token, "retry_interval", &config->retry_interval, saveptr)) return MOSQ_ERR_INVAL;
+					if(_conf_parse_int(&token, "retry_interval", &config->retry_interval, saveptr)) return ECLD_ERR_INVAL;
 					if(config->retry_interval < 1 || config->retry_interval > 3600){
-						_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid retry_interval value (%d).", config->retry_interval);
-						return MOSQ_ERR_INVAL;
+						_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Invalid retry_interval value (%d).", config->retry_interval);
+						return ECLD_ERR_INVAL;
 					}
 				}else if(!strcmp(token, "round_robin")){
 #ifdef WITH_BRIDGE
 					if(reload) continue; // FIXME
 					if(!cur_bridge){
-						_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
-						return MOSQ_ERR_INVAL;
+						_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Invalid bridge configuration.");
+						return ECLD_ERR_INVAL;
 					}
-					if(_conf_parse_bool(&token, "round_robin", &cur_bridge->round_robin, saveptr)) return MOSQ_ERR_INVAL;
+					if(_conf_parse_bool(&token, "round_robin", &cur_bridge->round_robin, saveptr)) return ECLD_ERR_INVAL;
 #else
-					_eecloud_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge support not available.");
+					_eecloud_log_printf(NULL, ECLD_LOG_WARNING, "Warning: Bridge support not available.");
 #endif
 				}else if(!strcmp(token, "start_type")){
 #ifdef WITH_BRIDGE
 					if(reload) continue; // FIXME
 					if(!cur_bridge){
-						_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
-						return MOSQ_ERR_INVAL;
+						_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Invalid bridge configuration.");
+						return ECLD_ERR_INVAL;
 					}
 					token = strtok_r(NULL, " ", &saveptr);
 					if(token){
@@ -1648,57 +1648,57 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 						}else if(!strcmp(token, "lazy")){
 							cur_bridge->start_type = bst_lazy;
 						}else if(!strcmp(token, "manual")){
-							_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Manual start_type not supported.");
-							return MOSQ_ERR_INVAL;
+							_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Manual start_type not supported.");
+							return ECLD_ERR_INVAL;
 						}else if(!strcmp(token, "once")){
 							cur_bridge->start_type = bst_once;
 						}else{
-							_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid start_type value in configuration (%s).", token);
-							return MOSQ_ERR_INVAL;
+							_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Invalid start_type value in configuration (%s).", token);
+							return ECLD_ERR_INVAL;
 						}
 					}else{
-						_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Empty start_type value in configuration.");
-						return MOSQ_ERR_INVAL;
+						_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Empty start_type value in configuration.");
+						return ECLD_ERR_INVAL;
 					}
 #else
-					_eecloud_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge support not available.");
+					_eecloud_log_printf(NULL, ECLD_LOG_WARNING, "Warning: Bridge support not available.");
 #endif
 				}else if(!strcmp(token, "store_clean_interval")){
-					_eecloud_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: store_clean_interval is no longer needed.");
+					_eecloud_log_printf(NULL, ECLD_LOG_WARNING, "Warning: store_clean_interval is no longer needed.");
 				}else if(!strcmp(token, "sys_interval")){
-					if(_conf_parse_int(&token, "sys_interval", &config->sys_interval, saveptr)) return MOSQ_ERR_INVAL;
+					if(_conf_parse_int(&token, "sys_interval", &config->sys_interval, saveptr)) return ECLD_ERR_INVAL;
 					if(config->sys_interval < 0 || config->sys_interval > 65535){
-						_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid sys_interval value (%d).", config->sys_interval);
-						return MOSQ_ERR_INVAL;
+						_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Invalid sys_interval value (%d).", config->sys_interval);
+						return ECLD_ERR_INVAL;
 					}
 				}else if(!strcmp(token, "threshold")){
 #ifdef WITH_BRIDGE
 					if(reload) continue; // FIXME
 					if(!cur_bridge){
-						_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
-						return MOSQ_ERR_INVAL;
+						_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Invalid bridge configuration.");
+						return ECLD_ERR_INVAL;
 					}
-					if(_conf_parse_int(&token, "threshold", &cur_bridge->threshold, saveptr)) return MOSQ_ERR_INVAL;
+					if(_conf_parse_int(&token, "threshold", &cur_bridge->threshold, saveptr)) return ECLD_ERR_INVAL;
 					if(cur_bridge->threshold < 1){
-						_eecloud_log_printf(NULL, MOSQ_LOG_NOTICE, "threshold too low, using 1 message.");
+						_eecloud_log_printf(NULL, ECLD_LOG_NOTICE, "threshold too low, using 1 message.");
 						cur_bridge->threshold = 1;
 					}
 #else
-					_eecloud_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge support not available.");
+					_eecloud_log_printf(NULL, ECLD_LOG_WARNING, "Warning: Bridge support not available.");
 #endif
 				}else if(!strcmp(token, "tls_version")){
 #if defined(WITH_TLS)
 					if(reload) continue; // Listeners not valid for reloading.
-					if(_conf_parse_string(&token, "tls_version", &cur_listener->tls_version, saveptr)) return MOSQ_ERR_INVAL;
+					if(_conf_parse_string(&token, "tls_version", &cur_listener->tls_version, saveptr)) return ECLD_ERR_INVAL;
 #else
-					_eecloud_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: TLS support not available.");
+					_eecloud_log_printf(NULL, ECLD_LOG_WARNING, "Warning: TLS support not available.");
 #endif
 				}else if(!strcmp(token, "topic")){
 #ifdef WITH_BRIDGE
 					if(reload) continue; // FIXME
 					if(!cur_bridge){
-						_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
-						return MOSQ_ERR_INVAL;
+						_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Invalid bridge configuration.");
+						return ECLD_ERR_INVAL;
 					}
 					token = strtok_r(NULL, " ", &saveptr);
 					if(token){
@@ -1706,8 +1706,8 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 						cur_bridge->topics = _eecloud_realloc(cur_bridge->topics, 
 								sizeof(struct _mqtt3_bridge_topic)*cur_bridge->topic_count);
 						if(!cur_bridge->topics){
-							_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-							return MOSQ_ERR_NOMEM;
+							_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Out of memory.");
+							return ECLD_ERR_NOMEM;
 						}
 						cur_topic = &cur_bridge->topics[cur_bridge->topic_count-1];
 						if(!strcmp(token, "\"\"")){
@@ -1715,8 +1715,8 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 						}else{
 							cur_topic->topic = _eecloud_strdup(token);
 							if(!cur_topic->topic){
-								_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-								return MOSQ_ERR_NOMEM;
+								_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Out of memory.");
+								return ECLD_ERR_NOMEM;
 							}
 						}
 						cur_topic->direction = bd_out;
@@ -1724,8 +1724,8 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 						cur_topic->local_prefix = NULL;
 						cur_topic->remote_prefix = NULL;
 					}else{
-						_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Empty topic value in configuration.");
-						return MOSQ_ERR_INVAL;
+						_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Empty topic value in configuration.");
+						return ECLD_ERR_INVAL;
 					}
 					token = strtok_r(NULL, " ", &saveptr);
 					if(token){
@@ -1736,15 +1736,15 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 						}else if(!strcasecmp(token, "both")){
 							cur_topic->direction = bd_both;
 						}else{
-							_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge topic direction '%s'.", token);
-							return MOSQ_ERR_INVAL;
+							_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Invalid bridge topic direction '%s'.", token);
+							return ECLD_ERR_INVAL;
 						}
 						token = strtok_r(NULL, " ", &saveptr);
 						if(token){
 							cur_topic->qos = atoi(token);
 							if(cur_topic->qos < 0 || cur_topic->qos > 2){
-								_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge QoS level '%s'.", token);
-								return MOSQ_ERR_INVAL;
+								_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Invalid bridge QoS level '%s'.", token);
+								return ECLD_ERR_INVAL;
 							}
 
 							token = strtok_r(NULL, " ", &saveptr);
@@ -1753,14 +1753,14 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 								if(!strcmp(token, "\"\"")){
 									cur_topic->local_prefix = NULL;
 								}else{
-									if(eecloud_pub_topic_check(token) != MOSQ_ERR_SUCCESS){
-										_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge topic local prefix '%s'.", token);
-										return MOSQ_ERR_INVAL;
+									if(eecloud_pub_topic_check(token) != ECLD_ERR_SUCCESS){
+										_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Invalid bridge topic local prefix '%s'.", token);
+										return ECLD_ERR_INVAL;
 									}
 									cur_topic->local_prefix = _eecloud_strdup(token);
 									if(!cur_topic->local_prefix){
-										_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-										return MOSQ_ERR_NOMEM;
+										_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Out of memory.");
+										return ECLD_ERR_NOMEM;
 									}
 								}
 
@@ -1769,14 +1769,14 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 									if(!strcmp(token, "\"\"")){
 										cur_topic->remote_prefix = NULL;
 									}else{
-										if(eecloud_pub_topic_check(token) != MOSQ_ERR_SUCCESS){
-											_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge topic remote prefix '%s'.", token);
-											return MOSQ_ERR_INVAL;
+										if(eecloud_pub_topic_check(token) != ECLD_ERR_SUCCESS){
+											_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Invalid bridge topic remote prefix '%s'.", token);
+											return ECLD_ERR_INVAL;
 										}
 										cur_topic->remote_prefix = _eecloud_strdup(token);
 										if(!cur_topic->remote_prefix){
-											_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-											return MOSQ_ERR_NOMEM;
+											_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Out of memory.");
+											return ECLD_ERR_NOMEM;
 										}
 									}
 								}
@@ -1786,31 +1786,31 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 					if(cur_topic->topic == NULL && 
 							(cur_topic->local_prefix == NULL || cur_topic->remote_prefix == NULL)){
 
-						_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge remapping.");
-						return MOSQ_ERR_INVAL;
+						_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Invalid bridge remapping.");
+						return ECLD_ERR_INVAL;
 					}
 					if(cur_topic->local_prefix){
 						if(cur_topic->topic){
 							len = strlen(cur_topic->topic) + strlen(cur_topic->local_prefix)+1;
 							cur_topic->local_topic = _eecloud_malloc(len+1);
 							if(!cur_topic->local_topic){
-								_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-								return MOSQ_ERR_NOMEM;
+								_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Out of memory.");
+								return ECLD_ERR_NOMEM;
 							}
 							snprintf(cur_topic->local_topic, len+1, "%s%s", cur_topic->local_prefix, cur_topic->topic);
 							cur_topic->local_topic[len] = '\0';
 						}else{
 							cur_topic->local_topic = _eecloud_strdup(cur_topic->local_prefix);
 							if(!cur_topic->local_topic){
-								_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-								return MOSQ_ERR_NOMEM;
+								_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Out of memory.");
+								return ECLD_ERR_NOMEM;
 							}
 						}
 					}else{
 						cur_topic->local_topic = _eecloud_strdup(cur_topic->topic);
 						if(!cur_topic->local_topic){
-							_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-							return MOSQ_ERR_NOMEM;
+							_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Out of memory.");
+							return ECLD_ERR_NOMEM;
 						}
 					}
 
@@ -1819,101 +1819,101 @@ int _config_read_file_core(struct mqtt3_config *config, bool reload, const char 
 							len = strlen(cur_topic->topic) + strlen(cur_topic->remote_prefix)+1;
 							cur_topic->remote_topic = _eecloud_malloc(len+1);
 							if(!cur_topic->remote_topic){
-								_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-								return MOSQ_ERR_NOMEM;
+								_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Out of memory.");
+								return ECLD_ERR_NOMEM;
 							}
 							snprintf(cur_topic->remote_topic, len, "%s%s", cur_topic->remote_prefix, cur_topic->topic);
 							cur_topic->remote_topic[len] = '\0';
 						}else{
 							cur_topic->remote_topic = _eecloud_strdup(cur_topic->remote_prefix);
 							if(!cur_topic->remote_topic){
-								_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-								return MOSQ_ERR_NOMEM;
+								_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Out of memory.");
+								return ECLD_ERR_NOMEM;
 							}
 						}
 					}else{
 						cur_topic->remote_topic = _eecloud_strdup(cur_topic->topic);
 						if(!cur_topic->remote_topic){
-							_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-							return MOSQ_ERR_NOMEM;
+							_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Out of memory.");
+							return ECLD_ERR_NOMEM;
 						}
 					}
 #else
-					_eecloud_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge support not available.");
+					_eecloud_log_printf(NULL, ECLD_LOG_WARNING, "Warning: Bridge support not available.");
 #endif
 				}else if(!strcmp(token, "try_private")){
 #ifdef WITH_BRIDGE
 					if(reload) continue; // FIXME
 					if(!cur_bridge){
-						_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
-						return MOSQ_ERR_INVAL;
+						_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Invalid bridge configuration.");
+						return ECLD_ERR_INVAL;
 					}
-					if(_conf_parse_bool(&token, "try_private", &cur_bridge->try_private, saveptr)) return MOSQ_ERR_INVAL;
+					if(_conf_parse_bool(&token, "try_private", &cur_bridge->try_private, saveptr)) return ECLD_ERR_INVAL;
 #else
-					_eecloud_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge support not available.");
+					_eecloud_log_printf(NULL, ECLD_LOG_WARNING, "Warning: Bridge support not available.");
 #endif
 				}else if(!strcmp(token, "upgrade_outgoing_qos")){
-					if(_conf_parse_bool(&token, token, &config->upgrade_outgoing_qos, saveptr)) return MOSQ_ERR_INVAL;
+					if(_conf_parse_bool(&token, token, &config->upgrade_outgoing_qos, saveptr)) return ECLD_ERR_INVAL;
 				}else if(!strcmp(token, "use_identity_as_username")){
 #ifdef WITH_TLS
 					if(reload) continue; // Listeners not valid for reloading.
-					if(_conf_parse_bool(&token, "use_identity_as_username", &cur_listener->use_identity_as_username, saveptr)) return MOSQ_ERR_INVAL;
+					if(_conf_parse_bool(&token, "use_identity_as_username", &cur_listener->use_identity_as_username, saveptr)) return ECLD_ERR_INVAL;
 #else
-					_eecloud_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: TLS support not available.");
+					_eecloud_log_printf(NULL, ECLD_LOG_WARNING, "Warning: TLS support not available.");
 #endif
 				}else if(!strcmp(token, "user")){
 					if(reload) continue; // Drop privileges user not valid for reloading.
-					if(_conf_parse_string(&token, "user", &config->user, saveptr)) return MOSQ_ERR_INVAL;
+					if(_conf_parse_string(&token, "user", &config->user, saveptr)) return ECLD_ERR_INVAL;
 				}else if(!strcmp(token, "use_username_as_clientid")){
 					if(reload) continue; // Listeners not valid for reloading.
-					if(_conf_parse_bool(&token, "use_username_as_clientid", &cur_listener->use_username_as_clientid, saveptr)) return MOSQ_ERR_INVAL;
+					if(_conf_parse_bool(&token, "use_username_as_clientid", &cur_listener->use_username_as_clientid, saveptr)) return ECLD_ERR_INVAL;
 				}else if(!strcmp(token, "user")){
 					if(reload) continue; // Drop privileges user not valid for reloading.
-					if(_conf_parse_string(&token, "user", &config->user, saveptr)) return MOSQ_ERR_INVAL;
+					if(_conf_parse_string(&token, "user", &config->user, saveptr)) return ECLD_ERR_INVAL;
 				}else if(!strcmp(token, "username") || !strcmp(token, "remote_username")){
 #ifdef WITH_BRIDGE
 					if(reload) continue; // FIXME
 					if(!cur_bridge){
-						_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid bridge configuration.");
-						return MOSQ_ERR_INVAL;
+						_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Invalid bridge configuration.");
+						return ECLD_ERR_INVAL;
 					}
 					token = strtok_r(NULL, " ", &saveptr);
 					if(token){
 						if(cur_bridge->remote_username){
-							_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Duplicate username value in bridge configuration.");
-							return MOSQ_ERR_INVAL;
+							_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Duplicate username value in bridge configuration.");
+							return ECLD_ERR_INVAL;
 						}
 						cur_bridge->remote_username = _eecloud_strdup(token);
 						if(!cur_bridge->remote_username){
-							_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-							return MOSQ_ERR_NOMEM;
+							_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Out of memory.");
+							return ECLD_ERR_NOMEM;
 						}
 					}else{
-						_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Empty username value in configuration.");
-						return MOSQ_ERR_INVAL;
+						_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Empty username value in configuration.");
+						return ECLD_ERR_INVAL;
 					}
 #else
-					_eecloud_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Bridge support not available.");
+					_eecloud_log_printf(NULL, ECLD_LOG_WARNING, "Warning: Bridge support not available.");
 #endif
 				}else if(!strcmp(token, "websockets_log_level")){
 #ifdef WITH_WEBSOCKETS
-					if(_conf_parse_int(&token, "websockets_log_level", &config->websockets_log_level, saveptr)) return MOSQ_ERR_INVAL;
+					if(_conf_parse_int(&token, "websockets_log_level", &config->websockets_log_level, saveptr)) return ECLD_ERR_INVAL;
 #else
-					_eecloud_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Websockets support not available.");
+					_eecloud_log_printf(NULL, ECLD_LOG_WARNING, "Warning: Websockets support not available.");
 #endif
 				}else if(!strcmp(token, "trace_level")
 						|| !strcmp(token, "ffdc_output")
 						|| !strcmp(token, "max_log_entries")
 						|| !strcmp(token, "trace_output")){
-					_eecloud_log_printf(NULL, MOSQ_LOG_WARNING, "Warning: Unsupported rsmb configuration option \"%s\".", token);
+					_eecloud_log_printf(NULL, ECLD_LOG_WARNING, "Warning: Unsupported rsmb configuration option \"%s\".", token);
 				}else{
-					_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unknown configuration variable \"%s\".", token);
-					return MOSQ_ERR_INVAL;
+					_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Unknown configuration variable \"%s\".", token);
+					return ECLD_ERR_INVAL;
 				}
 			}
 		}
 	}
-	return MOSQ_ERR_SUCCESS;
+	return ECLD_ERR_SUCCESS;
 }
 
 int _config_read_file(struct mqtt3_config *config, bool reload, const char *file, struct config_recurse *cr, int level, int *lineno)
@@ -1923,7 +1923,7 @@ int _config_read_file(struct mqtt3_config *config, bool reload, const char *file
 
 	fptr = _eecloud_fopen(file, "rt");
 	if(!fptr){
-		_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to open config file %s\n", file);
+		_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Unable to open config file %s\n", file);
 		return 1;
 	}
 
@@ -1942,14 +1942,14 @@ static int _conf_parse_bool(char **token, const char *name, bool *value, char *s
 		}else if(!strcmp(*token, "true") || !strcmp(*token, "1")){
 			*value = true;
 		}else{
-			_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Invalid %s value (%s).", name, *token);
+			_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Invalid %s value (%s).", name, *token);
 		}
 	}else{
-		_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Empty %s value in configuration.", name);
-		return MOSQ_ERR_INVAL;
+		_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Empty %s value in configuration.", name);
+		return ECLD_ERR_INVAL;
 	}
 	
-	return MOSQ_ERR_SUCCESS;
+	return ECLD_ERR_SUCCESS;
 }
 
 static int _conf_parse_int(char **token, const char *name, int *value, char *saveptr)
@@ -1958,11 +1958,11 @@ static int _conf_parse_int(char **token, const char *name, int *value, char *sav
 	if(*token){
 		*value = atoi(*token);
 	}else{
-		_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Empty %s value in configuration.", name);
-		return MOSQ_ERR_INVAL;
+		_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Empty %s value in configuration.", name);
+		return ECLD_ERR_INVAL;
 	}
 
-	return MOSQ_ERR_SUCCESS;
+	return ECLD_ERR_SUCCESS;
 }
 
 static int _conf_parse_string(char **token, const char *name, char **value, char *saveptr)
@@ -1970,8 +1970,8 @@ static int _conf_parse_string(char **token, const char *name, char **value, char
 	*token = strtok_r(NULL, "", &saveptr);
 	if(*token){
 		if(*value){
-			_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Duplicate %s value in configuration.", name);
-			return MOSQ_ERR_INVAL;
+			_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Duplicate %s value in configuration.", name);
+			return ECLD_ERR_INVAL;
 		}
 		/* Deal with multiple spaces at the beginning of the string. */
 		while((*token)[0] == ' ' || (*token)[0] == '\t'){
@@ -1979,12 +1979,12 @@ static int _conf_parse_string(char **token, const char *name, char **value, char
 		}
 		*value = _eecloud_strdup(*token);
 		if(!*value){
-			_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-			return MOSQ_ERR_NOMEM;
+			_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Out of memory.");
+			return ECLD_ERR_NOMEM;
 		}
 	}else{
-		_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error: Empty %s value in configuration.", name);
-		return MOSQ_ERR_INVAL;
+		_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Empty %s value in configuration.", name);
+		return ECLD_ERR_INVAL;
 	}
-	return MOSQ_ERR_SUCCESS;
+	return ECLD_ERR_SUCCESS;
 }

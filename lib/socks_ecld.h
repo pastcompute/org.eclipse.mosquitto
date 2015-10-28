@@ -14,8 +14,8 @@ Contributors:
    Roger Light - initial implementation and documentation.
 */
 
-#ifndef SOCKS_MOSQ_H
-#define SOCKS_MOSQ_H
+#ifndef SOCKS_ECLD_H
+#define SOCKS_ECLD_H
 
 int eecloud__socks5_send(struct eecloud *ecld);
 int eecloud__socks5_read(struct eecloud *ecld);

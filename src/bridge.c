@@ -58,7 +58,7 @@ int mqtt3_bridge_new(struct eecloud_db *db, struct _mqtt3_bridge *bridge)
 			len = strlen(hostname) + strlen(bridge->name) + 2;
 			id = _eecloud_malloc(len);
 			if(!id){
-				return MOSQ_ERR_NOMEM;
+				return ECLD_ERR_NOMEM;
 			}
 			snprintf(id, len, "%s.%s", hostname, bridge->name);
 		}else{
@@ -69,19 +69,19 @@ int mqtt3_bridge_new(struct eecloud_db *db, struct _mqtt3_bridge *bridge)
 	if(bridge->local_clientid){
 		local_id = _eecloud_strdup(bridge->local_clientid);
 		if(!local_id){
-			return MOSQ_ERR_NOMEM;
+			return ECLD_ERR_NOMEM;
 		}
 	}else{
 		len = strlen(bridge->remote_clientid) + strlen("local.") + 2;
 		local_id = _eecloud_malloc(len);
 		if(!local_id){
-			return MOSQ_ERR_NOMEM;
+			return ECLD_ERR_NOMEM;
 		}
 		snprintf(local_id, len, "local.%s", bridge->remote_clientid);
 		bridge->local_clientid = _eecloud_strdup(local_id);
 		if(!bridge->local_clientid){
 			_eecloud_free(local_id);
-			return MOSQ_ERR_NOMEM;
+			return ECLD_ERR_NOMEM;
 		}
 	}
 
@@ -94,7 +94,7 @@ int mqtt3_bridge_new(struct eecloud_db *db, struct _mqtt3_bridge *bridge)
 		new_context = mqtt3_context_init(db, -1);
 		if(!new_context){
 			_eecloud_free(local_id);
-			return MOSQ_ERR_NOMEM;
+			return ECLD_ERR_NOMEM;
 		}
 		new_context->id = local_id;
 		HASH_ADD_KEYPTR(hh_id, db->contexts_by_id, new_context->id, strlen(new_context->id), new_context);
@@ -128,7 +128,7 @@ int mqtt3_bridge_new(struct eecloud_db *db, struct _mqtt3_bridge *bridge)
 		db->bridge_count++;
 		db->bridges[db->bridge_count-1] = new_context;
 	}else{
-		return MOSQ_ERR_NOMEM;
+		return ECLD_ERR_NOMEM;
 	}
 
 	return mqtt3_bridge_connect(db, new_context);
@@ -142,7 +142,7 @@ int mqtt3_bridge_connect(struct eecloud_db *db, struct eecloud *context)
 	int notification_topic_len;
 	uint8_t notification_payload;
 
-	if(!context || !context->bridge) return MOSQ_ERR_INVAL;
+	if(!context || !context->bridge) return ECLD_ERR_INVAL;
 
 	context->state = ecld_cs_new;
 	context->sock = INVALID_SOCKET;
@@ -168,7 +168,7 @@ int mqtt3_bridge_connect(struct eecloud_db *db, struct eecloud *context)
 
 	for(i=0; i<context->bridge->topic_count; i++){
 		if(context->bridge->topics[i].direction == bd_out || context->bridge->topics[i].direction == bd_both){
-			_eecloud_log_printf(NULL, MOSQ_LOG_DEBUG, "Bridge %s doing local SUBSCRIBE on topic %s", context->id, context->bridge->topics[i].local_topic);
+			_eecloud_log_printf(NULL, ECLD_LOG_DEBUG, "Bridge %s doing local SUBSCRIBE on topic %s", context->id, context->bridge->topics[i].local_topic);
 			if(mqtt3_sub_add(db, context, context->bridge->topics[i].local_topic, context->bridge->topics[i].qos, &db->subs)) return 1;
 		}
 	}
@@ -182,13 +182,13 @@ int mqtt3_bridge_connect(struct eecloud_db *db, struct eecloud *context)
 			}
 			notification_payload = '0';
 			rc = _eecloud_will_set(context, context->bridge->notification_topic, 1, &notification_payload, 1, true);
-			if(rc != MOSQ_ERR_SUCCESS){
+			if(rc != ECLD_ERR_SUCCESS){
 				return rc;
 			}
 		}else{
 			notification_topic_len = strlen(context->bridge->remote_clientid)+strlen("$SYS/broker/connection//state");
 			notification_topic = _eecloud_malloc(sizeof(char)*(notification_topic_len+1));
-			if(!notification_topic) return MOSQ_ERR_NOMEM;
+			if(!notification_topic) return ECLD_ERR_NOMEM;
 
 			snprintf(notification_topic, notification_topic_len+1, "$SYS/broker/connection/%s/state", context->bridge->remote_clientid);
 
@@ -201,21 +201,21 @@ int mqtt3_bridge_connect(struct eecloud_db *db, struct eecloud *context)
 			notification_payload = '0';
 			rc = _eecloud_will_set(context, notification_topic, 1, &notification_payload, 1, true);
 			_eecloud_free(notification_topic);
-			if(rc != MOSQ_ERR_SUCCESS){
+			if(rc != ECLD_ERR_SUCCESS){
 				return rc;
 			}
 		}
 	}
 
-	_eecloud_log_printf(NULL, MOSQ_LOG_NOTICE, "Connecting bridge %s (%s:%d)", context->bridge->name, context->bridge->addresses[context->bridge->cur_address].address, context->bridge->addresses[context->bridge->cur_address].port);
+	_eecloud_log_printf(NULL, ECLD_LOG_NOTICE, "Connecting bridge %s (%s:%d)", context->bridge->name, context->bridge->addresses[context->bridge->cur_address].address, context->bridge->addresses[context->bridge->cur_address].port);
 	rc = _eecloud_socket_connect(context, context->bridge->addresses[context->bridge->cur_address].address, context->bridge->addresses[context->bridge->cur_address].port, NULL, false);
 	if(rc > 0 ){
-		if(rc == MOSQ_ERR_TLS){
+		if(rc == ECLD_ERR_TLS){
 			return rc; /* Error already printed */
-		}else if(rc == MOSQ_ERR_ERRNO){
-			_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error creating bridge: %s.", strerror(errno));
-		}else if(rc == MOSQ_ERR_EAI){
-			_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error creating bridge: %s.", gai_strerror(errno));
+		}else if(rc == ECLD_ERR_ERRNO){
+			_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error creating bridge: %s.", strerror(errno));
+		}else if(rc == ECLD_ERR_EAI){
+			_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error creating bridge: %s.", gai_strerror(errno));
 		}
 
 		return rc;
@@ -223,21 +223,21 @@ int mqtt3_bridge_connect(struct eecloud_db *db, struct eecloud *context)
 
 	HASH_ADD(hh_sock, db->contexts_by_sock, sock, sizeof(context->sock), context);
 
-	if(rc == MOSQ_ERR_CONN_PENDING){
+	if(rc == ECLD_ERR_CONN_PENDING){
 		context->state = ecld_cs_connect_pending;
 	}
 	rc = _eecloud_send_connect(context, context->keepalive, context->clean_session);
-	if(rc == MOSQ_ERR_SUCCESS){
-		return MOSQ_ERR_SUCCESS;
-	}else if(rc == MOSQ_ERR_ERRNO && errno == ENOTCONN){
-		return MOSQ_ERR_SUCCESS;
+	if(rc == ECLD_ERR_SUCCESS){
+		return ECLD_ERR_SUCCESS;
+	}else if(rc == ECLD_ERR_ERRNO && errno == ENOTCONN){
+		return ECLD_ERR_SUCCESS;
 	}else{
-		if(rc == MOSQ_ERR_TLS){
+		if(rc == ECLD_ERR_TLS){
 			return rc; /* Error already printed */
-		}else if(rc == MOSQ_ERR_ERRNO){
-			_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error creating bridge: %s.", strerror(errno));
-		}else if(rc == MOSQ_ERR_EAI){
-			_eecloud_log_printf(NULL, MOSQ_LOG_ERR, "Error creating bridge: %s.", gai_strerror(errno));
+		}else if(rc == ECLD_ERR_ERRNO){
+			_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error creating bridge: %s.", strerror(errno));
+		}else if(rc == ECLD_ERR_EAI){
+			_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error creating bridge: %s.", gai_strerror(errno));
 		}
 		_eecloud_socket_close(db, context);
 		return rc;

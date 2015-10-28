@@ -2,7 +2,7 @@
  * symbols are exported.
  */
 
-MOSQ_1.0 {
+ECLD_1.0 {
 	global:
 		eecloud_lib_version;
 		eecloud_lib_init;
@@ -50,12 +50,12 @@ MOSQ_1.0 {
 	local: *;
 };
 
-MOSQ_1.1 {
+ECLD_1.1 {
 	global:
 		eecloud_loop_forever;
-} MOSQ_1.0;
+} ECLD_1.0;
 
-MOSQ_1.2 {
+ECLD_1.2 {
 	global:
 		eecloud_connect_bind;
 		eecloud_connect_bind_async;
@@ -63,18 +63,18 @@ MOSQ_1.2 {
 		eecloud_reconnect_delay_set;
 		eecloud_reconnect_async;
 		eecloud_tls_insecure_set;
-} MOSQ_1.1;
+} ECLD_1.1;
 
-MOSQ_1.3 {
+ECLD_1.3 {
 	global:
 		eecloud_connect_srv;
-} MOSQ_1.2;
+} ECLD_1.2;
 
-MOSQ_1.4 {
+ECLD_1.4 {
 	global:
 		eecloud_threaded_set;
 		eecloud_opts_set;
 		eecloud_pub_topic_check;
 		eecloud_sub_topic_check;
 		eecloud_socks5_set;
-} MOSQ_1.3;
+} ECLD_1.3;

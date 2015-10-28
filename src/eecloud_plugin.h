@@ -14,14 +14,14 @@ Contributors:
    Roger Light - initial implementation and documentation.
 */
 
-#ifndef MOSQUITTO_PLUGIN_H
-#define MOSQUITTO_PLUGIN_H
+#ifndef EECLOUD_PLUGIN_H
+#define EECLOUD_PLUGIN_H
 
-#define MOSQ_AUTH_PLUGIN_VERSION 2
+#define ECLD_AUTH_PLUGIN_VERSION 2
 
-#define MOSQ_ACL_NONE 0x00
-#define MOSQ_ACL_READ 0x01
-#define MOSQ_ACL_WRITE 0x02
+#define ECLD_ACL_NONE 0x00
+#define ECLD_ACL_READ 0x01
+#define ECLD_ACL_WRITE 0x02
 
 struct eecloud_auth_opt {
 	char *key;
@@ -54,13 +54,13 @@ struct eecloud_auth_opt {
  * Parameters:
  * 	level -    Log message priority. Can currently be one of:
  *
- *             MOSQ_LOG_INFO
- *             MOSQ_LOG_NOTICE
- *             MOSQ_LOG_WARNING
- *             MOSQ_LOG_ERR
- *             MOSQ_LOG_DEBUG
- *             MOSQ_LOG_SUBSCRIBE (not recommended for use by plugins)
- *             MOSQ_LOG_UNSUBSCRIBE (not recommended for use by plugins)
+ *             ECLD_LOG_INFO
+ *             ECLD_LOG_NOTICE
+ *             ECLD_LOG_WARNING
+ *             ECLD_LOG_ERR
+ *             ECLD_LOG_DEBUG
+ *             ECLD_LOG_SUBSCRIBE (not recommended for use by plugins)
+ *             ECLD_LOG_UNSUBSCRIBE (not recommended for use by plugins)
  *
  *             These values are defined in eecloud.h.
  *
@@ -83,7 +83,7 @@ void eecloud_log_printf(int level, const char *fmt, ...);
  *
  * The broker will call this function immediately after loading the plugin to
  * check it is a supported plugin version. Your code must simply return
- * MOSQ_AUTH_PLUGIN_VERSION.
+ * ECLD_AUTH_PLUGIN_VERSION.
  */
 int eecloud_auth_plugin_version(void);
 
@@ -180,9 +180,9 @@ int eecloud_auth_security_cleanup(void *user_data, struct eecloud_auth_opt *auth
  * Function: eecloud_auth_acl_check
  *
  * Called by the broker when topic access must be checked. access will be one
- * of MOSQ_ACL_READ (for subscriptions) or MOSQ_ACL_WRITE (for publish). Return
- * MOSQ_ERR_SUCCESS if access was granted, MOSQ_ERR_ACL_DENIED if access was
- * not granted, or MOSQ_ERR_UNKNOWN for an application specific error.
+ * of ECLD_ACL_READ (for subscriptions) or ECLD_ACL_WRITE (for publish). Return
+ * ECLD_ERR_SUCCESS if access was granted, ECLD_ERR_ACL_DENIED if access was
+ * not granted, or ECLD_ERR_UNKNOWN for an application specific error.
  */
 int eecloud_auth_acl_check(void *user_data, const char *clientid, const char *username, const char *topic, int access);
 
@@ -190,8 +190,8 @@ int eecloud_auth_acl_check(void *user_data, const char *clientid, const char *us
  * Function: eecloud_auth_unpwd_check
  *
  * Called by the broker when a username/password must be checked. Return
- * MOSQ_ERR_SUCCESS if the user is authenticated, MOSQ_ERR_AUTH if
- * authentication failed, or MOSQ_ERR_UNKNOWN for an application specific
+ * ECLD_ERR_SUCCESS if the user is authenticated, ECLD_ERR_AUTH if
+ * authentication failed, or ECLD_ERR_UNKNOWN for an application specific
  * error.
  */
 int eecloud_auth_unpwd_check(void *user_data, const char *username, const char *password);
