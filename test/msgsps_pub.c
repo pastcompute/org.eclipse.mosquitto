@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/time.h>
-#include <mosquitto.h>
+#include <eecloud.h>
 
 #include <msgsps_common.h>
 
@@ -13,24 +13,24 @@ static bool run = true;
 static int message_count = 0;
 static struct timeval start, stop;
 
-void my_connect_callback(struct mosquitto *mosq, void *obj, int rc)
+void my_connect_callback(struct eecloud *ecld, void *obj, int rc)
 {
 	printf("rc: %d\n", rc);
 	gettimeofday(&start, NULL);
 }
 
-void my_disconnect_callback(struct mosquitto *mosq, void *obj, int result)
+void my_disconnect_callback(struct eecloud *ecld, void *obj, int result)
 {
 	run = false;
 }
 
-void my_publish_callback(struct mosquitto *mosq, void *obj, int mid)
+void my_publish_callback(struct eecloud *ecld, void *obj, int mid)
 {
 	message_count++;
 	//printf("%d ", message_count);
 	if(message_count == MESSAGE_COUNT){
 		gettimeofday(&stop, NULL);
-		mosquitto_disconnect((struct mosquitto *)obj);
+		eecloud_disconnect((struct eecloud *)obj);
 	}
 }
 
@@ -77,7 +77,7 @@ int create_data(void)
 
 int main(int argc, char *argv[])
 {
-	struct mosquitto *mosq;
+	struct eecloud *ecld;
 	int i;
 	double dstart, dstop, diff;
 	FILE *fptr;
@@ -106,19 +106,19 @@ int main(int argc, char *argv[])
 	fread(buf, sizeof(uint8_t), MESSAGE_SIZE*MESSAGE_COUNT, fptr);
 	fclose(fptr);
 
-	mosquitto_lib_init();
+	eecloud_lib_init();
 
-	mosq = mosquitto_new("perftest", true, NULL);
-	mosquitto_connect_callback_set(mosq, my_connect_callback);
-	mosquitto_disconnect_callback_set(mosq, my_disconnect_callback);
-	mosquitto_publish_callback_set(mosq, my_publish_callback);
+	ecld = eecloud_new("perftest", true, NULL);
+	eecloud_connect_callback_set(ecld, my_connect_callback);
+	eecloud_disconnect_callback_set(ecld, my_disconnect_callback);
+	eecloud_publish_callback_set(ecld, my_publish_callback);
 
-	mosquitto_connect(mosq, "127.0.0.1", 1884, 600);
+	eecloud_connect(ecld, "127.0.0.1", 1884, 600);
 
 	i=0;
-	while(!mosquitto_loop(mosq, 1, 10) && run){
+	while(!eecloud_loop(ecld, 1, 10) && run){
 		if(i<MESSAGE_COUNT){
-			mosquitto_publish(mosq, NULL, "perf/test", MESSAGE_SIZE, &buf[i*MESSAGE_SIZE], 0, false);
+			eecloud_publish(ecld, NULL, "perf/test", MESSAGE_SIZE, &buf[i*MESSAGE_SIZE], 0, false);
 			i++;
 		}
 	}
@@ -128,8 +128,8 @@ int main(int argc, char *argv[])
 
 	printf("Start: %g\nStop: %g\nDiff: %g\nMessages/s: %g\n", dstart, dstop, diff, (double)MESSAGE_COUNT/diff);
 
-	mosquitto_destroy(mosq);
-	mosquitto_lib_cleanup();
+	eecloud_destroy(ecld);
+	eecloud_lib_cleanup();
 
 	return 0;
 }

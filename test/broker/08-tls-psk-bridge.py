@@ -21,7 +21,7 @@ cmd_subfolder = os.path.realpath(os.path.abspath(os.path.join(os.path.split(insp
 if cmd_subfolder not in sys.path:
     sys.path.insert(0, cmd_subfolder)
 
-import mosq_test
+import ecld_test
 
 env = dict(os.environ)
 env['LD_LIBRARY_PATH'] = '../../lib:../../lib/cpp'
@@ -34,31 +34,31 @@ env['PYTHONPATH'] = '../../lib/python:'+pp
 
 rc = 1
 keepalive = 60
-connect_packet = mosq_test.gen_connect("no-psk-test-client", keepalive=keepalive)
-connack_packet = mosq_test.gen_connack(rc=0)
+connect_packet = ecld_test.gen_connect("no-psk-test-client", keepalive=keepalive)
+connack_packet = ecld_test.gen_connack(rc=0)
 
 mid = 1
-subscribe_packet = mosq_test.gen_subscribe(mid, "psk/test", 0)
-suback_packet = mosq_test.gen_suback(mid, 0)
+subscribe_packet = ecld_test.gen_subscribe(mid, "psk/test", 0)
+suback_packet = ecld_test.gen_suback(mid, 0)
 
-publish_packet = mosq_test.gen_publish(topic="psk/test", payload="message", qos=0)
+publish_packet = ecld_test.gen_publish(topic="psk/test", payload="message", qos=0)
 
-bridge_cmd = ['../../src/mosquitto', '-c', '08-tls-psk-bridge.conf2']
-broker = mosq_test.start_broker(filename=os.path.basename(__file__))
-bridge = mosq_test.start_broker(filename=os.path.basename(__file__)+'_bridge', cmd=bridge_cmd, port=1890)
+bridge_cmd = ['../../src/eecloud', '-c', '08-tls-psk-bridge.conf2']
+broker = ecld_test.start_broker(filename=os.path.basename(__file__))
+bridge = ecld_test.start_broker(filename=os.path.basename(__file__)+'_bridge', cmd=bridge_cmd, port=1890)
 
 pub = None
 try:
-    sock = mosq_test.do_client_connect(connect_packet, connack_packet, timeout=30)
+    sock = ecld_test.do_client_connect(connect_packet, connack_packet, timeout=30)
     sock.send(subscribe_packet)
 
-    if mosq_test.expect_packet(sock, "suback", suback_packet):
+    if ecld_test.expect_packet(sock, "suback", suback_packet):
         pub = subprocess.Popen(['./c/08-tls-psk-bridge.test'], env=env, stdout=subprocess.PIPE)
         if pub.wait():
             raise ValueError
             exit(1)
 
-        if mosq_test.expect_packet(sock, "publish", publish_packet):
+        if ecld_test.expect_packet(sock, "publish", publish_packet):
             rc = 0
     sock.close()
 finally:

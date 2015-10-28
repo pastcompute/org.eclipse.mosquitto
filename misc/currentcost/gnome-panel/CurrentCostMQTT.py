@@ -3,14 +3,14 @@
 import gnomeapplet
 import gobject
 import gtk
-import mosquitto
+import eecloud
 import os
 import platform
 import pygtk
 import sys
 
 class CurrentCostMQTT(gnomeapplet.Applet):
-    def on_message(self, mosq, obj, msg):
+    def on_message(self, ecld, obj, msg):
         # Message format is "power"
         self.label.set_text(msg.payload+"W")
 
@@ -41,11 +41,11 @@ class CurrentCostMQTT(gnomeapplet.Applet):
         self.applet.add(self.event_box)
         self.applet.set_background_widget(applet)
         self.applet.show_all()
-        self.mosq = mosquitto.Mosquitto()
-        self.mosq.on_message = self.on_message
-        self.mosq.connect("localhost")
-        self.mosq.loop_start()
-        self.mosq.subscribe("sensors/cc128/ch1", 0)
+        self.ecld = eecloud.Eecloud()
+        self.ecld.on_message = self.on_message
+        self.ecld.connect("localhost")
+        self.ecld.loop_start()
+        self.ecld.subscribe("sensors/cc128/ch1", 0)
         self.applet.connect('change-background', self.on_change_background)
 
 def CurrentCostMQTT_factory(applet, iid):

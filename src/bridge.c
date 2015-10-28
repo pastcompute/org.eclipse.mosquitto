@@ -29,23 +29,23 @@ Contributors:
 
 #include <config.h>
 
-#include <mosquitto.h>
-#include <mosquitto_broker.h>
-#include <mosquitto_internal.h>
-#include <net_mosq.h>
-#include <memory_mosq.h>
-#include <send_mosq.h>
-#include <time_mosq.h>
-#include <tls_mosq.h>
-#include <util_mosq.h>
-#include <will_mosq.h>
+#include <eecloud.h>
+#include <eecloud_broker.h>
+#include <eecloud_internal.h>
+#include <net_ecld.h>
+#include <memory_ecld.h>
+#include <send_ecld.h>
+#include <time_ecld.h>
+#include <tls_ecld.h>
+#include <util_ecld.h>
+#include <will_ecld.h>
 
 #ifdef WITH_BRIDGE
 
-int mqtt3_bridge_new(struct mosquitto_db *db, struct _mqtt3_bridge *bridge)
+int mqtt3_bridge_new(struct eecloud_db *db, struct _mqtt3_bridge *bridge)
 {
-	struct mosquitto *new_context = NULL;
-	struct mosquitto **bridges;
+	struct eecloud *new_context = NULL;
+	struct eecloud **bridges;
 	char hostname[256];
 	int len;
 	char *id, *local_id;
@@ -56,9 +56,9 @@ int mqtt3_bridge_new(struct mosquitto_db *db, struct _mqtt3_bridge *bridge)
 	if(!bridge->remote_clientid){
 		if(!gethostname(hostname, 256)){
 			len = strlen(hostname) + strlen(bridge->name) + 2;
-			id = _mosquitto_malloc(len);
+			id = _eecloud_malloc(len);
 			if(!id){
-				return MOSQ_ERR_NOMEM;
+				return ECLD_ERR_NOMEM;
 			}
 			snprintf(id, len, "%s.%s", hostname, bridge->name);
 		}else{
@@ -67,34 +67,34 @@ int mqtt3_bridge_new(struct mosquitto_db *db, struct _mqtt3_bridge *bridge)
 		bridge->remote_clientid = id;
 	}
 	if(bridge->local_clientid){
-		local_id = _mosquitto_strdup(bridge->local_clientid);
+		local_id = _eecloud_strdup(bridge->local_clientid);
 		if(!local_id){
-			return MOSQ_ERR_NOMEM;
+			return ECLD_ERR_NOMEM;
 		}
 	}else{
 		len = strlen(bridge->remote_clientid) + strlen("local.") + 2;
-		local_id = _mosquitto_malloc(len);
+		local_id = _eecloud_malloc(len);
 		if(!local_id){
-			return MOSQ_ERR_NOMEM;
+			return ECLD_ERR_NOMEM;
 		}
 		snprintf(local_id, len, "local.%s", bridge->remote_clientid);
-		bridge->local_clientid = _mosquitto_strdup(local_id);
+		bridge->local_clientid = _eecloud_strdup(local_id);
 		if(!bridge->local_clientid){
-			_mosquitto_free(local_id);
-			return MOSQ_ERR_NOMEM;
+			_eecloud_free(local_id);
+			return ECLD_ERR_NOMEM;
 		}
 	}
 
 	HASH_FIND(hh_id, db->contexts_by_id, local_id, strlen(local_id), new_context);
 	if(new_context){
 		/* (possible from persistent db) */
-		_mosquitto_free(local_id);
+		_eecloud_free(local_id);
 	}else{
 		/* id wasn't found, so generate a new context */
 		new_context = mqtt3_context_init(db, -1);
 		if(!new_context){
-			_mosquitto_free(local_id);
-			return MOSQ_ERR_NOMEM;
+			_eecloud_free(local_id);
+			return ECLD_ERR_NOMEM;
 		}
 		new_context->id = local_id;
 		HASH_ADD_KEYPTR(hh_id, db->contexts_by_id, new_context->id, strlen(new_context->id), new_context);
@@ -122,19 +122,19 @@ int mqtt3_bridge_new(struct mosquitto_db *db, struct _mqtt3_bridge *bridge)
 	bridge->try_private_accepted = true;
 	new_context->protocol = bridge->protocol_version;
 
-	bridges = _mosquitto_realloc(db->bridges, (db->bridge_count+1)*sizeof(struct mosquitto *));
+	bridges = _eecloud_realloc(db->bridges, (db->bridge_count+1)*sizeof(struct eecloud *));
 	if(bridges){
 		db->bridges = bridges;
 		db->bridge_count++;
 		db->bridges[db->bridge_count-1] = new_context;
 	}else{
-		return MOSQ_ERR_NOMEM;
+		return ECLD_ERR_NOMEM;
 	}
 
 	return mqtt3_bridge_connect(db, new_context);
 }
 
-int mqtt3_bridge_connect(struct mosquitto_db *db, struct mosquitto *context)
+int mqtt3_bridge_connect(struct eecloud_db *db, struct eecloud *context)
 {
 	int rc;
 	int i;
@@ -142,12 +142,12 @@ int mqtt3_bridge_connect(struct mosquitto_db *db, struct mosquitto *context)
 	int notification_topic_len;
 	uint8_t notification_payload;
 
-	if(!context || !context->bridge) return MOSQ_ERR_INVAL;
+	if(!context || !context->bridge) return ECLD_ERR_INVAL;
 
-	context->state = mosq_cs_new;
+	context->state = ecld_cs_new;
 	context->sock = INVALID_SOCKET;
-	context->last_msg_in = mosquitto_time();
-	context->last_msg_out = mosquitto_time();
+	context->last_msg_in = eecloud_time();
+	context->last_msg_out = eecloud_time();
 	context->keepalive = context->bridge->keepalive;
 	context->clean_session = context->bridge->clean_session;
 	context->in_packet.payload = NULL;
@@ -168,7 +168,7 @@ int mqtt3_bridge_connect(struct mosquitto_db *db, struct mosquitto *context)
 
 	for(i=0; i<context->bridge->topic_count; i++){
 		if(context->bridge->topics[i].direction == bd_out || context->bridge->topics[i].direction == bd_both){
-			_mosquitto_log_printf(NULL, MOSQ_LOG_DEBUG, "Bridge %s doing local SUBSCRIBE on topic %s", context->id, context->bridge->topics[i].local_topic);
+			_eecloud_log_printf(NULL, ECLD_LOG_DEBUG, "Bridge %s doing local SUBSCRIBE on topic %s", context->id, context->bridge->topics[i].local_topic);
 			if(mqtt3_sub_add(db, context, context->bridge->topics[i].local_topic, context->bridge->topics[i].qos, &db->subs)) return 1;
 		}
 	}
@@ -181,14 +181,14 @@ int mqtt3_bridge_connect(struct mosquitto_db *db, struct mosquitto *context)
 				context->bridge->initial_notification_done = true;
 			}
 			notification_payload = '0';
-			rc = _mosquitto_will_set(context, context->bridge->notification_topic, 1, &notification_payload, 1, true);
-			if(rc != MOSQ_ERR_SUCCESS){
+			rc = _eecloud_will_set(context, context->bridge->notification_topic, 1, &notification_payload, 1, true);
+			if(rc != ECLD_ERR_SUCCESS){
 				return rc;
 			}
 		}else{
 			notification_topic_len = strlen(context->bridge->remote_clientid)+strlen("$SYS/broker/connection//state");
-			notification_topic = _mosquitto_malloc(sizeof(char)*(notification_topic_len+1));
-			if(!notification_topic) return MOSQ_ERR_NOMEM;
+			notification_topic = _eecloud_malloc(sizeof(char)*(notification_topic_len+1));
+			if(!notification_topic) return ECLD_ERR_NOMEM;
 
 			snprintf(notification_topic, notification_topic_len+1, "$SYS/broker/connection/%s/state", context->bridge->remote_clientid);
 
@@ -199,23 +199,23 @@ int mqtt3_bridge_connect(struct mosquitto_db *db, struct mosquitto *context)
 			}
 
 			notification_payload = '0';
-			rc = _mosquitto_will_set(context, notification_topic, 1, &notification_payload, 1, true);
-			_mosquitto_free(notification_topic);
-			if(rc != MOSQ_ERR_SUCCESS){
+			rc = _eecloud_will_set(context, notification_topic, 1, &notification_payload, 1, true);
+			_eecloud_free(notification_topic);
+			if(rc != ECLD_ERR_SUCCESS){
 				return rc;
 			}
 		}
 	}
 
-	_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "Connecting bridge %s (%s:%d)", context->bridge->name, context->bridge->addresses[context->bridge->cur_address].address, context->bridge->addresses[context->bridge->cur_address].port);
-	rc = _mosquitto_socket_connect(context, context->bridge->addresses[context->bridge->cur_address].address, context->bridge->addresses[context->bridge->cur_address].port, NULL, false);
+	_eecloud_log_printf(NULL, ECLD_LOG_NOTICE, "Connecting bridge %s (%s:%d)", context->bridge->name, context->bridge->addresses[context->bridge->cur_address].address, context->bridge->addresses[context->bridge->cur_address].port);
+	rc = _eecloud_socket_connect(context, context->bridge->addresses[context->bridge->cur_address].address, context->bridge->addresses[context->bridge->cur_address].port, NULL, false);
 	if(rc > 0 ){
-		if(rc == MOSQ_ERR_TLS){
+		if(rc == ECLD_ERR_TLS){
 			return rc; /* Error already printed */
-		}else if(rc == MOSQ_ERR_ERRNO){
-			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error creating bridge: %s.", strerror(errno));
-		}else if(rc == MOSQ_ERR_EAI){
-			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error creating bridge: %s.", gai_strerror(errno));
+		}else if(rc == ECLD_ERR_ERRNO){
+			_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error creating bridge: %s.", strerror(errno));
+		}else if(rc == ECLD_ERR_EAI){
+			_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error creating bridge: %s.", gai_strerror(errno));
 		}
 
 		return rc;
@@ -223,47 +223,47 @@ int mqtt3_bridge_connect(struct mosquitto_db *db, struct mosquitto *context)
 
 	HASH_ADD(hh_sock, db->contexts_by_sock, sock, sizeof(context->sock), context);
 
-	if(rc == MOSQ_ERR_CONN_PENDING){
-		context->state = mosq_cs_connect_pending;
+	if(rc == ECLD_ERR_CONN_PENDING){
+		context->state = ecld_cs_connect_pending;
 	}
-	rc = _mosquitto_send_connect(context, context->keepalive, context->clean_session);
-	if(rc == MOSQ_ERR_SUCCESS){
-		return MOSQ_ERR_SUCCESS;
-	}else if(rc == MOSQ_ERR_ERRNO && errno == ENOTCONN){
-		return MOSQ_ERR_SUCCESS;
+	rc = _eecloud_send_connect(context, context->keepalive, context->clean_session);
+	if(rc == ECLD_ERR_SUCCESS){
+		return ECLD_ERR_SUCCESS;
+	}else if(rc == ECLD_ERR_ERRNO && errno == ENOTCONN){
+		return ECLD_ERR_SUCCESS;
 	}else{
-		if(rc == MOSQ_ERR_TLS){
+		if(rc == ECLD_ERR_TLS){
 			return rc; /* Error already printed */
-		}else if(rc == MOSQ_ERR_ERRNO){
-			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error creating bridge: %s.", strerror(errno));
-		}else if(rc == MOSQ_ERR_EAI){
-			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error creating bridge: %s.", gai_strerror(errno));
+		}else if(rc == ECLD_ERR_ERRNO){
+			_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error creating bridge: %s.", strerror(errno));
+		}else if(rc == ECLD_ERR_EAI){
+			_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error creating bridge: %s.", gai_strerror(errno));
 		}
-		_mosquitto_socket_close(db, context);
+		_eecloud_socket_close(db, context);
 		return rc;
 	}
 }
 
-void mqtt3_bridge_packet_cleanup(struct mosquitto *context)
+void mqtt3_bridge_packet_cleanup(struct eecloud *context)
 {
-	struct _mosquitto_packet *packet;
+	struct _eecloud_packet *packet;
 	if(!context) return;
 
 	if(context->current_out_packet){
-		_mosquitto_packet_cleanup(context->current_out_packet);
-		_mosquitto_free(context->current_out_packet);
+		_eecloud_packet_cleanup(context->current_out_packet);
+		_eecloud_free(context->current_out_packet);
 		context->current_out_packet = NULL;
 	}
     while(context->out_packet){
-		_mosquitto_packet_cleanup(context->out_packet);
+		_eecloud_packet_cleanup(context->out_packet);
 		packet = context->out_packet;
 		context->out_packet = context->out_packet->next;
-		_mosquitto_free(packet);
+		_eecloud_free(packet);
 	}
 	context->out_packet = NULL;
 	context->out_packet_last = NULL;
 
-	_mosquitto_packet_cleanup(&(context->in_packet));
+	_eecloud_packet_cleanup(&(context->in_packet));
 }
 
 #endif

@@ -11,53 +11,53 @@ cmd_subfolder = os.path.realpath(os.path.abspath(os.path.join(os.path.split(insp
 if cmd_subfolder not in sys.path:
     sys.path.insert(0, cmd_subfolder)
 
-import mosq_test
+import ecld_test
 
 rc = 1
 mid = 3265
 keepalive = 60
-connect_packet = mosq_test.gen_connect("pub-qos2-disco-test", keepalive=keepalive, clean_session=False)
-connack_packet = mosq_test.gen_connack(rc=0)
+connect_packet = ecld_test.gen_connect("pub-qos2-disco-test", keepalive=keepalive, clean_session=False)
+connack_packet = ecld_test.gen_connack(rc=0)
 
-subscribe_packet = mosq_test.gen_subscribe(mid, "qos2/disconnect/test", 2)
-suback_packet = mosq_test.gen_suback(mid, 2)
+subscribe_packet = ecld_test.gen_subscribe(mid, "qos2/disconnect/test", 2)
+suback_packet = ecld_test.gen_suback(mid, 2)
 
 mid = 1
-publish_packet = mosq_test.gen_publish("qos2/disconnect/test", qos=2, mid=mid, payload="disconnect-message")
-publish_dup_packet = mosq_test.gen_publish("qos2/disconnect/test", qos=2, mid=mid, payload="disconnect-message", dup=True)
-pubrec_packet = mosq_test.gen_pubrec(mid)
-pubrel_packet = mosq_test.gen_pubrel(mid)
-pubrel_dup_packet = mosq_test.gen_pubrel(mid, dup=True)
-pubcomp_packet = mosq_test.gen_pubcomp(mid)
+publish_packet = ecld_test.gen_publish("qos2/disconnect/test", qos=2, mid=mid, payload="disconnect-message")
+publish_dup_packet = ecld_test.gen_publish("qos2/disconnect/test", qos=2, mid=mid, payload="disconnect-message", dup=True)
+pubrec_packet = ecld_test.gen_pubrec(mid)
+pubrel_packet = ecld_test.gen_pubrel(mid)
+pubrel_dup_packet = ecld_test.gen_pubrel(mid, dup=True)
+pubcomp_packet = ecld_test.gen_pubcomp(mid)
 
 mid = 3266
-publish2_packet = mosq_test.gen_publish("qos1/outgoing", qos=1, mid=mid, payload="outgoing-message")
-puback2_packet = mosq_test.gen_puback(mid)
+publish2_packet = ecld_test.gen_publish("qos1/outgoing", qos=1, mid=mid, payload="outgoing-message")
+puback2_packet = ecld_test.gen_puback(mid)
 
-broker = mosq_test.start_broker(filename=os.path.basename(__file__))
+broker = ecld_test.start_broker(filename=os.path.basename(__file__))
 
 try:
-    sock = mosq_test.do_client_connect(connect_packet, connack_packet)
+    sock = ecld_test.do_client_connect(connect_packet, connack_packet)
 
     sock.send(publish_packet)
-    if mosq_test.expect_packet(sock, "pubrec", pubrec_packet):
+    if ecld_test.expect_packet(sock, "pubrec", pubrec_packet):
         # We're now going to disconnect and pretend we didn't receive the pubrec.
         sock.close()
 
-        sock = mosq_test.do_client_connect(connect_packet, connack_packet)
+        sock = ecld_test.do_client_connect(connect_packet, connack_packet)
         sock.send(publish_dup_packet)
 
-        if mosq_test.expect_packet(sock, "pubrec", pubrec_packet):
+        if ecld_test.expect_packet(sock, "pubrec", pubrec_packet):
             sock.send(pubrel_packet)
 
-            if mosq_test.expect_packet(sock, "pubcomp", pubcomp_packet):
+            if ecld_test.expect_packet(sock, "pubcomp", pubcomp_packet):
                 # Again, pretend we didn't receive this pubcomp
                 sock.close()
 
-                sock = mosq_test.do_client_connect(connect_packet, connack_packet)
+                sock = ecld_test.do_client_connect(connect_packet, connack_packet)
                 sock.send(pubrel_dup_packet)
 
-                if mosq_test.expect_packet(sock, "pubcomp", pubcomp_packet):
+                if ecld_test.expect_packet(sock, "pubcomp", pubcomp_packet):
                     rc = 0
 
                 sock.close()

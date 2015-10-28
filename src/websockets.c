@@ -10,7 +10,7 @@ modification, are permitted provided that the following conditions are met:
 2. Redistributions in binary form must reproduce the above copyright
    notice, this list of conditions and the following disclaimer in the
    documentation and/or other materials provided with the distribution.
-3. Neither the name of mosquitto nor the names of its
+3. Neither the name of eecloud nor the names of its
    contributors may be used to endorse or promote products derived from
    this software without specific prior written permission.
 
@@ -30,10 +30,10 @@ POSSIBILITY OF SUCH DAMAGE.
 #ifdef WITH_WEBSOCKETS
 
 #include <libwebsockets.h>
-#include "mosquitto_internal.h"
-#include "mosquitto_broker.h"
+#include "eecloud_internal.h"
+#include "eecloud_broker.h"
 #include "mqtt3_protocol.h"
-#include "memory_mosq.h"
+#include "memory_ecld.h"
 
 #include <stdlib.h>
 #include <errno.h>
@@ -47,7 +47,7 @@ extern unsigned long g_msgs_sent;
 extern unsigned long g_pub_msgs_received;
 extern unsigned long g_pub_msgs_sent;
 #endif
-extern struct mosquitto_db int_db;
+extern struct eecloud_db int_db;
 
 static int callback_mqtt(struct libwebsocket_context *context,
 		struct libwebsocket *wsi,
@@ -62,7 +62,7 @@ static int callback_http(struct libwebsocket_context *context,
 	void *in,
 	size_t len);
 
-enum mosq_ws_protocols {
+enum ecld_ws_protocols {
 	PROTOCOL_HTTP = 0,
 	PROTOCOL_MQTT,
 	DEMO_PROTOCOL_COUNT
@@ -126,12 +126,12 @@ static struct libwebsocket_protocols protocols[] = {
 #endif
 };
 
-static void easy_address(int sock, struct mosquitto *mosq)
+static void easy_address(int sock, struct eecloud *ecld)
 {
 	char address[1024];
 
-	if(!_mosquitto_socket_get_address(sock, address, 1024)){
-		mosq->address = _mosquitto_strdup(address);
+	if(!_eecloud_socket_get_address(sock, address, 1024)){
+		ecld->address = _eecloud_strdup(address);
 	}
 }
 
@@ -142,9 +142,9 @@ static int callback_mqtt(struct libwebsocket_context *context,
 		void *in,
 		size_t len)
 {
-	struct mosquitto_db *db;
-	struct mosquitto *mosq = NULL;
-	struct _mosquitto_packet *packet;
+	struct eecloud_db *db;
+	struct eecloud *ecld = NULL;
+	struct _eecloud_packet *packet;
 	int count;
 	struct libws_mqtt_data *u = (struct libws_mqtt_data *)user;
 	size_t pos;
@@ -156,19 +156,19 @@ static int callback_mqtt(struct libwebsocket_context *context,
 
 	switch (reason) {
 		case LWS_CALLBACK_ESTABLISHED:
-			mosq = mqtt3_context_init(db, WEBSOCKET_CLIENT);
-			if(mosq){
-				mosq->ws_context = context;
-				mosq->wsi = wsi;
-				u->mosq = mosq;
+			ecld = mqtt3_context_init(db, WEBSOCKET_CLIENT);
+			if(ecld){
+				ecld->ws_context = context;
+				ecld->wsi = wsi;
+				u->ecld = ecld;
 			}else{
 				return -1;
 			}
-			easy_address(libwebsocket_get_socket_fd(wsi), mosq);
-			if(!mosq->address){
+			easy_address(libwebsocket_get_socket_fd(wsi), ecld);
+			if(!ecld->address){
 				/* getpeername and inet_ntop failed and not a bridge */
-				_mosquitto_free(mosq);
-				u->mosq = NULL;
+				_eecloud_free(ecld);
+				u->ecld = NULL;
 				return -1;
 			}
 			break;
@@ -177,10 +177,10 @@ static int callback_mqtt(struct libwebsocket_context *context,
 			if(!u){
 				return -1;
 			}
-			mosq = u->mosq;
-			if(mosq){
-				mosq->wsi = NULL;
-				do_disconnect(db, mosq);
+			ecld = u->ecld;
+			if(ecld){
+				ecld->wsi = NULL;
+				do_disconnect(db, ecld);
 			}
 			break;
 
@@ -188,21 +188,21 @@ static int callback_mqtt(struct libwebsocket_context *context,
 			if(!u){
 				return -1;
 			}
-			mosq = u->mosq;
-			if(!mosq || mosq->state == mosq_cs_disconnect_ws || mosq->state == mosq_cs_disconnecting){
+			ecld = u->ecld;
+			if(!ecld || ecld->state == ecld_cs_disconnect_ws || ecld->state == ecld_cs_disconnecting){
 				return -1;
 			}
 
-			if(mosq->out_packet && !mosq->current_out_packet){
-				mosq->current_out_packet = mosq->out_packet;
-				mosq->out_packet = mosq->out_packet->next;
-				if(!mosq->out_packet){
-					mosq->out_packet_last = NULL;
+			if(ecld->out_packet && !ecld->current_out_packet){
+				ecld->current_out_packet = ecld->out_packet;
+				ecld->out_packet = ecld->out_packet->next;
+				if(!ecld->out_packet){
+					ecld->out_packet_last = NULL;
 				}
 			}
 
-			while(mosq->current_out_packet && !lws_send_pipe_choked(mosq->wsi)){
-				packet = mosq->current_out_packet;
+			while(ecld->current_out_packet && !lws_send_pipe_choked(ecld->wsi)){
+				packet = ecld->current_out_packet;
 
 				if(packet->pos == 0 && packet->to_process == packet->packet_length){
 					/* First time this packet has been dealt with.
@@ -229,48 +229,48 @@ static int callback_mqtt(struct libwebsocket_context *context,
 				}
 
 				/* Free data and reset values */
-				mosq->current_out_packet = mosq->out_packet;
-				if(mosq->out_packet){
-					mosq->out_packet = mosq->out_packet->next;
-					if(!mosq->out_packet){
-						mosq->out_packet_last = NULL;
+				ecld->current_out_packet = ecld->out_packet;
+				if(ecld->out_packet){
+					ecld->out_packet = ecld->out_packet->next;
+					if(!ecld->out_packet){
+						ecld->out_packet_last = NULL;
 					}
 				}
 
-				_mosquitto_packet_cleanup(packet);
-				_mosquitto_free(packet);
+				_eecloud_packet_cleanup(packet);
+				_eecloud_free(packet);
 
-				mosq->last_msg_out = mosquitto_time();
+				ecld->last_msg_out = eecloud_time();
 
-				if(mosq->current_out_packet){
-					libwebsocket_callback_on_writable(mosq->ws_context, mosq->wsi);
+				if(ecld->current_out_packet){
+					libwebsocket_callback_on_writable(ecld->ws_context, ecld->wsi);
 				}
 			}
-			if(mosq->current_out_packet){
-				libwebsocket_callback_on_writable(mosq->ws_context, mosq->wsi);
+			if(ecld->current_out_packet){
+				libwebsocket_callback_on_writable(ecld->ws_context, ecld->wsi);
 			}
 			break;
 
 		case LWS_CALLBACK_RECEIVE:
-			if(!u || !u->mosq){
+			if(!u || !u->ecld){
 				return -1;
 			}
-			mosq = u->mosq;
+			ecld = u->ecld;
 			pos = 0;
 			buf = (uint8_t *)in;
 #ifdef WITH_SYS_TREE
 			g_bytes_received += len;
 #endif
 			while(pos < len){
-				if(!mosq->in_packet.command){
-					mosq->in_packet.command = buf[pos];
+				if(!ecld->in_packet.command){
+					ecld->in_packet.command = buf[pos];
 					pos++;
 					/* Clients must send CONNECT as their first command. */
-					if(mosq->state == mosq_cs_new && (mosq->in_packet.command&0xF0) != CONNECT){
+					if(ecld->state == ecld_cs_new && (ecld->in_packet.command&0xF0) != CONNECT){
 						return -1;
 					}
 				}
-				if(mosq->in_packet.remaining_count <= 0){
+				if(ecld->in_packet.remaining_count <= 0){
 					do{
 						if(pos == len){
 							return 0;
@@ -278,57 +278,57 @@ static int callback_mqtt(struct libwebsocket_context *context,
 						byte = buf[pos];
 						pos++;
 
-						mosq->in_packet.remaining_count--;
+						ecld->in_packet.remaining_count--;
 						/* Max 4 bytes length for remaining length as defined by protocol.
 						* Anything more likely means a broken/malicious client.
 						*/
-						if(mosq->in_packet.remaining_count < -4){
+						if(ecld->in_packet.remaining_count < -4){
 							return -1;
 						}
 
-						mosq->in_packet.remaining_length += (byte & 127) * mosq->in_packet.remaining_mult;
-						mosq->in_packet.remaining_mult *= 128;
+						ecld->in_packet.remaining_length += (byte & 127) * ecld->in_packet.remaining_mult;
+						ecld->in_packet.remaining_mult *= 128;
 					}while((byte & 128) != 0);
-					mosq->in_packet.remaining_count *= -1;
+					ecld->in_packet.remaining_count *= -1;
 
-					if(mosq->in_packet.remaining_length > 0){
-						mosq->in_packet.payload = _mosquitto_malloc(mosq->in_packet.remaining_length*sizeof(uint8_t));
-						if(!mosq->in_packet.payload){
+					if(ecld->in_packet.remaining_length > 0){
+						ecld->in_packet.payload = _eecloud_malloc(ecld->in_packet.remaining_length*sizeof(uint8_t));
+						if(!ecld->in_packet.payload){
 							return -1;
 						}
-						mosq->in_packet.to_process = mosq->in_packet.remaining_length;
+						ecld->in_packet.to_process = ecld->in_packet.remaining_length;
 					}
 				}
-				if(mosq->in_packet.to_process>0){
-					if(len - pos >= mosq->in_packet.to_process){
-						memcpy(&mosq->in_packet.payload[mosq->in_packet.pos], &buf[pos], mosq->in_packet.to_process);
-						mosq->in_packet.pos += mosq->in_packet.to_process;
-						pos += mosq->in_packet.to_process;
-						mosq->in_packet.to_process = 0;
+				if(ecld->in_packet.to_process>0){
+					if(len - pos >= ecld->in_packet.to_process){
+						memcpy(&ecld->in_packet.payload[ecld->in_packet.pos], &buf[pos], ecld->in_packet.to_process);
+						ecld->in_packet.pos += ecld->in_packet.to_process;
+						pos += ecld->in_packet.to_process;
+						ecld->in_packet.to_process = 0;
 					}else{
-						memcpy(&mosq->in_packet.payload[mosq->in_packet.pos], &buf[pos], len-pos);
-						mosq->in_packet.pos += len-pos;
-						mosq->in_packet.to_process -= len-pos;
+						memcpy(&ecld->in_packet.payload[ecld->in_packet.pos], &buf[pos], len-pos);
+						ecld->in_packet.pos += len-pos;
+						ecld->in_packet.to_process -= len-pos;
 						return 0;
 					}
 				}
 				/* All data for this packet is read. */
-				mosq->in_packet.pos = 0;
+				ecld->in_packet.pos = 0;
 #ifdef WITH_SYS_TREE
 				g_msgs_received++;
-				if(((mosq->in_packet.command)&0xF5) == PUBLISH){
+				if(((ecld->in_packet.command)&0xF5) == PUBLISH){
 					g_pub_msgs_received++;
 				}
 #endif
-				rc = mqtt3_packet_handle(db, mosq);
+				rc = mqtt3_packet_handle(db, ecld);
 
 				/* Free data and reset values */
-				_mosquitto_packet_cleanup(&mosq->in_packet);
+				_eecloud_packet_cleanup(&ecld->in_packet);
 
-				mosq->last_msg_in = mosquitto_time();
+				ecld->last_msg_in = eecloud_time();
 
 				if(rc){
-					do_disconnect(db, mosq);
+					do_disconnect(db, ecld);
 					return -1;
 				}
 			}
@@ -388,7 +388,7 @@ static int callback_http(struct libwebsocket_context *context,
 			}else{
 				slen = strlen(http_dir) + strlen((char *)in) + 2;
 			}
-			filename = _mosquitto_malloc(slen);
+			filename = _eecloud_malloc(slen);
 			if(!filename){
 				libwebsockets_return_http_status(context, wsi, HTTP_STATUS_INTERNAL_SERVER_ERROR, NULL);
 				return -1;
@@ -404,14 +404,14 @@ static int callback_http(struct libwebsocket_context *context,
 #ifdef WIN32
 			filename_canonical = _fullpath(NULL, filename, 0);
 			if(!filename_canonical){
-				_mosquitto_free(filename);
+				_eecloud_free(filename);
 				libwebsockets_return_http_status(context, wsi, HTTP_STATUS_INTERNAL_SERVER_ERROR, NULL);
 				return -1;
 			}
 #else
 			filename_canonical = realpath(filename, NULL);
 			if(!filename_canonical){
-				_mosquitto_free(filename);
+				_eecloud_free(filename);
 				if(errno == EACCES){
 					libwebsockets_return_http_status(context, wsi, HTTP_STATUS_FORBIDDEN, NULL);
 				}else if(errno == EINVAL || errno == EIO || errno == ELOOP){
@@ -427,15 +427,15 @@ static int callback_http(struct libwebsocket_context *context,
 			if(strncmp(http_dir, filename_canonical, strlen(http_dir))){
 				/* Requested file isn't within http_dir, deny access. */
 				free(filename_canonical);
-				_mosquitto_free(filename);
+				_eecloud_free(filename);
 				libwebsockets_return_http_status(context, wsi, HTTP_STATUS_FORBIDDEN, NULL);
 				return -1;
 			}
 			free(filename_canonical);
 
-			_mosquitto_log_printf(NULL, MOSQ_LOG_DEBUG, "http serving file \"%s\".", filename);
+			_eecloud_log_printf(NULL, ECLD_LOG_DEBUG, "http serving file \"%s\".", filename);
 			u->fptr = fopen(filename, "rb");
-			_mosquitto_free(filename);
+			_eecloud_free(filename);
 			if(!u->fptr){
 				libwebsockets_return_http_status(context, wsi, HTTP_STATUS_NOT_FOUND, NULL);
 				return -1;
@@ -455,7 +455,7 @@ static int callback_http(struct libwebsocket_context *context,
 			}
 
 			buflen = snprintf((char *)buf, 4096, "HTTP/1.0 200 OK\r\n"
-												"Server: mosquitto\r\n"
+												"Server: eecloud\r\n"
 												"Content-Length: %u\r\n\r\n",
 												(unsigned int)filestat.st_size);
             if(libwebsocket_write(wsi, buf, buflen, LWS_WRITE_HTTP) < 0){
@@ -518,10 +518,10 @@ static void log_wrap(int level, const char *line)
 {
 	char *l = (char *)line;
 	l[strlen(line)-1] = '\0'; // Remove \n
-	_mosquitto_log_printf(NULL, MOSQ_LOG_WEBSOCKETS, "%s", l);
+	_eecloud_log_printf(NULL, ECLD_LOG_WEBSOCKETS, "%s", l);
 }
 
-struct libwebsocket_context *mosq_websockets_init(struct _mqtt3_listener *listener, int log_level)
+struct libwebsocket_context *ecld_websockets_init(struct _mqtt3_listener *listener, int log_level)
 {
 	struct lws_context_creation_info info;
 	struct libwebsocket_protocols *p;
@@ -532,9 +532,9 @@ struct libwebsocket_context *mosq_websockets_init(struct _mqtt3_listener *listen
 	/* Count valid protocols */
 	for(protocol_count=0; protocols[protocol_count].name; protocol_count++);
 
-	p = _mosquitto_calloc(protocol_count+1, sizeof(struct libwebsocket_protocols));
+	p = _eecloud_calloc(protocol_count+1, sizeof(struct libwebsocket_protocols));
 	if(!p){
-		_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Out of memory.");
+		_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Out of memory.");
 		return NULL;
 	}
 	for(i=0; protocols[i].name; i++){
@@ -564,9 +564,9 @@ struct libwebsocket_context *mosq_websockets_init(struct _mqtt3_listener *listen
 	info.options |= LWS_SERVER_OPTION_DISABLE_IPV6;
 #endif
 
-	user = _mosquitto_calloc(1, sizeof(struct libws_mqtt_hack));
+	user = _eecloud_calloc(1, sizeof(struct libws_mqtt_hack));
 	if(!user){
-		_mosquitto_free(p);
+		_eecloud_free(p);
 		return NULL;
 	}
 
@@ -577,8 +577,8 @@ struct libwebsocket_context *mosq_websockets_init(struct _mqtt3_listener *listen
 		user->http_dir = realpath(listener->http_dir, NULL);
 #endif
 		if(!user->http_dir){
-			_mosquitto_free(user);
-			_mosquitto_free(p);
+			_eecloud_free(user);
+			_eecloud_free(p);
 			return NULL;
 		}
 	}
@@ -588,7 +588,7 @@ struct libwebsocket_context *mosq_websockets_init(struct _mqtt3_listener *listen
 
 	lws_set_log_level(log_level, log_wrap);
 
-	_mosquitto_log_printf(NULL, MOSQ_LOG_INFO, "Opening websockets listen socket on port %d.", listener->port);
+	_eecloud_log_printf(NULL, ECLD_LOG_INFO, "Opening websockets listen socket on port %d.", listener->port);
 	return libwebsocket_create_context(&info);
 }
 

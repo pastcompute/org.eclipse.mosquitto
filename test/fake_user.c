@@ -10,7 +10,7 @@ modification, are permitted provided that the following conditions are met:
 2. Redistributions in binary form must reproduce the above copyright
    notice, this list of conditions and the following disclaimer in the
    documentation and/or other materials provided with the distribution.
-3. Neither the name of mosquitto nor the names of its
+3. Neither the name of eecloud nor the names of its
    contributors may be used to endorse or promote products derived from
    this software without specific prior written permission.
 
@@ -38,15 +38,15 @@ POSSIBILITY OF SUCH DAMAGE.
 #define snprintf sprintf_s
 #endif
 
-#include <mosquitto.h>
+#include <eecloud.h>
 
-void my_connect_callback(struct mosquitto *mosq, void *obj, int result)
+void my_connect_callback(struct eecloud *ecld, void *obj, int result)
 {
 	char topic[100];
 
 	if(!result){
 		snprintf(topic, 100, "fake/%d", getpid()%100);
-		mosquitto_subscribe(mosq, NULL, topic, rand()%3);
+		eecloud_subscribe(ecld, NULL, topic, rand()%3);
 	}
 }
 
@@ -57,7 +57,7 @@ int main(int argc, char *argv[])
 	int port = 1883;
 	int keepalive = 60;
 	bool clean_session = false;
-	struct mosquitto *mosq = NULL;
+	struct eecloud *ecld = NULL;
 	
 	void *will_payload = NULL;
 	long will_payloadlen = 0;
@@ -71,43 +71,43 @@ int main(int argc, char *argv[])
 	srand(pid);
 	snprintf(id, 30, "fake_user_%d", pid);
 
-	mosquitto_lib_init();
-	mosq = mosquitto_new(id, clean_session, NULL);
-	if(!mosq){
+	eecloud_lib_init();
+	ecld = eecloud_new(id, clean_session, NULL);
+	if(!ecld){
 		fprintf(stderr, "Error: Out of memory.\n");
 		return 1;
 	}
 
 	if(rand()%5 == 0){
 		snprintf(will_topic, 100, "fake/wills/%d", rand()%100);
-		if(mosquitto_will_set(mosq, will_topic, will_payloadlen, will_payload, will_qos, will_retain)){
+		if(eecloud_will_set(ecld, will_topic, will_payloadlen, will_payload, will_qos, will_retain)){
 			fprintf(stderr, "Error: Problem setting will.\n");
 			return 1;
 		}
 	}
-	mosquitto_connect_callback_set(mosq, my_connect_callback);
+	eecloud_connect_callback_set(ecld, my_connect_callback);
 	while(1){
 		clean_session = rand()%10==0?false:true;
 
-		if(mosquitto_connect(mosq, host, port, keepalive)){
+		if(eecloud_connect(ecld, host, port, keepalive)){
 			fprintf(stderr, "Unable to connect.\n");
 			return 1;
 		}
-		mosquitto_subscribe(mosq, NULL, "#", 0);
+		eecloud_subscribe(ecld, NULL, "#", 0);
 
-		while(!mosquitto_loop(mosq, -1, 5)){
+		while(!eecloud_loop(ecld, -1, 5)){
 			if(rand()%100==0){
 				snprintf(topic, 100, "fake/%d", rand()%100);
-				mosquitto_publish(mosq, NULL, topic, 10, "0123456789", rand()%3, rand()%2);
+				eecloud_publish(ecld, NULL, topic, 10, "0123456789", rand()%3, rand()%2);
 			}
 			if(rand()%50==0){
-				mosquitto_disconnect(mosq);
+				eecloud_disconnect(ecld);
 			}
 		}
 		sleep(10);
 	}
-	mosquitto_destroy(mosq);
-	mosquitto_lib_cleanup();
+	eecloud_destroy(ecld);
+	eecloud_lib_cleanup();
 
 	return 0;
 }

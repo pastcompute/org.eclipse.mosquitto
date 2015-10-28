@@ -30,7 +30,7 @@ Contributors:
 #define CLIENT_PUB 1
 #define CLIENT_SUB 2
 
-struct mosq_config {
+struct ecld_config {
 	char *id;
 	char *id_prefix;
 	int protocol_version;
@@ -88,10 +88,10 @@ struct mosq_config {
 #endif
 };
 
-int client_config_load(struct mosq_config *config, int pub_or_sub, int argc, char *argv[]);
-void client_config_cleanup(struct mosq_config *cfg);
-int client_opts_set(struct mosquitto *mosq, struct mosq_config *cfg);
-int client_id_generate(struct mosq_config *cfg, const char *id_base);
-int client_connect(struct mosquitto *mosq, struct mosq_config *cfg);
+int client_config_load(struct ecld_config *config, int pub_or_sub, int argc, char *argv[]);
+void client_config_cleanup(struct ecld_config *cfg);
+int client_opts_set(struct eecloud *ecld, struct ecld_config *cfg);
+int client_id_generate(struct ecld_config *cfg, const char *id_base);
+int client_connect(struct eecloud *ecld, struct ecld_config *cfg);
 
 #endif

@@ -1,22 +1,22 @@
-#include <mosquittopp.h>
+#include <eecloudpp.h>
 
 static int run = -1;
 
-class mosquittopp_test : public mosqpp::mosquittopp
+class eecloudpp_test : public ecldpp::eecloudpp
 {
 	public:
-		mosquittopp_test(const char *id);
+		eecloudpp_test(const char *id);
 
 		void on_connect(int rc);
 		void on_disconnect(int rc);
 		void on_subscribe(int mid, int qos_count, const int *granted_qos);
 };
 
-mosquittopp_test::mosquittopp_test(const char *id) : mosqpp::mosquittopp(id)
+eecloudpp_test::eecloudpp_test(const char *id) : ecldpp::eecloudpp(id)
 {
 }
 
-void mosquittopp_test::on_connect(int rc)
+void eecloudpp_test::on_connect(int rc)
 {
 	if(rc){
 		exit(1);
@@ -25,12 +25,12 @@ void mosquittopp_test::on_connect(int rc)
 	}
 }
 
-void mosquittopp_test::on_disconnect(int rc)
+void eecloudpp_test::on_disconnect(int rc)
 {
 	run = rc;
 }
 
-void mosquittopp_test::on_subscribe(int mid, int qos_count, const int *granted_qos)
+void eecloudpp_test::on_subscribe(int mid, int qos_count, const int *granted_qos)
 {
 	disconnect();
 }
@@ -38,19 +38,19 @@ void mosquittopp_test::on_subscribe(int mid, int qos_count, const int *granted_q
 
 int main(int argc, char *argv[])
 {
-	struct mosquittopp_test *mosq;
+	struct eecloudpp_test *ecld;
 
-	mosqpp::lib_init();
+	ecldpp::lib_init();
 
-	mosq = new mosquittopp_test("subscribe-qos1-test");
+	ecld = new eecloudpp_test("subscribe-qos1-test");
 
-	mosq->connect("localhost", 1888, 60);
+	ecld->connect("localhost", 1888, 60);
 
 	while(run == -1){
-		mosq->loop();
+		ecld->loop();
 	}
 
-	mosqpp::lib_cleanup();
+	ecldpp::lib_cleanup();
 
 	return run;
 }

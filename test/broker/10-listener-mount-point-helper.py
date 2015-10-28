@@ -10,16 +10,16 @@ cmd_subfolder = os.path.realpath(os.path.abspath(os.path.join(os.path.split(insp
 if cmd_subfolder not in sys.path:
     sys.path.insert(0, cmd_subfolder)
 
-import mosq_test
+import ecld_test
 
 rc = 1
 keepalive = 60
-connect_packet = mosq_test.gen_connect("test-helper", keepalive=keepalive)
-connack_packet = mosq_test.gen_connack(rc=0)
+connect_packet = ecld_test.gen_connect("test-helper", keepalive=keepalive)
+connack_packet = ecld_test.gen_connack(rc=0)
 
-publish_packet = mosq_test.gen_publish("test", qos=0, payload="mount point")
+publish_packet = ecld_test.gen_publish("test", qos=0, payload="mount point")
 
-sock = mosq_test.do_client_connect(connect_packet, connack_packet, port=1889, connack_error="helper connack")
+sock = ecld_test.do_client_connect(connect_packet, connack_packet, port=1889, connack_error="helper connack")
 sock.send(publish_packet)
 rc = 0
 sock.close()

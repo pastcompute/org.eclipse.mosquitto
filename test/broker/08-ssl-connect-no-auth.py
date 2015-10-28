@@ -18,14 +18,14 @@ cmd_subfolder = os.path.realpath(os.path.abspath(os.path.join(os.path.split(insp
 if cmd_subfolder not in sys.path:
     sys.path.insert(0, cmd_subfolder)
 
-import mosq_test
+import ecld_test
 
 rc = 1
 keepalive = 10
-connect_packet = mosq_test.gen_connect("connect-success-test", keepalive=keepalive)
-connack_packet = mosq_test.gen_connack(rc=0)
+connect_packet = ecld_test.gen_connect("connect-success-test", keepalive=keepalive)
+connack_packet = ecld_test.gen_connack(rc=0)
 
-broker = mosq_test.start_broker(filename=os.path.basename(__file__), port=1889)
+broker = ecld_test.start_broker(filename=os.path.basename(__file__), port=1889)
 
 try:
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -34,7 +34,7 @@ try:
     ssock.connect(("localhost", 1888))
     ssock.send(connect_packet)
 
-    if mosq_test.expect_packet(ssock, "connack", connack_packet):
+    if ecld_test.expect_packet(ssock, "connack", connack_packet):
         rc = 0
 
     ssock.close()

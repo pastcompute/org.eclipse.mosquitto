@@ -1,4 +1,4 @@
-# This file generates the keys and certificates used for testing mosquitto.
+# This file generates the keys and certificates used for testing eecloud.
 # None of the keys are encrypted, so do not just use this script to generate
 # files for your own use.
 
@@ -12,7 +12,7 @@ for a in root signing; do
 done
 rm -rf certs
 
-BASESUBJ="/C=GB/ST=Derbyshire/L=Derby/O=Mosquitto Project/OU=Testing"
+BASESUBJ="/C=GB/ST=Derbyshire/L=Derby/O=Eecloud Project/OU=Testing"
 SBASESUBJ="/C=GB/ST=Nottinghamshire/L=Nottingham/O=Server/OU=Production"
 BBASESUBJ="/C=GB/ST=Nottinghamshire/L=Nottingham/O=Server/OU=Bridge"
 

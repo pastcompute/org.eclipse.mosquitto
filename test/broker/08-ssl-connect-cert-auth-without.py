@@ -20,14 +20,14 @@ cmd_subfolder = os.path.realpath(os.path.abspath(os.path.join(os.path.split(insp
 if cmd_subfolder not in sys.path:
     sys.path.insert(0, cmd_subfolder)
 
-import mosq_test
+import ecld_test
 
 rc = 1
 keepalive = 10
-connect_packet = mosq_test.gen_connect("connect-cert-test", keepalive=keepalive)
-connack_packet = mosq_test.gen_connack(rc=0)
+connect_packet = ecld_test.gen_connect("connect-cert-test", keepalive=keepalive)
+connack_packet = ecld_test.gen_connack(rc=0)
 
-broker = mosq_test.start_broker(filename=os.path.basename(__file__), port=1889)
+broker = ecld_test.start_broker(filename=os.path.basename(__file__), port=1889)
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 ssock = ssl.wrap_socket(sock, ca_certs="../ssl/test-root-ca.crt", cert_reqs=ssl.CERT_REQUIRED)

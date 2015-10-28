@@ -1,7 +1,7 @@
 .PHONY: all test 01 02 03 04 08 09 clean reallyclean
 
 CFLAGS=-I../../../lib -Werror
-LIBS=../../../lib/libmosquitto.so.1
+LIBS=../../../lib/libeecloud.so.1
 
 all : 01 02 03 04 08 09
 

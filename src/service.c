@@ -18,7 +18,7 @@ Contributors:
 
 #include <windows.h>
 
-#include <memory_mosq.h>
+#include <memory_ecld.h>
 
 extern int run;
 SERVICE_STATUS_HANDLE service_handle = 0;
@@ -54,18 +54,18 @@ void __stdcall service_main(DWORD dwArgc, LPTSTR *lpszArgv)
 	char conf_path[MAX_PATH + 20];
 	int rc;
 
-	service_handle = RegisterServiceCtrlHandler("mosquitto", service_handler);
+	service_handle = RegisterServiceCtrlHandler("eecloud", service_handler);
 	if(service_handle){
-		rc = GetEnvironmentVariable("MOSQUITTO_DIR", conf_path, MAX_PATH);
+		rc = GetEnvironmentVariable("EECLOUD_DIR", conf_path, MAX_PATH);
 		if(!rc || rc == MAX_PATH){
 			service_status.dwCurrentState = SERVICE_STOPPED;
 			SetServiceStatus(service_handle, &service_status);
 			return;
 		}
-		strcat(conf_path, "/mosquitto.conf");
+		strcat(conf_path, "/eecloud.conf");
 
-		argv = _mosquitto_malloc(sizeof(char *)*3);
-		argv[0] = "mosquitto";
+		argv = _eecloud_malloc(sizeof(char *)*3);
+		argv[0] = "eecloud";
 		argv[1] = "-c";
 		argv[2] = conf_path;
 		argc = 3;
@@ -78,7 +78,7 @@ void __stdcall service_main(DWORD dwArgc, LPTSTR *lpszArgv)
 		SetServiceStatus(service_handle, &service_status);
 
 		main(argc, argv);
-		_mosquitto_free(argv);
+		_eecloud_free(argv);
 
 		service_status.dwCurrentState = SERVICE_STOPPED;
 		SetServiceStatus(service_handle, &service_status);
@@ -96,7 +96,7 @@ void service_install(void)
 
 	sc_manager = OpenSCManager(NULL, NULL, SC_MANAGER_CREATE_SERVICE);
 	if(sc_manager){
-		svc_handle = CreateService(sc_manager, "mosquitto", "Mosquitto Broker", 
+		svc_handle = CreateService(sc_manager, "eecloud", "Eecloud Broker", 
 				SERVICE_START | SERVICE_STOP | SERVICE_CHANGE_CONFIG,
 				SERVICE_WIN32_OWN_PROCESS, SERVICE_AUTO_START, SERVICE_ERROR_NORMAL,
 				exe_path, NULL, NULL, NULL, NULL, NULL);
@@ -117,7 +117,7 @@ void service_uninstall(void)
 
 	sc_manager = OpenSCManager(NULL, SERVICES_ACTIVE_DATABASE, SC_MANAGER_CONNECT);
 	if(sc_manager){
-		svc_handle = OpenService(sc_manager, "mosquitto", SERVICE_QUERY_STATUS | DELETE);
+		svc_handle = OpenService(sc_manager, "eecloud", SERVICE_QUERY_STATUS | DELETE);
 		if(svc_handle){
 			if(QueryServiceStatus(svc_handle, &status)){
 				if(status.dwCurrentState == SERVICE_STOPPED){
@@ -133,7 +133,7 @@ void service_uninstall(void)
 void service_run(void)
 {
 	SERVICE_TABLE_ENTRY ste[] = {
-		{ "mosquitto", service_main },
+		{ "eecloud", service_main },
 		{ NULL, NULL }
 	};
 

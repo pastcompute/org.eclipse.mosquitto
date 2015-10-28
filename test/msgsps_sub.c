@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <sys/time.h>
 #include <unistd.h>
-#include <mosquitto.h>
+#include <eecloud.h>
 
 #include <msgsps_common.h>
 
@@ -15,17 +15,17 @@ static struct timeval start, stop;
 FILE *fptr = NULL;
 
 
-void my_connect_callback(struct mosquitto *mosq, void *obj, int rc)
+void my_connect_callback(struct eecloud *ecld, void *obj, int rc)
 {
 	printf("rc: %d\n", rc);
 }
 
-void my_disconnect_callback(struct mosquitto *mosq, void *obj, int result)
+void my_disconnect_callback(struct eecloud *ecld, void *obj, int result)
 {
 	run = false;
 }
 
-void my_message_callback(struct mosquitto *mosq, void *obj, const struct mosquitto_message *msg)
+void my_message_callback(struct eecloud *ecld, void *obj, const struct eecloud_message *msg)
 {
 	if(message_count == 0){
 		gettimeofday(&start, NULL);
@@ -34,13 +34,13 @@ void my_message_callback(struct mosquitto *mosq, void *obj, const struct mosquit
 	message_count++;
 	if(message_count == MESSAGE_COUNT){
 		gettimeofday(&stop, NULL);
-		mosquitto_disconnect((struct mosquitto *)obj);
+		eecloud_disconnect((struct eecloud *)obj);
 	}
 }
 
 int main(int argc, char *argv[])
 {
-	struct mosquitto *mosq;
+	struct eecloud *ecld;
 	double dstart, dstop, diff;
 	int mid = 0;
 	char id[50];
@@ -56,20 +56,20 @@ int main(int argc, char *argv[])
 		printf("Error: Unable to write to msgsps_sub.dat.\n");
 		return 1;
 	}
-	mosquitto_lib_init();
+	eecloud_lib_init();
 
 	snprintf(id, 50, "msgps_sub_%d", getpid());
-	mosq = mosquitto_new(id, true, NULL);
-	mosquitto_connect_callback_set(mosq, my_connect_callback);
-	mosquitto_disconnect_callback_set(mosq, my_disconnect_callback);
-	mosquitto_message_callback_set(mosq, my_message_callback);
+	ecld = eecloud_new(id, true, NULL);
+	eecloud_connect_callback_set(ecld, my_connect_callback);
+	eecloud_disconnect_callback_set(ecld, my_disconnect_callback);
+	eecloud_message_callback_set(ecld, my_message_callback);
 
-	mosquitto_connect(mosq, "127.0.0.1", 1884, 600);
-	mosquitto_subscribe(mosq, &mid, "perf/test", 0);
+	eecloud_connect(ecld, "127.0.0.1", 1884, 600);
+	eecloud_subscribe(ecld, &mid, "perf/test", 0);
 
 	do{
-		rc = mosquitto_loop(mosq, 1, 10);
-	}while(rc == MOSQ_ERR_SUCCESS && run);
+		rc = eecloud_loop(ecld, 1, 10);
+	}while(rc == ECLD_ERR_SUCCESS && run);
 	printf("rc: %d\n", rc);
 
 	dstart = (double)start.tv_sec*1.0e6 + (double)start.tv_usec;
@@ -78,8 +78,8 @@ int main(int argc, char *argv[])
 
 	printf("Start: %g\nStop: %g\nDiff: %g\nMessages/s: %g\n", dstart, dstop, diff, (double)MESSAGE_COUNT/diff);
 
-	mosquitto_destroy(mosq);
-	mosquitto_lib_cleanup();
+	eecloud_destroy(ecld);
+	eecloud_lib_cleanup();
 	fclose(fptr);
 
 	return 0;

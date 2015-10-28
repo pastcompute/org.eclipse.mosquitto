@@ -40,11 +40,11 @@ Contributors:
 #  include <libwebsockets.h>
 #endif
 
-#include <mosquitto_broker.h>
-#include <memory_mosq.h>
-#include <send_mosq.h>
-#include <time_mosq.h>
-#include <util_mosq.h>
+#include <eecloud_broker.h>
+#include <memory_ecld.h>
+#include <send_ecld.h>
+#include <time_ecld.h>
+#include <util_ecld.h>
 
 extern bool flag_reload;
 #ifdef WITH_PERSISTENCE
@@ -56,15 +56,15 @@ extern int run;
 extern int g_clients_expired;
 #endif
 
-static void loop_handle_errors(struct mosquitto_db *db, struct pollfd *pollfds);
-static void loop_handle_reads_writes(struct mosquitto_db *db, struct pollfd *pollfds);
+static void loop_handle_errors(struct eecloud_db *db, struct pollfd *pollfds);
+static void loop_handle_reads_writes(struct eecloud_db *db, struct pollfd *pollfds);
 
 #ifdef WITH_WEBSOCKETS
-static void temp__expire_websockets_clients(struct mosquitto_db *db)
+static void temp__expire_websockets_clients(struct eecloud_db *db)
 {
-	struct mosquitto *context, *ctxt_tmp;
+	struct eecloud *context, *ctxt_tmp;
 	static time_t last_check = 0;
-	time_t now = mosquitto_time();
+	time_t now = eecloud_time();
 	char *id;
 
 	if(now - last_check > 60){
@@ -77,31 +77,31 @@ static void temp__expire_websockets_clients(struct mosquitto_db *db)
 						}else{
 							id = "<unknown>";
 						}
-						_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "Client %s has exceeded timeout, disconnecting.", id);
+						_eecloud_log_printf(NULL, ECLD_LOG_NOTICE, "Client %s has exceeded timeout, disconnecting.", id);
 					}
 					/* Client has exceeded keepalive*1.5 */
 					do_disconnect(db, context);
 				}
 			}
 		}
-		last_check = mosquitto_time();
+		last_check = eecloud_time();
 	}
 }
 #endif
 
-int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int listensock_count, int listener_max)
+int eecloud_main_loop(struct eecloud_db *db, ecld_sock_t *listensock, int listensock_count, int listener_max)
 {
 #ifdef WITH_SYS_TREE
-	time_t start_time = mosquitto_time();
+	time_t start_time = eecloud_time();
 #endif
 #ifdef WITH_PERSISTENCE
-	time_t last_backup = mosquitto_time();
+	time_t last_backup = eecloud_time();
 #endif
 	time_t now = 0;
 	time_t now_time;
 	int time_count;
 	int fdcount;
-	struct mosquitto *context, *ctxt_tmp;
+	struct eecloud *context, *ctxt_tmp;
 #ifndef WIN32
 	sigset_t sigblock, origsig;
 #endif
@@ -110,7 +110,7 @@ int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int li
 	int pollfd_count = 0;
 	int pollfd_index;
 #ifdef WITH_BRIDGE
-	mosq_sock_t bridge_sock;
+	ecld_sock_t bridge_sock;
 	int rc;
 #endif
 	int context_count;
@@ -127,7 +127,7 @@ int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int li
 	}
 
 	while(run){
-		mosquitto__free_disused_contexts(db);
+		eecloud__free_disused_contexts(db);
 #ifdef WITH_SYS_TREE
 		if(db->config->sys_interval > 0){
 			mqtt3_db_sys_update(db, db->config->sys_interval, start_time);
@@ -141,10 +141,10 @@ int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int li
 
 		if(listensock_count + context_count > pollfd_count || !pollfds){
 			pollfd_count = listensock_count + context_count;
-			pollfds = _mosquitto_realloc(pollfds, sizeof(struct pollfd)*pollfd_count);
+			pollfds = _eecloud_realloc(pollfds, sizeof(struct pollfd)*pollfd_count);
 			if(!pollfds){
-				_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Out of memory.");
-				return MOSQ_ERR_NOMEM;
+				_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Out of memory.");
+				return ECLD_ERR_NOMEM;
 			}
 		}
 
@@ -166,21 +166,21 @@ int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int li
 				time_count--;
 			}else{
 				time_count = 1000;
-				now = mosquitto_time();
+				now = eecloud_time();
 			}
 			context->pollfd_index = -1;
 
 			if(context->sock != INVALID_SOCKET){
 #ifdef WITH_BRIDGE
 				if(context->bridge){
-					_mosquitto_check_keepalive(db, context);
+					_eecloud_check_keepalive(db, context);
 					if(context->bridge->round_robin == false
 							&& context->bridge->cur_address != 0
 							&& now > context->bridge->primary_retry){
 
-						if(_mosquitto_try_connect(context, context->bridge->addresses[0].address, context->bridge->addresses[0].port, &bridge_sock, NULL, false) == MOSQ_ERR_SUCCESS){
+						if(_eecloud_try_connect(context, context->bridge->addresses[0].address, context->bridge->addresses[0].port, &bridge_sock, NULL, false) == ECLD_ERR_SUCCESS){
 							COMPAT_CLOSE(bridge_sock);
-							_mosquitto_socket_close(db, context);
+							_eecloud_socket_close(db, context);
 							context->bridge->cur_address = context->bridge->address_count-1;
 						}
 					}
@@ -192,11 +192,11 @@ int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int li
 						|| context->bridge
 						|| now - context->last_msg_in < (time_t)(context->keepalive)*3/2){
 
-					if(mqtt3_db_message_write(db, context) == MOSQ_ERR_SUCCESS){
+					if(mqtt3_db_message_write(db, context) == ECLD_ERR_SUCCESS){
 						pollfds[pollfd_index].fd = context->sock;
 						pollfds[pollfd_index].events = POLLIN;
 						pollfds[pollfd_index].revents = 0;
-						if(context->current_out_packet || context->state == mosq_cs_connect_pending){
+						if(context->current_out_packet || context->state == ecld_cs_connect_pending){
 							pollfds[pollfd_index].events |= POLLOUT;
 						}
 						context->pollfd_index = pollfd_index;
@@ -211,7 +211,7 @@ int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int li
 						}else{
 							id = "<unknown>";
 						}
-						_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "Client %s has exceeded timeout, disconnecting.", id);
+						_eecloud_log_printf(NULL, ECLD_LOG_NOTICE, "Client %s has exceeded timeout, disconnecting.", id);
 					}
 					/* Client has exceeded keepalive*1.5 */
 					do_disconnect(db, context);
@@ -231,7 +231,7 @@ int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int li
 					time_count--;
 				}else{
 					time_count = 1000;
-					now = mosquitto_time();
+					now = eecloud_time();
 				}
 				/* Want to try to restart the bridge connection */
 				if(!context->bridge->restart_t){
@@ -256,7 +256,7 @@ int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int li
 					if(context->bridge->start_type == bst_automatic && now > context->bridge->restart_t){
 						context->bridge->restart_t = 0;
 						rc = mqtt3_bridge_connect(db, context);
-						if(rc == MOSQ_ERR_SUCCESS){
+						if(rc == ECLD_ERR_SUCCESS){
 							pollfds[pollfd_index].fd = context->sock;
 							pollfds[pollfd_index].events = POLLIN;
 							pollfds[pollfd_index].revents = 0;
@@ -294,12 +294,12 @@ int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int li
 						}else{
 							id = "<unknown>";
 						}
-						_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "Expiring persistent client %s due to timeout.", id);
+						_eecloud_log_printf(NULL, ECLD_LOG_NOTICE, "Expiring persistent client %s due to timeout.", id);
 #ifdef WITH_SYS_TREE
 						g_clients_expired++;
 #endif
 						context->clean_session = true;
-						context->state = mosq_cs_expiring;
+						context->state = ecld_cs_expiring;
 						do_disconnect(db, context);
 					}
 				}
@@ -336,9 +336,9 @@ int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int li
 					db->persistence_changes = 0;
 				}
 			}else{
-				if(last_backup + db->config->autosave_interval < mosquitto_time()){
+				if(last_backup + db->config->autosave_interval < eecloud_time()){
 					mqtt3_db_backup(db, false);
-					last_backup = mosquitto_time();
+					last_backup = eecloud_time();
 				}
 			}
 		}
@@ -351,11 +351,11 @@ int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int li
 		}
 #endif
 		if(flag_reload){
-			_mosquitto_log_printf(NULL, MOSQ_LOG_INFO, "Reloading config.");
+			_eecloud_log_printf(NULL, ECLD_LOG_INFO, "Reloading config.");
 			mqtt3_config_read(db->config, true);
-			mosquitto_security_cleanup(db, true);
-			mosquitto_security_init(db, true);
-			mosquitto_security_apply(db);
+			eecloud_security_cleanup(db, true);
+			eecloud_security_init(db, true);
+			eecloud_security_apply(db);
 			mqtt3_log_close(db->config);
 			mqtt3_log_init(db->config);
 			flag_reload = false;
@@ -380,21 +380,21 @@ int mosquitto_main_loop(struct mosquitto_db *db, mosq_sock_t *listensock, int li
 #endif
 	}
 
-	if(pollfds) _mosquitto_free(pollfds);
-	return MOSQ_ERR_SUCCESS;
+	if(pollfds) _eecloud_free(pollfds);
+	return ECLD_ERR_SUCCESS;
 }
 
-void do_disconnect(struct mosquitto_db *db, struct mosquitto *context)
+void do_disconnect(struct eecloud_db *db, struct eecloud *context)
 {
 	char *id;
 
-	if(context->state == mosq_cs_disconnected){
+	if(context->state == ecld_cs_disconnected){
 		return;
 	}
 #ifdef WITH_WEBSOCKETS
 	if(context->wsi){
-		if(context->state != mosq_cs_disconnecting){
-			context->state = mosq_cs_disconnect_ws;
+		if(context->state != ecld_cs_disconnecting){
+			context->state = ecld_cs_disconnect_ws;
 		}
 		if(context->wsi){
 			libwebsocket_callback_on_writable(context->ws_context, context->wsi);
@@ -409,10 +409,10 @@ void do_disconnect(struct mosquitto_db *db, struct mosquitto *context)
 			}else{
 				id = "<unknown>";
 			}
-			if(context->state != mosq_cs_disconnecting){
-				_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "Socket error on client %s, disconnecting.", id);
+			if(context->state != ecld_cs_disconnecting){
+				_eecloud_log_printf(NULL, ECLD_LOG_NOTICE, "Socket error on client %s, disconnecting.", id);
 			}else{
-				_mosquitto_log_printf(NULL, MOSQ_LOG_NOTICE, "Client %s disconnected.", id);
+				_eecloud_log_printf(NULL, ECLD_LOG_NOTICE, "Client %s disconnected.", id);
 			}
 		}
 		mqtt3_context_disconnect(db, context);
@@ -421,23 +421,23 @@ void do_disconnect(struct mosquitto_db *db, struct mosquitto *context)
 #else
 		if(context->clean_session){
 #endif
-			mosquitto__add_context_to_disused(db, context);
+			eecloud__add_context_to_disused(db, context);
 			if(context->id){
 				HASH_DELETE(hh_id, db->contexts_by_id, context);
-				_mosquitto_free(context->id);
+				_eecloud_free(context->id);
 				context->id = NULL;
 			}
 		}
-		context->state = mosq_cs_disconnected;
+		context->state = ecld_cs_disconnected;
 	}
 }
 
 /* Error ocurred, probably an fd has been closed. 
  * Loop through and check them all.
  */
-static void loop_handle_errors(struct mosquitto_db *db, struct pollfd *pollfds)
+static void loop_handle_errors(struct eecloud_db *db, struct pollfd *pollfds)
 {
-	struct mosquitto *context, *ctxt_tmp;
+	struct eecloud *context, *ctxt_tmp;
 
 	HASH_ITER(hh_sock, db->contexts_by_sock, context, ctxt_tmp){
 		if(context->pollfd_index < 0){
@@ -450,9 +450,9 @@ static void loop_handle_errors(struct mosquitto_db *db, struct pollfd *pollfds)
 	}
 }
 
-static void loop_handle_reads_writes(struct mosquitto_db *db, struct pollfd *pollfds)
+static void loop_handle_reads_writes(struct eecloud_db *db, struct pollfd *pollfds)
 {
-	struct mosquitto *context, *ctxt_tmp;
+	struct eecloud *context, *ctxt_tmp;
 	int err;
 	socklen_t len;
 
@@ -465,22 +465,22 @@ static void loop_handle_reads_writes(struct mosquitto_db *db, struct pollfd *pol
 #ifdef WITH_TLS
 		if(pollfds[context->pollfd_index].revents & POLLOUT ||
 				context->want_write ||
-				(context->ssl && context->state == mosq_cs_new)){
+				(context->ssl && context->state == ecld_cs_new)){
 #else
 		if(pollfds[context->pollfd_index].revents & POLLOUT){
 #endif
-			if(context->state == mosq_cs_connect_pending){
+			if(context->state == ecld_cs_connect_pending){
 				len = sizeof(int);
 				if(!getsockopt(context->sock, SOL_SOCKET, SO_ERROR, (char *)&err, &len)){
 					if(err == 0){
-						context->state = mosq_cs_new;
+						context->state = ecld_cs_new;
 					}
 				}else{
 					do_disconnect(db, context);
 					continue;
 				}
 			}
-			if(_mosquitto_packet_write(context)){
+			if(_eecloud_packet_write(context)){
 				do_disconnect(db, context);
 				continue;
 			}
@@ -494,11 +494,11 @@ static void loop_handle_reads_writes(struct mosquitto_db *db, struct pollfd *pol
 
 #ifdef WITH_TLS
 		if(pollfds[context->pollfd_index].revents & POLLIN ||
-				(context->ssl && context->state == mosq_cs_new)){
+				(context->ssl && context->state == ecld_cs_new)){
 #else
 		if(pollfds[context->pollfd_index].revents & POLLIN){
 #endif
-			if(_mosquitto_packet_read(db, context)){
+			if(_eecloud_packet_read(db, context)){
 				do_disconnect(db, context);
 				continue;
 			}

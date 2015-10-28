@@ -16,23 +16,23 @@ Contributors:
 #ifndef _READ_HANDLE_H_
 #define _READ_HANDLE_H_
 
-#include <mosquitto.h>
-struct mosquitto_db;
+#include <eecloud.h>
+struct eecloud_db;
 
-int _mosquitto_packet_handle(struct mosquitto *mosq);
-int _mosquitto_handle_connack(struct mosquitto *mosq);
-int _mosquitto_handle_pingreq(struct mosquitto *mosq);
-int _mosquitto_handle_pingresp(struct mosquitto *mosq);
+int _eecloud_packet_handle(struct eecloud *ecld);
+int _eecloud_handle_connack(struct eecloud *ecld);
+int _eecloud_handle_pingreq(struct eecloud *ecld);
+int _eecloud_handle_pingresp(struct eecloud *ecld);
 #ifdef WITH_BROKER
-int _mosquitto_handle_pubackcomp(struct mosquitto_db *db, struct mosquitto *mosq, const char *type);
+int _eecloud_handle_pubackcomp(struct eecloud_db *db, struct eecloud *ecld, const char *type);
 #else
-int _mosquitto_handle_pubackcomp(struct mosquitto *mosq, const char *type);
+int _eecloud_handle_pubackcomp(struct eecloud *ecld, const char *type);
 #endif
-int _mosquitto_handle_publish(struct mosquitto *mosq);
-int _mosquitto_handle_pubrec(struct mosquitto *mosq);
-int _mosquitto_handle_pubrel(struct mosquitto_db *db, struct mosquitto *mosq);
-int _mosquitto_handle_suback(struct mosquitto *mosq);
-int _mosquitto_handle_unsuback(struct mosquitto *mosq);
+int _eecloud_handle_publish(struct eecloud *ecld);
+int _eecloud_handle_pubrec(struct eecloud *ecld);
+int _eecloud_handle_pubrel(struct eecloud_db *db, struct eecloud *ecld);
+int _eecloud_handle_suback(struct eecloud *ecld);
+int _eecloud_handle_unsuback(struct eecloud *ecld);
 
 
 #endif

@@ -24,14 +24,14 @@ Contributors:
 #include <sys/stat.h>
 #include <time.h>
 
-#include <mosquitto_broker.h>
-#include <memory_mosq.h>
+#include <eecloud_broker.h>
+#include <memory_ecld.h>
 #include <persist.h>
 
 static uint32_t db_version;
 static int stats = 0;
 
-static int _db_client_chunk_restore(struct mosquitto_db *db, FILE *db_fd)
+static int _db_client_chunk_restore(struct eecloud_db *db, FILE *db_fd)
 {
 	uint16_t i16temp, slen, last_mid;
 	char *client_id = NULL;
@@ -75,7 +75,7 @@ error:
 	return 1;
 }
 
-static int _db_client_msg_chunk_restore(struct mosquitto_db *db, FILE *db_fd)
+static int _db_client_msg_chunk_restore(struct eecloud_db *db, FILE *db_fd)
 {
 	dbid_t i64temp, store_id;
 	uint16_t i16temp, slen, mid;
@@ -127,7 +127,7 @@ error:
 	return 1;
 }
 
-static int _db_msg_store_chunk_restore(struct mosquitto_db *db, FILE *db_fd)
+static int _db_msg_store_chunk_restore(struct eecloud_db *db, FILE *db_fd)
 {
 	dbid_t i64temp, store_id;
 	uint32_t i32temp, payloadlen;
@@ -240,7 +240,7 @@ error:
 	return 1;
 }
 
-static int _db_retain_chunk_restore(struct mosquitto_db *db, FILE *db_fd)
+static int _db_retain_chunk_restore(struct eecloud_db *db, FILE *db_fd)
 {
 	dbid_t i64temp, store_id;
 
@@ -254,7 +254,7 @@ static int _db_retain_chunk_restore(struct mosquitto_db *db, FILE *db_fd)
 	return 0;
 }
 
-static int _db_sub_chunk_restore(struct mosquitto_db *db, FILE *db_fd)
+static int _db_sub_chunk_restore(struct eecloud_db *db, FILE *db_fd)
 {
 	uint16_t i16temp, slen;
 	uint8_t qos;
@@ -306,7 +306,7 @@ int main(int argc, char *argv[])
 	uint16_t i16temp, chunk;
 	uint8_t i8temp;
 	ssize_t rlen;
-	struct mosquitto_db db;
+	struct eecloud_db db;
 	char *filename;
 	long cfg_count = 0;
 	long msg_store_count = 0;
@@ -321,15 +321,15 @@ int main(int argc, char *argv[])
 		stats = 1;
 		filename = argv[2];
 	}else{
-		fprintf(stderr, "Usage: db_dump [--stats] <mosquitto db filename>\n");
+		fprintf(stderr, "Usage: db_dump [--stats] <eecloud db filename>\n");
 		return 1;
 	}
-	memset(&db, 0, sizeof(struct mosquitto_db));
+	memset(&db, 0, sizeof(struct eecloud_db));
 	fd = fopen(filename, "rb");
 	if(!fd) return 0;
 	read_e(fd, &header, 15);
 	if(!memcmp(header, magic, 15)){
-		if(!stats) printf("Mosquitto DB dump\n");
+		if(!stats) printf("Eecloud DB dump\n");
 		// Restore DB as normal
 		read_e(fd, &crc, sizeof(uint32_t));
 		if(!stats) printf("CRC: %d\n", crc);

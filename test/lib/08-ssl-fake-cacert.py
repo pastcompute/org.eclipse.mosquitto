@@ -13,7 +13,7 @@ cmd_subfolder = os.path.realpath(os.path.abspath(os.path.join(os.path.split(insp
 if cmd_subfolder not in sys.path:
     sys.path.insert(0, cmd_subfolder)
 
-import mosq_test
+import ecld_test
 
 if sys.version < '2.7':
     print("WARNING: SSL not supported on Python 2.6")
@@ -36,7 +36,7 @@ try:
 except KeyError:
     pp = ''
 env['PYTHONPATH'] = '../../lib/python:'+pp
-client = mosq_test.start_client(filename=sys.argv[1].replace('/', '-'), cmd=client_args, env=env)
+client = ecld_test.start_client(filename=sys.argv[1].replace('/', '-'), cmd=client_args, env=env)
 
 try:
     (conn, address) = ssock.accept()

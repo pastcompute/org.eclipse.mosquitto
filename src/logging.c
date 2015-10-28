@@ -25,11 +25,11 @@ Contributors:
 #include <config.h>
 #endif
 
-#include <mosquitto_broker.h>
-#include <memory_mosq.h>
-#include <util_mosq.h>
+#include <eecloud_broker.h>
+#include <memory_ecld.h>
+#include <util_ecld.h>
 
-extern struct mosquitto_db int_db;
+extern struct eecloud_db int_db;
 
 #ifdef WIN32
 HANDLE syslog_h;
@@ -48,7 +48,7 @@ HANDLE syslog_h;
  * Logging pid.
  */
 static int log_destinations = MQTT3_LOG_STDERR;
-static int log_priorities = MOSQ_LOG_ERR | MOSQ_LOG_WARNING | MOSQ_LOG_NOTICE | MOSQ_LOG_INFO;
+static int log_priorities = ECLD_LOG_ERR | ECLD_LOG_WARNING | ECLD_LOG_NOTICE | ECLD_LOG_INFO;
 
 int mqtt3_log_init(struct mqtt3_config *config)
 {
@@ -59,9 +59,9 @@ int mqtt3_log_init(struct mqtt3_config *config)
 
 	if(log_destinations & MQTT3_LOG_SYSLOG){
 #ifndef WIN32
-		openlog("mosquitto", LOG_PID|LOG_CONS, config->log_facility);
+		openlog("eecloud", LOG_PID|LOG_CONS, config->log_facility);
 #else
-		syslog_h = OpenEventLog(NULL, "mosquitto");
+		syslog_h = OpenEventLog(NULL, "eecloud");
 #endif
 	}
 
@@ -69,10 +69,10 @@ int mqtt3_log_init(struct mqtt3_config *config)
 		if(drop_privileges(config, true)){
 			return 1;
 		}
-		config->log_fptr = _mosquitto_fopen(config->log_file, "at");
+		config->log_fptr = _eecloud_fopen(config->log_file, "at");
 		if(!config->log_fptr){
-			_mosquitto_log_printf(NULL, MOSQ_LOG_ERR, "Error: Unable to open log file %s for writing.", config->log_file);
-			return MOSQ_ERR_INVAL;
+			_eecloud_log_printf(NULL, ECLD_LOG_ERR, "Error: Unable to open log file %s for writing.", config->log_file);
+			return ECLD_ERR_INVAL;
 		}
 		restore_privileges();
 	}
@@ -96,10 +96,10 @@ int mqtt3_log_close(struct mqtt3_config *config)
 	}
 
 	/* FIXME - do something for all destinations! */
-	return MOSQ_ERR_SUCCESS;
+	return ECLD_ERR_SUCCESS;
 }
 
-int _mosquitto_log_vprintf(struct mosquitto *mosq, int priority, const char *fmt, va_list va)
+int _eecloud_log_vprintf(struct eecloud *ecld, int priority, const char *fmt, va_list va)
 {
 	char *s;
 	char *st;
@@ -114,7 +114,7 @@ int _mosquitto_log_vprintf(struct mosquitto *mosq, int priority, const char *fmt
 
 	if((log_priorities & priority) && log_destinations != MQTT3_LOG_NONE){
 		switch(priority){
-			case MOSQ_LOG_SUBSCRIBE:
+			case ECLD_LOG_SUBSCRIBE:
 				topic = "$SYS/broker/log/M/subscribe";
 #ifndef WIN32
 				syslog_priority = LOG_NOTICE;
@@ -122,7 +122,7 @@ int _mosquitto_log_vprintf(struct mosquitto *mosq, int priority, const char *fmt
 				syslog_priority = EVENTLOG_INFORMATION_TYPE;
 #endif
 				break;
-			case MOSQ_LOG_UNSUBSCRIBE:
+			case ECLD_LOG_UNSUBSCRIBE:
 				topic = "$SYS/broker/log/M/unsubscribe";
 #ifndef WIN32
 				syslog_priority = LOG_NOTICE;
@@ -130,7 +130,7 @@ int _mosquitto_log_vprintf(struct mosquitto *mosq, int priority, const char *fmt
 				syslog_priority = EVENTLOG_INFORMATION_TYPE;
 #endif
 				break;
-			case MOSQ_LOG_DEBUG:
+			case ECLD_LOG_DEBUG:
 				topic = "$SYS/broker/log/D";
 #ifndef WIN32
 				syslog_priority = LOG_DEBUG;
@@ -138,7 +138,7 @@ int _mosquitto_log_vprintf(struct mosquitto *mosq, int priority, const char *fmt
 				syslog_priority = EVENTLOG_INFORMATION_TYPE;
 #endif
 				break;
-			case MOSQ_LOG_ERR:
+			case ECLD_LOG_ERR:
 				topic = "$SYS/broker/log/E";
 #ifndef WIN32
 				syslog_priority = LOG_ERR;
@@ -146,7 +146,7 @@ int _mosquitto_log_vprintf(struct mosquitto *mosq, int priority, const char *fmt
 				syslog_priority = EVENTLOG_ERROR_TYPE;
 #endif
 				break;
-			case MOSQ_LOG_WARNING:
+			case ECLD_LOG_WARNING:
 				topic = "$SYS/broker/log/W";
 #ifndef WIN32
 				syslog_priority = LOG_WARNING;
@@ -154,7 +154,7 @@ int _mosquitto_log_vprintf(struct mosquitto *mosq, int priority, const char *fmt
 				syslog_priority = EVENTLOG_WARNING_TYPE;
 #endif
 				break;
-			case MOSQ_LOG_NOTICE:
+			case ECLD_LOG_NOTICE:
 				topic = "$SYS/broker/log/N";
 #ifndef WIN32
 				syslog_priority = LOG_NOTICE;
@@ -162,7 +162,7 @@ int _mosquitto_log_vprintf(struct mosquitto *mosq, int priority, const char *fmt
 				syslog_priority = EVENTLOG_INFORMATION_TYPE;
 #endif
 				break;
-			case MOSQ_LOG_INFO:
+			case ECLD_LOG_INFO:
 				topic = "$SYS/broker/log/I";
 #ifndef WIN32
 				syslog_priority = LOG_INFO;
@@ -171,7 +171,7 @@ int _mosquitto_log_vprintf(struct mosquitto *mosq, int priority, const char *fmt
 #endif
 				break;
 #ifdef WITH_WEBSOCKETS
-			case MOSQ_LOG_WEBSOCKETS:
+			case ECLD_LOG_WEBSOCKETS:
 				topic = "$SYS/broker/log/WS";
 #ifndef WIN32
 				syslog_priority = LOG_DEBUG;
@@ -189,8 +189,8 @@ int _mosquitto_log_vprintf(struct mosquitto *mosq, int priority, const char *fmt
 #endif
 		}
 		len = strlen(fmt) + 500;
-		s = _mosquitto_malloc(len*sizeof(char));
-		if(!s) return MOSQ_ERR_NOMEM;
+		s = _eecloud_malloc(len*sizeof(char));
+		if(!s) return ECLD_ERR_NOMEM;
 
 		vsnprintf(s, len, fmt, va);
 		s[len-1] = '\0'; /* Ensure string is null terminated. */
@@ -230,45 +230,45 @@ int _mosquitto_log_vprintf(struct mosquitto *mosq, int priority, const char *fmt
 			ReportEvent(syslog_h, syslog_priority, 0, 0, NULL, 1, 0, &sp, NULL);
 #endif
 		}
-		if(log_destinations & MQTT3_LOG_TOPIC && priority != MOSQ_LOG_DEBUG){
+		if(log_destinations & MQTT3_LOG_TOPIC && priority != ECLD_LOG_DEBUG){
 			if(int_db.config && int_db.config->log_timestamp){
 				len += 30;
-				st = _mosquitto_malloc(len*sizeof(char));
+				st = _eecloud_malloc(len*sizeof(char));
 				if(!st){
-					_mosquitto_free(s);
-					return MOSQ_ERR_NOMEM;
+					_eecloud_free(s);
+					return ECLD_ERR_NOMEM;
 				}
 				snprintf(st, len, "%d: %s", (int)now, s);
 				mqtt3_db_messages_easy_queue(&int_db, NULL, topic, 2, strlen(st), st, 0);
-				_mosquitto_free(st);
+				_eecloud_free(st);
 			}else{
 				mqtt3_db_messages_easy_queue(&int_db, NULL, topic, 2, strlen(s), s, 0);
 			}
 		}
-		_mosquitto_free(s);
+		_eecloud_free(s);
 	}
 
-	return MOSQ_ERR_SUCCESS;
+	return ECLD_ERR_SUCCESS;
 }
 
-int _mosquitto_log_printf(struct mosquitto *mosq, int priority, const char *fmt, ...)
+int _eecloud_log_printf(struct eecloud *ecld, int priority, const char *fmt, ...)
 {
 	va_list va;
 	int rc;
 
 	va_start(va, fmt);
-	rc = _mosquitto_log_vprintf(mosq, priority, fmt, va);
+	rc = _eecloud_log_vprintf(ecld, priority, fmt, va);
 	va_end(va);
 
 	return rc;
 }
 
-void mosquitto_log_printf(int level, const char *fmt, ...)
+void eecloud_log_printf(int level, const char *fmt, ...)
 {
 	va_list va;
 
 	va_start(va, fmt);
-	_mosquitto_log_vprintf(NULL, level, fmt, va);
+	_eecloud_log_vprintf(NULL, level, fmt, va);
 	va_end(va);
 }
 

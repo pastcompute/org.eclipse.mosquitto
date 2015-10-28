@@ -14,32 +14,32 @@ cmd_subfolder = os.path.realpath(os.path.abspath(os.path.join(os.path.split(insp
 if cmd_subfolder not in sys.path:
     sys.path.insert(0, cmd_subfolder)
 
-import mosq_test
+import ecld_test
 
 rc = 1
 keepalive = 600
-connect_packet = mosq_test.gen_connect("pub-qos2-timeout-test", keepalive=keepalive)
-connack_packet = mosq_test.gen_connack(rc=0)
+connect_packet = ecld_test.gen_connect("pub-qos2-timeout-test", keepalive=keepalive)
+connack_packet = ecld_test.gen_connack(rc=0)
 
 mid = 1926
-publish_packet = mosq_test.gen_publish("pub/qos2/test", qos=2, mid=mid, payload="timeout-message")
-pubrec_packet = mosq_test.gen_pubrec(mid)
-pubrel_packet = mosq_test.gen_pubrel(mid)
-pubcomp_packet = mosq_test.gen_pubcomp(mid)
+publish_packet = ecld_test.gen_publish("pub/qos2/test", qos=2, mid=mid, payload="timeout-message")
+pubrec_packet = ecld_test.gen_pubrec(mid)
+pubrel_packet = ecld_test.gen_pubrel(mid)
+pubcomp_packet = ecld_test.gen_pubcomp(mid)
 
-broker = mosq_test.start_broker(filename=os.path.basename(__file__))
+broker = ecld_test.start_broker(filename=os.path.basename(__file__))
 
 try:
-    sock = mosq_test.do_client_connect(connect_packet, connack_packet)
+    sock = ecld_test.do_client_connect(connect_packet, connack_packet)
     sock.send(publish_packet)
 
-    if mosq_test.expect_packet(sock, "pubrec", pubrec_packet):
+    if ecld_test.expect_packet(sock, "pubrec", pubrec_packet):
         # Timeout is 8 seconds which means the broker should repeat the PUBREC.
 
-        if mosq_test.expect_packet(sock, "pubrec", pubrec_packet):
+        if ecld_test.expect_packet(sock, "pubrec", pubrec_packet):
             sock.send(pubrel_packet)
 
-            if mosq_test.expect_packet(sock, "pubcomp", pubcomp_packet):
+            if ecld_test.expect_packet(sock, "pubcomp", pubcomp_packet):
                 rc = 0
 
     sock.close()

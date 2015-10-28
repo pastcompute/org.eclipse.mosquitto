@@ -1,7 +1,7 @@
-Mosquitto for Windows
+Eecloud for Windows
 =====================
 
-Mosquitto for Windows comes in two flavours, win32 or Cygwin. The win32 version is only
+Eecloud for Windows comes in two flavours, win32 or Cygwin. The win32 version is only
 supported on Windows Vista or later.
 
 In all cases, the dependencies are not provided in this installer and must be installed
@@ -20,7 +20,7 @@ Websockets
 
 The broker executables provided in the installers do not have Websockets support enabled.
 If you wish to have a version of the broker with Websockets support, you will need to compile
-libwebsockets version v1.3-chrome37-firefox30 yourself and mosquitto version 1.4 yourself.
+libwebsockets version v1.3-chrome37-firefox30 yourself and eecloud version 1.4 yourself.
 
 Please note that on Windows, libwebsockets limits connections to a maximum of 64 clients.
 
@@ -38,7 +38,7 @@ Dependencies - win32
     Required DLLs: pthreadVC2.dll
 
 Please ensure that the required DLLs are on the system path, or are in the same directory as
-the mosquitto executable.
+the eecloud executable.
 
 
 Dependencies - Cygwin
@@ -65,5 +65,5 @@ You can start/stop it from
  the control panel as well as running it as a normal
 executable.
 
-When running as a service, the configuration in mosquitto.conf in the
+When running as a service, the configuration in eecloud.conf in the
 installation directory is used so modify this to your needs.

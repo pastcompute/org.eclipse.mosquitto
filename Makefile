@@ -4,16 +4,16 @@ DIRS=lib client src
 DOCDIRS=man
 DISTDIRS=man
 
-.PHONY : all mosquitto docs binary clean reallyclean test install uninstall dist sign copy
+.PHONY : all eecloud docs binary clean reallyclean test install uninstall dist sign copy
 
 all : $(MAKE_ALL)
 
 docs :
 	set -e; for d in ${DOCDIRS}; do $(MAKE) -C $${d}; done
 
-binary : mosquitto
+binary : eecloud
 
-mosquitto :
+eecloud :
 ifeq ($(UNAME),Darwin)
 	$(error Please compile using CMake on Mac OS X)
 endif
@@ -31,31 +31,31 @@ reallyclean :
 	$(MAKE) -C test reallyclean
 	-rm -f *.orig
 
-test : mosquitto
+test : eecloud
 	$(MAKE) -C test test
 
-install : mosquitto
+install : eecloud
 	set -e; for d in ${DIRS}; do $(MAKE) -C $${d} install; done
 	set -e; for d in ${DOCDIRS}; do $(MAKE) -C $${d} install; done
-	$(INSTALL) -d ${DESTDIR}/etc/mosquitto
-	$(INSTALL) -m 644 mosquitto.conf ${DESTDIR}/etc/mosquitto/mosquitto.conf.example
-	$(INSTALL) -m 644 aclfile.example ${DESTDIR}/etc/mosquitto/aclfile.example
-	$(INSTALL) -m 644 pwfile.example ${DESTDIR}/etc/mosquitto/pwfile.example
-	$(INSTALL) -m 644 pskfile.example ${DESTDIR}/etc/mosquitto/pskfile.example
+	$(INSTALL) -d ${DESTDIR}/etc/eecloud
+	$(INSTALL) -m 644 eecloud.conf ${DESTDIR}/etc/eecloud/eecloud.conf.example
+	$(INSTALL) -m 644 aclfile.example ${DESTDIR}/etc/eecloud/aclfile.example
+	$(INSTALL) -m 644 pwfile.example ${DESTDIR}/etc/eecloud/pwfile.example
+	$(INSTALL) -m 644 pskfile.example ${DESTDIR}/etc/eecloud/pskfile.example
 
 uninstall :
 	set -e; for d in ${DIRS}; do $(MAKE) -C $${d} uninstall; done
-	rm -f ${DESTDIR}/etc/mosquitto/mosquitto.conf
-	rm -f ${DESTDIR}/etc/mosquitto/aclfile.example
-	rm -f ${DESTDIR}/etc/mosquitto/pwfile.example
-	rm -f ${DESTDIR}/etc/mosquitto/pskfile.example
+	rm -f ${DESTDIR}/etc/eecloud/eecloud.conf
+	rm -f ${DESTDIR}/etc/eecloud/aclfile.example
+	rm -f ${DESTDIR}/etc/eecloud/pwfile.example
+	rm -f ${DESTDIR}/etc/eecloud/pskfile.example
 
 dist : reallyclean
 	set -e; for d in ${DISTDIRS}; do $(MAKE) -C $${d} dist; done
 	
-	mkdir -p dist/mosquitto-${VERSION}
-	cp -r client examples installer lib logo man misc security service src test about.html aclfile.example ChangeLog.txt CMakeLists.txt compiling.txt config.h config.mk CONTRIBUTING.md edl-v10 epl-v10 LICENSE.txt Makefile mosquitto.conf notice.html pskfile.example pwfile.example readme.txt readme-windows.txt dist/mosquitto-${VERSION}/
-	cd dist; tar -zcf mosquitto-${VERSION}.tar.gz mosquitto-${VERSION}/
+	mkdir -p dist/eecloud-${VERSION}
+	cp -r client examples installer lib logo man misc security service src test about.html aclfile.example ChangeLog.txt CMakeLists.txt compiling.txt config.h config.mk CONTRIBUTING.md edl-v10 epl-v10 LICENSE.txt Makefile eecloud.conf notice.html pskfile.example pwfile.example readme.txt readme-windows.txt dist/eecloud-${VERSION}/
+	cd dist; tar -zcf eecloud-${VERSION}.tar.gz eecloud-${VERSION}/
 	set -e; for m in man/*.xml; \
 		do \
 		hfile=$$(echo $${m} | sed -e 's#man/\(.*\)\.xml#\1#' | sed -e 's/\./-/g'); \
@@ -64,10 +64,10 @@ dist : reallyclean
 
 
 sign : dist
-	cd dist; gpg --detach-sign -a mosquitto-${VERSION}.tar.gz
+	cd dist; gpg --detach-sign -a eecloud-${VERSION}.tar.gz
 
 copy : sign
-	cd dist; scp mosquitto-${VERSION}.tar.gz mosquitto-${VERSION}.tar.gz.asc mosquitto:site/mosquitto.org/files/source/
-	cd dist; scp *.html mosquitto:site/mosquitto.org/man/
-	scp ChangeLog.txt mosquitto:site/mosquitto.org/
+	cd dist; scp eecloud-${VERSION}.tar.gz eecloud-${VERSION}.tar.gz.asc eecloud:site/eecloud.org/files/source/
+	cd dist; scp *.html eecloud:site/eecloud.org/man/
+	scp ChangeLog.txt eecloud:site/eecloud.org/
 

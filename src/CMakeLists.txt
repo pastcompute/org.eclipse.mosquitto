@@ -1,38 +1,38 @@
-include_directories(${mosquitto_SOURCE_DIR} ${mosquitto_SOURCE_DIR}/src
-		${mosquitto_SOURCE_DIR}/lib ${OPENSSL_INCLUDE_DIR}
+include_directories(${eecloud_SOURCE_DIR} ${eecloud_SOURCE_DIR}/src
+		${eecloud_SOURCE_DIR}/lib ${OPENSSL_INCLUDE_DIR}
 		${STDBOOL_H_PATH} ${STDINT_H_PATH})
 
-set (MOSQ_SRCS
+set (ECLD_SRCS
 	conf.c
 	context.c
 	database.c
 	lib_load.h
 	logging.c
 	loop.c
-	../lib/memory_mosq.c ../lib/memory_mosq.h
-	mosquitto.c
-	mosquitto_broker.h
+	../lib/memory_ecld.c ../lib/memory_ecld.h
+	eecloud.c
+	eecloud_broker.h
 	net.c
-	../lib/net_mosq.c ../lib/net_mosq.h
+	../lib/net_ecld.c ../lib/net_ecld.h
 	persist.c persist.h
 	read_handle.c read_handle_client.c read_handle_server.c
 	../lib/read_handle_shared.c ../lib/read_handle.h
 	subs.c
 	security.c security_default.c
-	../lib/send_client_mosq.c ../lib/send_mosq.h
-	../lib/send_mosq.c ../lib/send_mosq.h
+	../lib/send_client_ecld.c ../lib/send_ecld.h
+	../lib/send_ecld.c ../lib/send_ecld.h
 	send_server.c
 	sys_tree.c
-	../lib/time_mosq.c
-	../lib/tls_mosq.c
-	../lib/util_mosq.c ../lib/util_mosq.h
+	../lib/time_ecld.c
+	../lib/tls_ecld.c
+	../lib/util_ecld.c ../lib/util_ecld.h
 	websockets.c
-	../lib/will_mosq.c ../lib/will_mosq.h)
+	../lib/will_ecld.c ../lib/will_ecld.h)
 
 option(INC_BRIDGE_SUPPORT
 	"Include bridge support for connecting to other brokers?" ON)
 if (${INC_BRIDGE_SUPPORT} STREQUAL ON)
-	set (MOSQ_SRCS ${MOSQ_SRCS} bridge.c)
+	set (ECLD_SRCS ${ECLD_SRCS} bridge.c)
 	add_definitions("-DWITH_BRIDGE")
 endif (${INC_BRIDGE_SUPPORT} STREQUAL ON)
 
@@ -41,7 +41,7 @@ option(USE_LIBWRAP
 	"Include tcp-wrappers support?" OFF)
 
 if (${USE_LIBWRAP} STREQUAL ON)
-	set (MOSQ_LIBS ${MOSQ_LIBS} wrap)
+	set (ECLD_LIBS ${ECLD_LIBS} wrap)
 	add_definitions("-DWITH_WRAP")
 endif (${USE_LIBWRAP} STREQUAL ON)
 
@@ -73,29 +73,29 @@ if (${WITH_WEBSOCKETS} STREQUAL ON)
 endif (${WITH_WEBSOCKETS} STREQUAL ON)
 
 if (WIN32 OR CYGWIN)
-	set (MOSQ_SRCS ${MOSQ_SRCS} service.c)
+	set (ECLD_SRCS ${ECLD_SRCS} service.c)
 endif (WIN32 OR CYGWIN)
 
 add_definitions (-DWITH_BROKER)
 
-add_executable(mosquitto ${MOSQ_SRCS})
+add_executable(eecloud ${ECLD_SRCS})
 
-set (MOSQ_LIBS ${MOSQ_LIBS} ${OPENSSL_LIBRARIES})
+set (ECLD_LIBS ${ECLD_LIBS} ${OPENSSL_LIBRARIES})
 
 if (UNIX)
 	if (APPLE)
-		set (MOSQ_LIBS ${MOSQ_LIBS} dl m)
+		set (ECLD_LIBS ${ECLD_LIBS} dl m)
 	else (APPLE)
-		set (MOSQ_LIBS ${MOSQ_LIBS} rt dl m)
+		set (ECLD_LIBS ${ECLD_LIBS} rt dl m)
 	endif (APPLE)
 endif (UNIX)
 
 if (WIN32)
-	set (MOSQ_LIBS ${MOSQ_LIBS} ws2_32)
+	set (ECLD_LIBS ${ECLD_LIBS} ws2_32)
 endif (WIN32)
 
 if (${WITH_WEBSOCKETS} STREQUAL ON)
-	set (MOSQ_LIBS ${MOSQ_LIBS} websockets)
+	set (ECLD_LIBS ${ECLD_LIBS} websockets)
 endif (${WITH_WEBSOCKETS} STREQUAL ON)
 
 # Simple detect libuuid
@@ -103,27 +103,27 @@ if(NOT APPLE)
 	FIND_PATH(UUID_HEADER uuid/uuid.h)
 	if (UUID_HEADER)
 		add_definitions(-DWITH_UUID)
-		set (MOSQ_LIBS ${MOSQ_LIBS} uuid)
+		set (ECLD_LIBS ${ECLD_LIBS} uuid)
 	endif (UUID_HEADER)
 endif(NOT APPLE)
 
-target_link_libraries(mosquitto ${MOSQ_LIBS})
+target_link_libraries(eecloud ${ECLD_LIBS})
 
 if (UNIX)
 	if (APPLE)
-		set_target_properties(mosquitto PROPERTIES LINK_FLAGS "-Wl,-exported_symbols_list -Wl,${mosquitto_SOURCE_DIR}/src/linker-macosx.syms")
+		set_target_properties(eecloud PROPERTIES LINK_FLAGS "-Wl,-exported_symbols_list -Wl,${eecloud_SOURCE_DIR}/src/linker-macosx.syms")
 	else (APPLE)
-		set_target_properties(mosquitto PROPERTIES LINK_FLAGS "-Wl,-dynamic-list=${mosquitto_SOURCE_DIR}/src/linker.syms")
+		set_target_properties(eecloud PROPERTIES LINK_FLAGS "-Wl,-dynamic-list=${eecloud_SOURCE_DIR}/src/linker.syms")
 	endif (APPLE)
 endif (UNIX)
 
-install(TARGETS mosquitto RUNTIME DESTINATION ${SBINDIR} LIBRARY DESTINATION ${LIBDIR})
-install(FILES mosquitto_plugin.h DESTINATION ${INCLUDEDIR})
+install(TARGETS eecloud RUNTIME DESTINATION ${SBINDIR} LIBRARY DESTINATION ${LIBDIR})
+install(FILES eecloud_plugin.h DESTINATION ${INCLUDEDIR})
 
 if (${WITH_TLS} STREQUAL ON)
-	add_executable(mosquitto_passwd mosquitto_passwd.c)
-	target_link_libraries(mosquitto_passwd ${OPENSSL_LIBRARIES})
-	install(TARGETS mosquitto_passwd RUNTIME DESTINATION ${BINDIR} LIBRARY DESTINATION ${LIBDIR})
+	add_executable(eecloud_passwd eecloud_passwd.c)
+	target_link_libraries(eecloud_passwd ${OPENSSL_LIBRARIES})
+	install(TARGETS eecloud_passwd RUNTIME DESTINATION ${BINDIR} LIBRARY DESTINATION ${LIBDIR})
 endif (${WITH_TLS} STREQUAL ON)
 
 if (UNIX)

@@ -3,20 +3,20 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <mosquitto.h>
+#include <eecloud.h>
 
 static int run = -1;
 
-void on_connect(struct mosquitto *mosq, void *obj, int rc)
+void on_connect(struct eecloud *ecld, void *obj, int rc)
 {
 	if(rc){
 		exit(1);
 	}else{
-		mosquitto_disconnect(mosq);
+		eecloud_disconnect(ecld);
 	}
 }
 
-void on_disconnect(struct mosquitto *mosq, void *obj, int rc)
+void on_disconnect(struct eecloud *ecld, void *obj, int rc)
 {
 	run = rc;
 }
@@ -32,22 +32,22 @@ static int password_callback(char* buf, int size, int rwflag, void* userdata)
 int main(int argc, char *argv[])
 {
 	int rc;
-	struct mosquitto *mosq;
+	struct eecloud *ecld;
 
-	mosquitto_lib_init();
+	eecloud_lib_init();
 
-	mosq = mosquitto_new("08-ssl-connect-crt-auth-enc", true, NULL);
-	mosquitto_tls_opts_set(mosq, 1, "tlsv1", NULL);
-	mosquitto_tls_set(mosq, "../ssl/test-root-ca.crt", "../ssl/certs", "../ssl/client-encrypted.crt", "../ssl/client-encrypted.key", password_callback);
-	mosquitto_connect_callback_set(mosq, on_connect);
-	mosquitto_disconnect_callback_set(mosq, on_disconnect);
+	ecld = eecloud_new("08-ssl-connect-crt-auth-enc", true, NULL);
+	eecloud_tls_opts_set(ecld, 1, "tlsv1", NULL);
+	eecloud_tls_set(ecld, "../ssl/test-root-ca.crt", "../ssl/certs", "../ssl/client-encrypted.crt", "../ssl/client-encrypted.key", password_callback);
+	eecloud_connect_callback_set(ecld, on_connect);
+	eecloud_disconnect_callback_set(ecld, on_disconnect);
 
-	rc = mosquitto_connect(mosq, "localhost", 1888, 60);
+	rc = eecloud_connect(ecld, "localhost", 1888, 60);
 
 	while(run == -1){
-		mosquitto_loop(mosq, -1, 1);
+		eecloud_loop(ecld, -1, 1);
 	}
 
-	mosquitto_lib_cleanup();
+	eecloud_lib_cleanup();
 	return run;
 }

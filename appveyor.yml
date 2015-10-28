@@ -25,18 +25,18 @@ build_script:
 
 after_build:
   - cd installer
-  - '%NSIS_ROOT%\makensis mosquitto.nsi'
+  - '%NSIS_ROOT%\makensis eecloud.nsi'
 
 artifacts:
   - name: Installer
-    path: 'installer/mosquitto-*-install-win32.exe'
-  #- path: build\src\Release\mosquitto.exe
-  #- path: build\src\Release\mosquitto_passwd.exe
-  #- path: build\lib\Release\mosquitto.dll
-  #- path: build\lib\Release\mosquitto.lib
-  #- path: build\client\Release\mosquitto_pub.exe
-  #- path: build\client\Release\mosquitto_sub.exe
-  #- path: build\src\Release\mosquitto.exe
+    path: 'installer/eecloud-*-install-win32.exe'
+  #- path: build\src\Release\eecloud.exe
+  #- path: build\src\Release\eecloud_passwd.exe
+  #- path: build\lib\Release\eecloud.dll
+  #- path: build\lib\Release\eecloud.lib
+  #- path: build\client\Release\eecloud_pub.exe
+  #- path: build\client\Release\eecloud_sub.exe
+  #- path: build\src\Release\eecloud.exe
 
 cache:
   - C:\OpenSSL-Win32

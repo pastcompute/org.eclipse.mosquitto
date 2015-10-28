@@ -27,27 +27,27 @@ Contributors:
 #define snprintf sprintf_s
 #endif
 
-#include <mosquitto.h>
+#include <eecloud.h>
 #include "client_shared.h"
 
 bool process_messages = true;
 int msg_count = 0;
 
-void my_message_callback(struct mosquitto *mosq, void *obj, const struct mosquitto_message *message)
+void my_message_callback(struct eecloud *ecld, void *obj, const struct eecloud_message *message)
 {
-	struct mosq_config *cfg;
+	struct ecld_config *cfg;
 	int i;
 	bool res;
 
 	if(process_messages == false) return;
 
 	assert(obj);
-	cfg = (struct mosq_config *)obj;
+	cfg = (struct ecld_config *)obj;
 
 	if(message->retain && cfg->no_retain) return;
 	if(cfg->filter_outs){
 		for(i=0; i<cfg->filter_out_count; i++){
-			mosquitto_topic_matches_sub(cfg->filter_outs[i], message->topic, &res);
+			eecloud_topic_matches_sub(cfg->filter_outs[i], message->topic, &res);
 			if(res) return;
 		}
 	}
@@ -78,37 +78,37 @@ void my_message_callback(struct mosquitto *mosq, void *obj, const struct mosquit
 		msg_count++;
 		if(cfg->msg_count == msg_count){
 			process_messages = false;
-			mosquitto_disconnect(mosq);
+			eecloud_disconnect(ecld);
 		}
 	}
 }
 
-void my_connect_callback(struct mosquitto *mosq, void *obj, int result)
+void my_connect_callback(struct eecloud *ecld, void *obj, int result)
 {
 	int i;
-	struct mosq_config *cfg;
+	struct ecld_config *cfg;
 
 	assert(obj);
-	cfg = (struct mosq_config *)obj;
+	cfg = (struct ecld_config *)obj;
 
 	if(!result){
 		for(i=0; i<cfg->topic_count; i++){
-			mosquitto_subscribe(mosq, NULL, cfg->topics[i], cfg->qos);
+			eecloud_subscribe(ecld, NULL, cfg->topics[i], cfg->qos);
 		}
 	}else{
 		if(result && !cfg->quiet){
-			fprintf(stderr, "%s\n", mosquitto_connack_string(result));
+			fprintf(stderr, "%s\n", eecloud_connack_string(result));
 		}
 	}
 }
 
-void my_subscribe_callback(struct mosquitto *mosq, void *obj, int mid, int qos_count, const int *granted_qos)
+void my_subscribe_callback(struct eecloud *ecld, void *obj, int mid, int qos_count, const int *granted_qos)
 {
 	int i;
-	struct mosq_config *cfg;
+	struct ecld_config *cfg;
 
 	assert(obj);
-	cfg = (struct mosq_config *)obj;
+	cfg = (struct ecld_config *)obj;
 
 	if(!cfg->quiet) printf("Subscribed (mid: %d): %d", mid, granted_qos[0]);
 	for(i=1; i<qos_count; i++){
@@ -117,7 +117,7 @@ void my_subscribe_callback(struct mosquitto *mosq, void *obj, int mid, int qos_c
 	if(!cfg->quiet) printf("\n");
 }
 
-void my_log_callback(struct mosquitto *mosq, void *obj, int level, const char *str)
+void my_log_callback(struct eecloud *ecld, void *obj, int level, const char *str)
 {
 	printf("%s\n", str);
 }
@@ -126,10 +126,10 @@ void print_usage(void)
 {
 	int major, minor, revision;
 
-	mosquitto_lib_version(&major, &minor, &revision);
-	printf("mosquitto_sub is a simple mqtt client that will subscribe to a single topic and print all messages it receives.\n");
-	printf("mosquitto_sub version %s running on libmosquitto %d.%d.%d.\n\n", VERSION, major, minor, revision);
-	printf("Usage: mosquitto_sub [-c] [-h host] [-k keepalive] [-p port] [-q qos] [-R] -t topic ...\n");
+	eecloud_lib_version(&major, &minor, &revision);
+	printf("eecloud_sub is a simple mqtt client that will subscribe to a single topic and print all messages it receives.\n");
+	printf("eecloud_sub version %s running on libeecloud %d.%d.%d.\n\n", VERSION, major, minor, revision);
+	printf("Usage: eecloud_sub [-c] [-h host] [-k keepalive] [-p port] [-q qos] [-R] -t topic ...\n");
 	printf("                     [-C msg_count] [-T filter_out]\n");
 #ifdef WITH_SRV
 	printf("                     [-A bind_address] [-S]\n");
@@ -150,14 +150,14 @@ void print_usage(void)
 #ifdef WITH_SOCKS
 	printf("                     [--proxy socks-url]\n");
 #endif
-	printf("       mosquitto_sub --help\n\n");
+	printf("       eecloud_sub --help\n\n");
 	printf(" -A : bind the outgoing socket to this host/ip address. Use to control which interface\n");
 	printf("      the client communicates over.\n");
 	printf(" -c : disable 'clean session' (store subscription and pending messages when client disconnects).\n");
 	printf(" -C : disconnect and exit after receiving the 'msg_count' messages.\n");
 	printf(" -d : enable debug messages.\n");
 	printf(" -h : mqtt host to connect to. Defaults to localhost.\n");
-	printf(" -i : id to use for this client. Defaults to mosquitto_sub_ appended with the process id.\n");
+	printf(" -i : id to use for this client. Defaults to eecloud_sub_ appended with the process id.\n");
 	printf(" -I : define the client id as id_prefix appended with the process id. Useful for when the\n");
 	printf("      broker is using the clientid_prefixes option.\n");
 	printf(" -k : keep alive in seconds for this client. Defaults to 60.\n");
@@ -207,13 +207,13 @@ void print_usage(void)
 	printf("           socks5h://[username[:password]@]hostname[:port]\n");
 	printf("           Only \"none\" and \"username\" authentication is supported.\n");
 #endif
-	printf("\nSee http://mosquitto.org/ for more information.\n\n");
+	printf("\nSee http://eecloud.org/ for more information.\n\n");
 }
 
 int main(int argc, char *argv[])
 {
-	struct mosq_config cfg;
-	struct mosquitto *mosq = NULL;
+	struct ecld_config cfg;
+	struct eecloud *ecld = NULL;
 	int rc;
 	
 	rc = client_config_load(&cfg, CLIENT_SUB, argc, argv);
@@ -223,19 +223,19 @@ int main(int argc, char *argv[])
 			/* --help */
 			print_usage();
 		}else{
-			fprintf(stderr, "\nUse 'mosquitto_sub --help' to see usage.\n");
+			fprintf(stderr, "\nUse 'eecloud_sub --help' to see usage.\n");
 		}
 		return 1;
 	}
 
-	mosquitto_lib_init();
+	eecloud_lib_init();
 
-	if(client_id_generate(&cfg, "mosqsub")){
+	if(client_id_generate(&cfg, "ecldsub")){
 		return 1;
 	}
 
-	mosq = mosquitto_new(cfg.id, cfg.clean_session, &cfg);
-	if(!mosq){
+	ecld = eecloud_new(cfg.id, cfg.clean_session, &cfg);
+	if(!ecld){
 		switch(errno){
 			case ENOMEM:
 				if(!cfg.quiet) fprintf(stderr, "Error: Out of memory.\n");
@@ -244,33 +244,33 @@ int main(int argc, char *argv[])
 				if(!cfg.quiet) fprintf(stderr, "Error: Invalid id and/or clean_session.\n");
 				break;
 		}
-		mosquitto_lib_cleanup();
+		eecloud_lib_cleanup();
 		return 1;
 	}
-	if(client_opts_set(mosq, &cfg)){
+	if(client_opts_set(ecld, &cfg)){
 		return 1;
 	}
 	if(cfg.debug){
-		mosquitto_log_callback_set(mosq, my_log_callback);
-		mosquitto_subscribe_callback_set(mosq, my_subscribe_callback);
+		eecloud_log_callback_set(ecld, my_log_callback);
+		eecloud_subscribe_callback_set(ecld, my_subscribe_callback);
 	}
-	mosquitto_connect_callback_set(mosq, my_connect_callback);
-	mosquitto_message_callback_set(mosq, my_message_callback);
+	eecloud_connect_callback_set(ecld, my_connect_callback);
+	eecloud_message_callback_set(ecld, my_message_callback);
 
-	rc = client_connect(mosq, &cfg);
+	rc = client_connect(ecld, &cfg);
 	if(rc) return rc;
 
 
-	rc = mosquitto_loop_forever(mosq, -1, 1);
+	rc = eecloud_loop_forever(ecld, -1, 1);
 
-	mosquitto_destroy(mosq);
-	mosquitto_lib_cleanup();
+	eecloud_destroy(ecld);
+	eecloud_lib_cleanup();
 
-	if(cfg.msg_count>0 && rc == MOSQ_ERR_NO_CONN){
+	if(cfg.msg_count>0 && rc == ECLD_ERR_NO_CONN){
 		rc = 0;
 	}
 	if(rc){
-		fprintf(stderr, "Error: %s\n", mosquitto_strerror(rc));
+		fprintf(stderr, "Error: %s\n", eecloud_strerror(rc));
 	}
 	return rc;
 }

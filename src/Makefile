@@ -3,119 +3,119 @@ include ../config.mk
 .PHONY: all install uninstall clean reallyclean
 
 ifeq ($(WITH_TLS),yes)
-all : mosquitto mosquitto_passwd
+all : eecloud eecloud_passwd
 else
-all : mosquitto
+all : eecloud
 endif
 
-mosquitto : mosquitto.o bridge.o conf.o context.o database.o logging.o loop.o memory_mosq.o persist.o net.o net_mosq.o read_handle.o read_handle_client.o read_handle_server.o read_handle_shared.o security.o security_default.o send_client_mosq.o send_mosq.o send_server.o service.o subs.o sys_tree.o time_mosq.o tls_mosq.o util_mosq.o websockets.o will_mosq.o
+eecloud : eecloud.o bridge.o conf.o context.o database.o logging.o loop.o memory_ecld.o persist.o net.o net_ecld.o read_handle.o read_handle_client.o read_handle_server.o read_handle_shared.o security.o security_default.o send_client_ecld.o send_ecld.o send_server.o service.o subs.o sys_tree.o time_ecld.o tls_ecld.o util_ecld.o websockets.o will_ecld.o
 	${CROSS_COMPILE}${CC} $^ -o $@ ${LDFLAGS} $(BROKER_LIBS)
 
-mosquitto.o : mosquitto.c mosquitto_broker.h
+eecloud.o : eecloud.c eecloud_broker.h
 	${CROSS_COMPILE}${CC} $(BROKER_CFLAGS) -c $< -o $@
 
-bridge.o : bridge.c mosquitto_broker.h
+bridge.o : bridge.c eecloud_broker.h
 	${CROSS_COMPILE}${CC} $(BROKER_CFLAGS) -c $< -o $@
 	
-conf.o : conf.c mosquitto_broker.h
+conf.o : conf.c eecloud_broker.h
 	${CROSS_COMPILE}${CC} $(BROKER_CFLAGS) -c $< -o $@
 	
-context.o : context.c mosquitto_broker.h
+context.o : context.c eecloud_broker.h
 	${CROSS_COMPILE}${CC} $(BROKER_CFLAGS) -c $< -o $@
 
-database.o : database.c mosquitto_broker.h
+database.o : database.c eecloud_broker.h
 	${CROSS_COMPILE}${CC} $(BROKER_CFLAGS) -c $< -o $@
 
-logging.o : logging.c mosquitto_broker.h
+logging.o : logging.c eecloud_broker.h
 	${CROSS_COMPILE}${CC} $(BROKER_CFLAGS) -c $< -o $@
 
-loop.o : loop.c mosquitto_broker.h
+loop.o : loop.c eecloud_broker.h
 	${CROSS_COMPILE}${CC} $(BROKER_CFLAGS) -c $< -o $@
 
-memory_mosq.o : ../lib/memory_mosq.c ../lib/memory_mosq.h
+memory_ecld.o : ../lib/memory_ecld.c ../lib/memory_ecld.h
 	${CROSS_COMPILE}${CC} $(BROKER_CFLAGS) -c $< -o $@
 
-net.o : net.c mosquitto_broker.h
+net.o : net.c eecloud_broker.h
 	${CROSS_COMPILE}${CC} $(BROKER_CFLAGS) -c $< -o $@
 
-net_mosq.o : ../lib/net_mosq.c ../lib/net_mosq.h
+net_ecld.o : ../lib/net_ecld.c ../lib/net_ecld.h
 	${CROSS_COMPILE}${CC} $(BROKER_CFLAGS) -c $< -o $@
 	
-persist.o : persist.c persist.h mosquitto_broker.h
+persist.o : persist.c persist.h eecloud_broker.h
 	${CROSS_COMPILE}${CC} $(BROKER_CFLAGS) -c $< -o $@
 	
-read_handle.o : read_handle.c mosquitto_broker.h
+read_handle.o : read_handle.c eecloud_broker.h
 	${CROSS_COMPILE}${CC} $(BROKER_CFLAGS) -c $< -o $@
 
-read_handle_client.o : read_handle_client.c mosquitto_broker.h
+read_handle_client.o : read_handle_client.c eecloud_broker.h
 	${CROSS_COMPILE}${CC} $(BROKER_CFLAGS) -c $< -o $@
 
-read_handle_server.o : read_handle_server.c mosquitto_broker.h
+read_handle_server.o : read_handle_server.c eecloud_broker.h
 	${CROSS_COMPILE}${CC} $(BROKER_CFLAGS) -c $< -o $@
 
 read_handle_shared.o : ../lib/read_handle_shared.c ../lib/read_handle.h
 	${CROSS_COMPILE}${CC} $(BROKER_CFLAGS) -c $< -o $@
 
-security.o : security.c mosquitto_broker.h
+security.o : security.c eecloud_broker.h
 	${CROSS_COMPILE}${CC} $(BROKER_CFLAGS) -c $< -o $@
 
-security_default.o : security_default.c mosquitto_broker.h
+security_default.o : security_default.c eecloud_broker.h
 	${CROSS_COMPILE}${CC} $(BROKER_CFLAGS) -c $< -o $@
 
-send_client_mosq.o : ../lib/send_client_mosq.c ../lib/send_mosq.h
+send_client_ecld.o : ../lib/send_client_ecld.c ../lib/send_ecld.h
 	${CROSS_COMPILE}${CC} $(BROKER_CFLAGS) -c $< -o $@
 
-send_mosq.o : ../lib/send_mosq.c ../lib/send_mosq.h
+send_ecld.o : ../lib/send_ecld.c ../lib/send_ecld.h
 	${CROSS_COMPILE}${CC} $(BROKER_CFLAGS) -c $< -o $@
 
-send_server.o : send_server.c mosquitto_broker.h
+send_server.o : send_server.c eecloud_broker.h
 	${CROSS_COMPILE}${CC} $(BROKER_CFLAGS) -c $< -o $@
 
-service.o : service.c mosquitto_broker.h
+service.o : service.c eecloud_broker.h
 	${CROSS_COMPILE}${CC} $(BROKER_CFLAGS) -c $< -o $@
 
-subs.o : subs.c mosquitto_broker.h
+subs.o : subs.c eecloud_broker.h
 	${CROSS_COMPILE}${CC} $(BROKER_CFLAGS) -c $< -o $@
 
-sys_tree.o : sys_tree.c mosquitto_broker.h
+sys_tree.o : sys_tree.c eecloud_broker.h
 	${CROSS_COMPILE}${CC} $(BROKER_CFLAGS) -c $< -o $@
 
-time_mosq.o : ../lib/time_mosq.c ../lib/time_mosq.h
+time_ecld.o : ../lib/time_ecld.c ../lib/time_ecld.h
 	${CROSS_COMPILE}${CC} $(BROKER_CFLAGS) -c $< -o $@
 
-tls_mosq.o : ../lib/tls_mosq.c
+tls_ecld.o : ../lib/tls_ecld.c
 	${CROSS_COMPILE}${CC} $(BROKER_CFLAGS) -c $< -o $@
 
-util_mosq.o : ../lib/util_mosq.c ../lib/util_mosq.h
+util_ecld.o : ../lib/util_ecld.c ../lib/util_ecld.h
 	${CROSS_COMPILE}${CC} $(BROKER_CFLAGS) -c $< -o $@
 
-websockets.o : websockets.c mosquitto_broker.h
+websockets.o : websockets.c eecloud_broker.h
 	${CC} $(BROKER_CFLAGS) -c $< -o $@
 
-will_mosq.o : ../lib/will_mosq.c ../lib/will_mosq.h
+will_ecld.o : ../lib/will_ecld.c ../lib/will_ecld.h
 	${CROSS_COMPILE}${CC} $(BROKER_CFLAGS) -c $< -o $@
 
-mosquitto_passwd : mosquitto_passwd.o
+eecloud_passwd : eecloud_passwd.o
 	${CROSS_COMPILE}${CC} $^ -o $@ ${LDFLAGS} $(PASSWD_LIBS)
 
-mosquitto_passwd.o : mosquitto_passwd.c
+eecloud_passwd.o : eecloud_passwd.c
 	${CROSS_COMPILE}${CC} $(CFLAGS) ${CPPFLAGS} -c $< -o $@
 
 install : all
 	$(INSTALL) -d ${DESTDIR}$(prefix)/sbin
-	$(INSTALL) -s --strip-program=${CROSS_COMPILE}${STRIP} mosquitto ${DESTDIR}${prefix}/sbin/mosquitto
-	$(INSTALL) mosquitto_plugin.h ${DESTDIR}${prefix}/include/mosquitto_plugin.h
+	$(INSTALL) -s --strip-program=${CROSS_COMPILE}${STRIP} eecloud ${DESTDIR}${prefix}/sbin/eecloud
+	$(INSTALL) eecloud_plugin.h ${DESTDIR}${prefix}/include/eecloud_plugin.h
 ifeq ($(WITH_TLS),yes)
-	$(INSTALL) -s --strip-program=${CROSS_COMPILE}${STRIP} mosquitto_passwd ${DESTDIR}${prefix}/bin/mosquitto_passwd
+	$(INSTALL) -s --strip-program=${CROSS_COMPILE}${STRIP} eecloud_passwd ${DESTDIR}${prefix}/bin/eecloud_passwd
 endif
 
 uninstall :
-	-rm -f ${DESTDIR}${prefix}/sbin/mosquitto
-	-rm -f ${DESTDIR}${prefix}/include/mosquitto_plugin.h
-	-rm -f ${DESTDIR}${prefix}/bin/mosquitto_passwd
+	-rm -f ${DESTDIR}${prefix}/sbin/eecloud
+	-rm -f ${DESTDIR}${prefix}/include/eecloud_plugin.h
+	-rm -f ${DESTDIR}${prefix}/bin/eecloud_passwd
 
 clean : 
-	-rm -f *.o mosquitto mosquitto_passwd
+	-rm -f *.o eecloud eecloud_passwd
 
 reallyclean : clean
 	-rm -rf *.orig *.db

@@ -1,22 +1,22 @@
 #!/usr/bin/python -u
 
-import mosquitto
+import eecloud
 import serial
 
 usb = serial.Serial(port='/dev/ttyUSB0', baudrate=57600)
 
-mosq = mosquitto.Mosquitto()
-mosq.connect("localhost")
-mosq.loop_start()
+ecld = eecloud.Eecloud()
+ecld.connect("localhost")
+ecld.loop_start()
 
 running = True
 try:
     while running:
         line = usb.readline()
-        mosq.publish("cc128/raw", line)
+        ecld.publish("cc128/raw", line)
 except usb.SerialException, e:
     running = False
 
-mosq.disconnect()
-mosq.loop_stop()
+ecld.disconnect()
+ecld.loop_stop()
 

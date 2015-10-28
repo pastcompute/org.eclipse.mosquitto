@@ -3,11 +3,11 @@ Certificate:
         Version: 3 (0x2)
         Serial Number: 1 (0x1)
     Signature Algorithm: sha1WithRSAEncryption
-        Issuer: C=GB, ST=Derbyshire, L=Derby, O=Mosquitto Project, OU=Testing, CN=Root CA
+        Issuer: C=GB, ST=Derbyshire, L=Derby, O=Eecloud Project, OU=Testing, CN=Root CA
         Validity
             Not Before: Aug 30 22:03:18 2013 GMT
             Not After : Aug 29 22:03:18 2018 GMT
-        Subject: C=GB, ST=Derbyshire, O=Mosquitto Project, OU=Testing, CN=Signing CA
+        Subject: C=GB, ST=Derbyshire, O=Eecloud Project, OU=Testing, CN=Signing CA
         Subject Public Key Info:
             Public Key Algorithm: rsaEncryption
                 Public-Key: (1024 bit)

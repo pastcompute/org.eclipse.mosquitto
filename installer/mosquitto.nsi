@@ -1,4 +1,4 @@
-; NSIS installer script for mosquitto
+; NSIS installer script for eecloud
 
 !include "MUI2.nsh"
 !include "nsDialogs.nsh"
@@ -8,11 +8,11 @@
 !include "WinMessages.nsh"
 !define env_hklm 'HKLM "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"'
 
-Name "mosquitto"
+Name "eecloud"
 !define VERSION 1.4.2
-OutFile "mosquitto-${VERSION}-install-win32.exe"
+OutFile "eecloud-${VERSION}-install-win32.exe"
 
-InstallDir "$PROGRAMFILES\mosquitto"
+InstallDir "$PROGRAMFILES\eecloud"
 
 ;--------------------------------
 ; Installer pages
@@ -42,15 +42,15 @@ Page custom DependencyPage
 Section "Files" SecInstall
 	SectionIn RO
 	SetOutPath "$INSTDIR"
-	File "..\build\src\Release\mosquitto.exe"
-	File "..\build\src\Release\mosquitto_passwd.exe"
-	File "..\build\client\Release\mosquitto_pub.exe"
-	File "..\build\client\Release\mosquitto_sub.exe"
-	File "..\build\lib\Release\mosquitto.dll"
-	File "..\build\lib\cpp\Release\mosquittopp.dll"
+	File "..\build\src\Release\eecloud.exe"
+	File "..\build\src\Release\eecloud_passwd.exe"
+	File "..\build\client\Release\eecloud_pub.exe"
+	File "..\build\client\Release\eecloud_sub.exe"
+	File "..\build\lib\Release\eecloud.dll"
+	File "..\build\lib\cpp\Release\eecloudpp.dll"
 	File "..\aclfile.example"
 	File "..\ChangeLog.txt"
-	File "..\mosquitto.conf"
+	File "..\eecloud.conf"
 	File "..\pwfile.example"
 	File "..\readme.txt"
 	File "..\readme-windows.txt"
@@ -61,41 +61,41 @@ Section "Files" SecInstall
 	File "..\epl-v10"
 
 	SetOutPath "$INSTDIR\devel"
-	File "..\lib\mosquitto.h"
-	File "..\build\lib\Release\mosquitto.lib"
-	File "..\lib\cpp\mosquittopp.h"
-	File "..\build\lib\cpp\Release\mosquittopp.lib"
-	File "..\src\mosquitto_plugin.h"
+	File "..\lib\eecloud.h"
+	File "..\build\lib\Release\eecloud.lib"
+	File "..\lib\cpp\eecloudpp.h"
+	File "..\build\lib\cpp\Release\eecloudpp.lib"
+	File "..\src\eecloud_plugin.h"
 
 	WriteUninstaller "$INSTDIR\Uninstall.exe"
-	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Mosquitto" "DisplayName" "Mosquitto MQTT broker"
-	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Mosquitto" "UninstallString" "$\"$INSTDIR\Uninstall.exe$\""
-	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Mosquitto" "QuietUninstallString" "$\"$INSTDIR\Uninstall.exe$\" /S"
-	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Mosquitto" "HelpLink" "http://mosquitto.org/"
-	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Mosquitto" "URLInfoAbout" "http://mosquitto.org/"
-	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Mosquitto" "DisplayVersion" "${VERSION}"
-	WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Mosquitto" "NoModify" "1"
-	WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Mosquitto" "NoRepair" "1"
+	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Eecloud" "DisplayName" "Eecloud MQTT broker"
+	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Eecloud" "UninstallString" "$\"$INSTDIR\Uninstall.exe$\""
+	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Eecloud" "QuietUninstallString" "$\"$INSTDIR\Uninstall.exe$\" /S"
+	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Eecloud" "HelpLink" "http://eecloud.org/"
+	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Eecloud" "URLInfoAbout" "http://eecloud.org/"
+	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Eecloud" "DisplayVersion" "${VERSION}"
+	WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Eecloud" "NoModify" "1"
+	WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Eecloud" "NoRepair" "1"
 
-	WriteRegExpandStr ${env_hklm} MOSQUITTO_DIR $INSTDIR
+	WriteRegExpandStr ${env_hklm} EECLOUD_DIR $INSTDIR
 	SendMessage ${HWND_BROADCAST} ${WM_WININICHANGE} 0 "STR:Environment" /TIMEOUT=5000
 SectionEnd
 
 Section "Service" SecService
-	ExecWait '"$INSTDIR\mosquitto.exe" install'
+	ExecWait '"$INSTDIR\eecloud.exe" install'
 SectionEnd
 
 Section "Uninstall"
-	ExecWait '"$INSTDIR\mosquitto.exe" uninstall'
-	Delete "$INSTDIR\mosquitto.exe"
-	Delete "$INSTDIR\mosquitto_passwd.exe"
-	Delete "$INSTDIR\mosquitto_pub.exe"
-	Delete "$INSTDIR\mosquitto_sub.exe"
-	Delete "$INSTDIR\mosquitto.dll"
-	Delete "$INSTDIR\mosquittopp.dll"
+	ExecWait '"$INSTDIR\eecloud.exe" uninstall'
+	Delete "$INSTDIR\eecloud.exe"
+	Delete "$INSTDIR\eecloud_passwd.exe"
+	Delete "$INSTDIR\eecloud_pub.exe"
+	Delete "$INSTDIR\eecloud_sub.exe"
+	Delete "$INSTDIR\eecloud.dll"
+	Delete "$INSTDIR\eecloudpp.dll"
 	Delete "$INSTDIR\aclfile.example"
 	Delete "$INSTDIR\ChangeLog.txt"
-	Delete "$INSTDIR\mosquitto.conf"
+	Delete "$INSTDIR\eecloud.conf"
 	Delete "$INSTDIR\pwfile.example"
 	Delete "$INSTDIR\readme.txt"
 	Delete "$INSTDIR\readme-windows.txt"
@@ -105,22 +105,22 @@ Section "Uninstall"
 	Delete "$INSTDIR\edl-v10"
 	Delete "$INSTDIR\epl-v10"
 
-	Delete "$INSTDIR\devel\mosquitto.h"
-	Delete "$INSTDIR\devel\mosquitto.lib"
-	Delete "$INSTDIR\devel\mosquittopp.h"
-	Delete "$INSTDIR\devel\mosquittopp.lib"
-	Delete "$INSTDIR\devel\mosquitto_plugin.h"
+	Delete "$INSTDIR\devel\eecloud.h"
+	Delete "$INSTDIR\devel\eecloud.lib"
+	Delete "$INSTDIR\devel\eecloudpp.h"
+	Delete "$INSTDIR\devel\eecloudpp.lib"
+	Delete "$INSTDIR\devel\eecloud_plugin.h"
 
 	Delete "$INSTDIR\Uninstall.exe"
 	RMDir "$INSTDIR"
-	DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Mosquitto"
+	DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Eecloud"
 
-	DeleteRegValue ${env_hklm} MOSQUITTO_DIR
+	DeleteRegValue ${env_hklm} EECLOUD_DIR
 	SendMessage ${HWND_BROADCAST} ${WM_WININICHANGE} 0 "STR:Environment" /TIMEOUT=5000
 SectionEnd
 
 LangString DESC_SecInstall ${LANG_ENGLISH} "The main installation."
-LangString DESC_SecService ${LANG_ENGLISH} "Install mosquitto as a Windows service?"
+LangString DESC_SecService ${LANG_ENGLISH} "Install eecloud as a Windows service?"
 !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
 	!insertmacro MUI_DESCRIPTION_TEXT ${SecInstall} $(DESC_SecInstall)
 	!insertmacro MUI_DESCRIPTION_TEXT ${SecService} $(DESC_SecService)
@@ -138,12 +138,12 @@ Function DependencyPage
 		Abort
 	${EndIf}
 
-	${NSD_CreateLabel} 0 0 100% 12u "OpenSSL - install 'Win32 OpenSSL vXXXXX Light' then copy dlls to the mosquitto directory"
+	${NSD_CreateLabel} 0 0 100% 12u "OpenSSL - install 'Win32 OpenSSL vXXXXX Light' then copy dlls to the eecloud directory"
 	${NSD_CreateLink} 13u 13u 100% 12u "http://slproweb.com/products/Win32OpenSSL.html"
 	Pop $OSSLLink
 	${NSD_OnClick} $OSSLLink OnClick_OSSL
 
-	${NSD_CreateLabel} 0 26u 100% 12u "pthreads - copy 'pthreadVC2.dll' to the mosquitto directory"
+	${NSD_CreateLabel} 0 26u 100% 12u "pthreads - copy 'pthreadVC2.dll' to the eecloud directory"
 	${NSD_CreateLink} 13u 39u 100% 12u "ftp://sources.redhat.com/pub/pthreads-win32/dll-latest/dll/x86/"
 	Pop $PTHLink
 	${NSD_OnClick} $PTHLink OnClick_PTH

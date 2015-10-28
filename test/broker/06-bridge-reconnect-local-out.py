@@ -14,58 +14,58 @@ cmd_subfolder = os.path.realpath(os.path.abspath(os.path.join(os.path.split(insp
 if cmd_subfolder not in sys.path:
     sys.path.insert(0, cmd_subfolder)
 
-import mosq_test
+import ecld_test
 
 rc = 1
 keepalive = 60
-connect_packet = mosq_test.gen_connect("bridge-reconnect-test", keepalive=keepalive)
-connack_packet = mosq_test.gen_connack(rc=0)
+connect_packet = ecld_test.gen_connect("bridge-reconnect-test", keepalive=keepalive)
+connack_packet = ecld_test.gen_connack(rc=0)
 
 mid = 180
-subscribe_packet = mosq_test.gen_subscribe(mid, "bridge/#", 0)
-suback_packet = mosq_test.gen_suback(mid, 0)
-publish_packet = mosq_test.gen_publish("bridge/reconnect", qos=0, payload="bridge-reconnect-message")
+subscribe_packet = ecld_test.gen_subscribe(mid, "bridge/#", 0)
+suback_packet = ecld_test.gen_suback(mid, 0)
+publish_packet = ecld_test.gen_publish("bridge/reconnect", qos=0, payload="bridge-reconnect-message")
 
 try:
-    os.remove('mosquitto.db')
+    os.remove('eecloud.db')
 except OSError:
     pass
 
-cmd = ['../../src/mosquitto', '-p', '1888']
-broker = mosq_test.start_broker(filename=os.path.basename(__file__), cmd=cmd)
+cmd = ['../../src/eecloud', '-p', '1888']
+broker = ecld_test.start_broker(filename=os.path.basename(__file__), cmd=cmd)
 
-local_cmd = ['../../src/mosquitto', '-c', '06-bridge-reconnect-local-out.conf']
-local_broker = mosq_test.start_broker(cmd=local_cmd, filename=os.path.basename(__file__)+'_local1')
-if os.environ.get('MOSQ_USE_VALGRIND') is not None:
+local_cmd = ['../../src/eecloud', '-c', '06-bridge-reconnect-local-out.conf']
+local_broker = ecld_test.start_broker(cmd=local_cmd, filename=os.path.basename(__file__)+'_local1')
+if os.environ.get('ECLD_USE_VALGRIND') is not None:
     time.sleep(5)
 else:
     time.sleep(0.5)
 local_broker.terminate()
 local_broker.wait()
-if os.environ.get('MOSQ_USE_VALGRIND') is not None:
+if os.environ.get('ECLD_USE_VALGRIND') is not None:
     time.sleep(5)
 else:
     time.sleep(0.5)
-local_broker = mosq_test.start_broker(cmd=local_cmd, filename=os.path.basename(__file__)+'_local2')
-if os.environ.get('MOSQ_USE_VALGRIND') is not None:
+local_broker = ecld_test.start_broker(cmd=local_cmd, filename=os.path.basename(__file__)+'_local2')
+if os.environ.get('ECLD_USE_VALGRIND') is not None:
     time.sleep(5)
 else:
     time.sleep(0.5)
 
 pub = None
 try:
-    sock = mosq_test.do_client_connect(connect_packet, connack_packet)
+    sock = ecld_test.do_client_connect(connect_packet, connack_packet)
     sock.send(subscribe_packet)
 
-    if mosq_test.expect_packet(sock, "suback", suback_packet):
+    if ecld_test.expect_packet(sock, "suback", suback_packet):
         sock.send(subscribe_packet)
 
-        if mosq_test.expect_packet(sock, "suback", suback_packet):
+        if ecld_test.expect_packet(sock, "suback", suback_packet):
             pub = subprocess.Popen(['./06-bridge-reconnect-local-out-helper.py'], stdout=subprocess.PIPE)
             pub.wait()
             # Should have now received a publish command
 
-            if mosq_test.expect_packet(sock, "publish", publish_packet):
+            if ecld_test.expect_packet(sock, "publish", publish_packet):
                 rc = 0
     sock.close()
 finally:
@@ -85,7 +85,7 @@ finally:
             print(stdo)
 
     try:
-        os.remove('mosquitto.db')
+        os.remove('eecloud.db')
     except OSError:
         pass
 

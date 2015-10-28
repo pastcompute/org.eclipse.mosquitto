@@ -13,47 +13,47 @@ cmd_subfolder = os.path.realpath(os.path.abspath(os.path.join(os.path.split(insp
 if cmd_subfolder not in sys.path:
     sys.path.insert(0, cmd_subfolder)
 
-import mosq_test
+import ecld_test
 
 rc = 1
 mid = 3265
 keepalive = 60
-connect_packet = mosq_test.gen_connect("pub-qo2-timeout-test", keepalive=keepalive)
-connack_packet = mosq_test.gen_connack(rc=0)
+connect_packet = ecld_test.gen_connect("pub-qo2-timeout-test", keepalive=keepalive)
+connack_packet = ecld_test.gen_connack(rc=0)
 
-subscribe_packet = mosq_test.gen_subscribe(mid, "qos2/timeout/test", 2)
-suback_packet = mosq_test.gen_suback(mid, 2)
+subscribe_packet = ecld_test.gen_subscribe(mid, "qos2/timeout/test", 2)
+suback_packet = ecld_test.gen_suback(mid, 2)
 
 mid = 1
-publish_packet = mosq_test.gen_publish("qos2/timeout/test", qos=2, mid=mid, payload="timeout-message")
-publish_dup_packet = mosq_test.gen_publish("qos2/timeout/test", qos=2, mid=mid, payload="timeout-message", dup=True)
-pubrec_packet = mosq_test.gen_pubrec(mid)
-pubrel_packet = mosq_test.gen_pubrel(mid)
-pubcomp_packet = mosq_test.gen_pubcomp(mid)
+publish_packet = ecld_test.gen_publish("qos2/timeout/test", qos=2, mid=mid, payload="timeout-message")
+publish_dup_packet = ecld_test.gen_publish("qos2/timeout/test", qos=2, mid=mid, payload="timeout-message", dup=True)
+pubrec_packet = ecld_test.gen_pubrec(mid)
+pubrel_packet = ecld_test.gen_pubrel(mid)
+pubcomp_packet = ecld_test.gen_pubcomp(mid)
 
-broker = mosq_test.start_broker(filename=os.path.basename(__file__))
+broker = ecld_test.start_broker(filename=os.path.basename(__file__))
 
 try:
-    sock = mosq_test.do_client_connect(connect_packet, connack_packet)
+    sock = ecld_test.do_client_connect(connect_packet, connack_packet)
     sock.send(subscribe_packet)
 
-    if mosq_test.expect_packet(sock, "suback", suback_packet):
+    if ecld_test.expect_packet(sock, "suback", suback_packet):
         pub = subprocess.Popen(['./03-publish-b2c-timeout-qos2-helper.py'])
         pub.wait()
         # Should have now received a publish command
 
-        if mosq_test.expect_packet(sock, "publish", publish_packet):
+        if ecld_test.expect_packet(sock, "publish", publish_packet):
             # Wait for longer than 5 seconds to get republish with dup set
             # This is covered by the 8 second timeout
 
-            if mosq_test.expect_packet(sock, "dup publish", publish_dup_packet):
+            if ecld_test.expect_packet(sock, "dup publish", publish_dup_packet):
                 sock.send(pubrec_packet)
 
-                if mosq_test.expect_packet(sock, "pubrel", pubrel_packet):
+                if ecld_test.expect_packet(sock, "pubrel", pubrel_packet):
                     # Wait for longer than 5 seconds to get republish with dup set
                     # This is covered by the 8 second timeout
 
-                    if mosq_test.expect_packet(sock, "dup pubrel", pubrel_packet):
+                    if ecld_test.expect_packet(sock, "dup pubrel", pubrel_packet):
                         sock.send(pubcomp_packet)
                         rc = 0
 

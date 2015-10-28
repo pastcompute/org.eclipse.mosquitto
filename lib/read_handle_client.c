@@ -16,45 +16,45 @@ Contributors:
 
 #include <assert.h>
 
-#include <mosquitto.h>
-#include <logging_mosq.h>
-#include <memory_mosq.h>
-#include <net_mosq.h>
+#include <eecloud.h>
+#include <logging_ecld.h>
+#include <memory_ecld.h>
+#include <net_ecld.h>
 #include <read_handle.h>
 
-int _mosquitto_handle_connack(struct mosquitto *mosq)
+int _eecloud_handle_connack(struct eecloud *ecld)
 {
 	uint8_t byte;
 	uint8_t result;
 	int rc;
 
-	assert(mosq);
-	_mosquitto_log_printf(mosq, MOSQ_LOG_DEBUG, "Client %s received CONNACK", mosq->id);
-	rc = _mosquitto_read_byte(&mosq->in_packet, &byte); // Reserved byte, not used
+	assert(ecld);
+	_eecloud_log_printf(ecld, ECLD_LOG_DEBUG, "Client %s received CONNACK", ecld->id);
+	rc = _eecloud_read_byte(&ecld->in_packet, &byte); // Reserved byte, not used
 	if(rc) return rc;
-	rc = _mosquitto_read_byte(&mosq->in_packet, &result);
+	rc = _eecloud_read_byte(&ecld->in_packet, &result);
 	if(rc) return rc;
-	pthread_mutex_lock(&mosq->callback_mutex);
-	if(mosq->on_connect){
-		mosq->in_callback = true;
-		mosq->on_connect(mosq, mosq->userdata, result);
-		mosq->in_callback = false;
+	pthread_mutex_lock(&ecld->callback_mutex);
+	if(ecld->on_connect){
+		ecld->in_callback = true;
+		ecld->on_connect(ecld, ecld->userdata, result);
+		ecld->in_callback = false;
 	}
-	pthread_mutex_unlock(&mosq->callback_mutex);
+	pthread_mutex_unlock(&ecld->callback_mutex);
 	switch(result){
 		case 0:
-			if(mosq->state != mosq_cs_disconnecting){
-				mosq->state = mosq_cs_connected;
+			if(ecld->state != ecld_cs_disconnecting){
+				ecld->state = ecld_cs_connected;
 			}
-			return MOSQ_ERR_SUCCESS;
+			return ECLD_ERR_SUCCESS;
 		case 1:
 		case 2:
 		case 3:
 		case 4:
 		case 5:
-			return MOSQ_ERR_CONN_REFUSED;
+			return ECLD_ERR_CONN_REFUSED;
 		default:
-			return MOSQ_ERR_PROTOCOL;
+			return ECLD_ERR_PROTOCOL;
 	}
 }
 

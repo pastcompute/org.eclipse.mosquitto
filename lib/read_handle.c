@@ -18,138 +18,138 @@ Contributors:
 #include <stdio.h>
 #include <string.h>
 
-#include <mosquitto.h>
-#include <logging_mosq.h>
-#include <memory_mosq.h>
-#include <messages_mosq.h>
+#include <eecloud.h>
+#include <logging_ecld.h>
+#include <memory_ecld.h>
+#include <messages_ecld.h>
 #include <mqtt3_protocol.h>
-#include <net_mosq.h>
+#include <net_ecld.h>
 #include <read_handle.h>
-#include <send_mosq.h>
-#include <time_mosq.h>
-#include <util_mosq.h>
+#include <send_ecld.h>
+#include <time_ecld.h>
+#include <util_ecld.h>
 
-int _mosquitto_packet_handle(struct mosquitto *mosq)
+int _eecloud_packet_handle(struct eecloud *ecld)
 {
-	assert(mosq);
+	assert(ecld);
 
-	switch((mosq->in_packet.command)&0xF0){
+	switch((ecld->in_packet.command)&0xF0){
 		case PINGREQ:
-			return _mosquitto_handle_pingreq(mosq);
+			return _eecloud_handle_pingreq(ecld);
 		case PINGRESP:
-			return _mosquitto_handle_pingresp(mosq);
+			return _eecloud_handle_pingresp(ecld);
 		case PUBACK:
-			return _mosquitto_handle_pubackcomp(mosq, "PUBACK");
+			return _eecloud_handle_pubackcomp(ecld, "PUBACK");
 		case PUBCOMP:
-			return _mosquitto_handle_pubackcomp(mosq, "PUBCOMP");
+			return _eecloud_handle_pubackcomp(ecld, "PUBCOMP");
 		case PUBLISH:
-			return _mosquitto_handle_publish(mosq);
+			return _eecloud_handle_publish(ecld);
 		case PUBREC:
-			return _mosquitto_handle_pubrec(mosq);
+			return _eecloud_handle_pubrec(ecld);
 		case PUBREL:
-			return _mosquitto_handle_pubrel(NULL, mosq);
+			return _eecloud_handle_pubrel(NULL, ecld);
 		case CONNACK:
-			return _mosquitto_handle_connack(mosq);
+			return _eecloud_handle_connack(ecld);
 		case SUBACK:
-			return _mosquitto_handle_suback(mosq);
+			return _eecloud_handle_suback(ecld);
 		case UNSUBACK:
-			return _mosquitto_handle_unsuback(mosq);
+			return _eecloud_handle_unsuback(ecld);
 		default:
 			/* If we don't recognise the command, return an error straight away. */
-			_mosquitto_log_printf(mosq, MOSQ_LOG_ERR, "Error: Unrecognised command %d\n", (mosq->in_packet.command)&0xF0);
-			return MOSQ_ERR_PROTOCOL;
+			_eecloud_log_printf(ecld, ECLD_LOG_ERR, "Error: Unrecognised command %d\n", (ecld->in_packet.command)&0xF0);
+			return ECLD_ERR_PROTOCOL;
 	}
 }
 
-int _mosquitto_handle_publish(struct mosquitto *mosq)
+int _eecloud_handle_publish(struct eecloud *ecld)
 {
 	uint8_t header;
-	struct mosquitto_message_all *message;
+	struct eecloud_message_all *message;
 	int rc = 0;
 	uint16_t mid;
 
-	assert(mosq);
+	assert(ecld);
 
-	message = _mosquitto_calloc(1, sizeof(struct mosquitto_message_all));
-	if(!message) return MOSQ_ERR_NOMEM;
+	message = _eecloud_calloc(1, sizeof(struct eecloud_message_all));
+	if(!message) return ECLD_ERR_NOMEM;
 
-	header = mosq->in_packet.command;
+	header = ecld->in_packet.command;
 
 	message->dup = (header & 0x08)>>3;
 	message->msg.qos = (header & 0x06)>>1;
 	message->msg.retain = (header & 0x01);
 
-	rc = _mosquitto_read_string(&mosq->in_packet, &message->msg.topic);
+	rc = _eecloud_read_string(&ecld->in_packet, &message->msg.topic);
 	if(rc){
-		_mosquitto_message_cleanup(&message);
+		_eecloud_message_cleanup(&message);
 		return rc;
 	}
 	if(!strlen(message->msg.topic)){
-		_mosquitto_message_cleanup(&message);
-		return MOSQ_ERR_PROTOCOL;
+		_eecloud_message_cleanup(&message);
+		return ECLD_ERR_PROTOCOL;
 	}
 
 	if(message->msg.qos > 0){
-		rc = _mosquitto_read_uint16(&mosq->in_packet, &mid);
+		rc = _eecloud_read_uint16(&ecld->in_packet, &mid);
 		if(rc){
-			_mosquitto_message_cleanup(&message);
+			_eecloud_message_cleanup(&message);
 			return rc;
 		}
 		message->msg.mid = (int)mid;
 	}
 
-	message->msg.payloadlen = mosq->in_packet.remaining_length - mosq->in_packet.pos;
+	message->msg.payloadlen = ecld->in_packet.remaining_length - ecld->in_packet.pos;
 	if(message->msg.payloadlen){
-		message->msg.payload = _mosquitto_calloc(message->msg.payloadlen+1, sizeof(uint8_t));
+		message->msg.payload = _eecloud_calloc(message->msg.payloadlen+1, sizeof(uint8_t));
 		if(!message->msg.payload){
-			_mosquitto_message_cleanup(&message);
-			return MOSQ_ERR_NOMEM;
+			_eecloud_message_cleanup(&message);
+			return ECLD_ERR_NOMEM;
 		}
-		rc = _mosquitto_read_bytes(&mosq->in_packet, message->msg.payload, message->msg.payloadlen);
+		rc = _eecloud_read_bytes(&ecld->in_packet, message->msg.payload, message->msg.payloadlen);
 		if(rc){
-			_mosquitto_message_cleanup(&message);
+			_eecloud_message_cleanup(&message);
 			return rc;
 		}
 	}
-	_mosquitto_log_printf(mosq, MOSQ_LOG_DEBUG,
+	_eecloud_log_printf(ecld, ECLD_LOG_DEBUG,
 			"Client %s received PUBLISH (d%d, q%d, r%d, m%d, '%s', ... (%ld bytes))",
-			mosq->id, message->dup, message->msg.qos, message->msg.retain,
+			ecld->id, message->dup, message->msg.qos, message->msg.retain,
 			message->msg.mid, message->msg.topic,
 			(long)message->msg.payloadlen);
 
-	message->timestamp = mosquitto_time();
+	message->timestamp = eecloud_time();
 	switch(message->msg.qos){
 		case 0:
-			pthread_mutex_lock(&mosq->callback_mutex);
-			if(mosq->on_message){
-				mosq->in_callback = true;
-				mosq->on_message(mosq, mosq->userdata, &message->msg);
-				mosq->in_callback = false;
+			pthread_mutex_lock(&ecld->callback_mutex);
+			if(ecld->on_message){
+				ecld->in_callback = true;
+				ecld->on_message(ecld, ecld->userdata, &message->msg);
+				ecld->in_callback = false;
 			}
-			pthread_mutex_unlock(&mosq->callback_mutex);
-			_mosquitto_message_cleanup(&message);
-			return MOSQ_ERR_SUCCESS;
+			pthread_mutex_unlock(&ecld->callback_mutex);
+			_eecloud_message_cleanup(&message);
+			return ECLD_ERR_SUCCESS;
 		case 1:
-			rc = _mosquitto_send_puback(mosq, message->msg.mid);
-			pthread_mutex_lock(&mosq->callback_mutex);
-			if(mosq->on_message){
-				mosq->in_callback = true;
-				mosq->on_message(mosq, mosq->userdata, &message->msg);
-				mosq->in_callback = false;
+			rc = _eecloud_send_puback(ecld, message->msg.mid);
+			pthread_mutex_lock(&ecld->callback_mutex);
+			if(ecld->on_message){
+				ecld->in_callback = true;
+				ecld->on_message(ecld, ecld->userdata, &message->msg);
+				ecld->in_callback = false;
 			}
-			pthread_mutex_unlock(&mosq->callback_mutex);
-			_mosquitto_message_cleanup(&message);
+			pthread_mutex_unlock(&ecld->callback_mutex);
+			_eecloud_message_cleanup(&message);
 			return rc;
 		case 2:
-			rc = _mosquitto_send_pubrec(mosq, message->msg.mid);
-			pthread_mutex_lock(&mosq->in_message_mutex);
-			message->state = mosq_ms_wait_for_pubrel;
-			_mosquitto_message_queue(mosq, message, mosq_md_in);
-			pthread_mutex_unlock(&mosq->in_message_mutex);
+			rc = _eecloud_send_pubrec(ecld, message->msg.mid);
+			pthread_mutex_lock(&ecld->in_message_mutex);
+			message->state = ecld_ms_wait_for_pubrel;
+			_eecloud_message_queue(ecld, message, ecld_md_in);
+			pthread_mutex_unlock(&ecld->in_message_mutex);
 			return rc;
 		default:
-			_mosquitto_message_cleanup(&message);
-			return MOSQ_ERR_PROTOCOL;
+			_eecloud_message_cleanup(&message);
+			return ECLD_ERR_PROTOCOL;
 	}
 }
 

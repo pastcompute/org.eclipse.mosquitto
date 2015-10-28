@@ -1,11 +1,11 @@
 #include <cstdio>
-#include <mosquittopp.h>
+#include <eecloudpp.h>
 
 void do_check(const char *sub, const char *topic, bool bad_res)
 {
 	bool match;
 
-	mosqpp::topic_matches_sub(sub, topic, &match);
+	ecldpp::topic_matches_sub(sub, topic, &match);
 	
 	if(match == bad_res){
 		printf("s: %s t: %s\n", sub, topic);

@@ -1,11 +1,11 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <mosquitto.h>
+#include <eecloud.h>
 
 static int run = -1;
 
-void on_connect(struct mosquitto *mosq, void *obj, int rc)
+void on_connect(struct eecloud *ecld, void *obj, int rc)
 {
 	if(rc){
 		exit(1);
@@ -15,19 +15,19 @@ void on_connect(struct mosquitto *mosq, void *obj, int rc)
 int main(int argc, char *argv[])
 {
 	int rc;
-	struct mosquitto *mosq;
+	struct eecloud *ecld;
 
-	mosquitto_lib_init();
+	eecloud_lib_init();
 
-	mosq = mosquitto_new("01-keepalive-pingreq", true, NULL);
-	mosquitto_connect_callback_set(mosq, on_connect);
+	ecld = eecloud_new("01-keepalive-pingreq", true, NULL);
+	eecloud_connect_callback_set(ecld, on_connect);
 
-	rc = mosquitto_connect(mosq, "localhost", 1888, 4);
+	rc = eecloud_connect(ecld, "localhost", 1888, 4);
 
 	while(run == -1){
-		mosquitto_loop(mosq, -1, 1);
+		eecloud_loop(ecld, -1, 1);
 	}
 
-	mosquitto_lib_cleanup();
+	eecloud_lib_cleanup();
 	return run;
 }

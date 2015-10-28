@@ -1,5 +1,5 @@
 These people have reported bugs / provided patches / done something else to aid
-the mosquitto project. Thanks to you all!
+the eecloud project. Thanks to you all!
 
 If you think I've missed you off the list, please rest assured that it wasn't
 intentional and get in touch and I'll fix it.
